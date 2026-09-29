@@ -1,0 +1,100 @@
+/* Mobile screens — app shell + 球局核心流程 (explore → list → detail → join → success).
+ * Ported from prototype/PIKYOO-core-flow.html; the phone frame and demo guide were dropped. */
+
+@layer components {
+/* — app shell: the phone screen, full-height on real devices — */
+.app-shell { position: relative; height: 100dvh; max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; overflow: hidden; background: var(--color-bg); padding-top: env(safe-area-inset-top); }
+@media (min-width: 481px) {
+  body:has(.app-shell) { background: var(--color-neutral-100); }
+  .app-shell { box-shadow: 0 0 0 1px var(--color-line), var(--shadow-lg); }
+}
+.scroll { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; position: relative; }
+.scroll::-webkit-scrollbar { display: none; }
+.pad { padding: 0 var(--space-4); }
+.sec { padding: var(--space-6) var(--space-4) 0; }
+.stack { display: flex; flex-direction: column; gap: var(--space-3); }
+.hscroll { display: flex; gap: var(--space-3); overflow-x: auto; padding: 0 var(--space-4) 4px; scrollbar-width: none; }
+.hscroll::-webkit-scrollbar { display: none; }
+.btnrow { display: flex; gap: var(--space-2); margin-top: var(--space-3); }
+.btnrow .btn { flex: 1; }
+.btnrow-tight { gap: 8px; margin-top: 12px; }
+.btnrow-tight .btn { padding: 0 12px; }
+.fine { font-size: 13px; color: var(--color-muted); margin: 12px 0 0; }
+.toast-wrap { position: absolute; left: 0; right: 0; bottom: 104px; display: flex; justify-content: center; pointer-events: none; z-index: 40; padding: 0 16px; }
+.appbar-spacer { width: 44px; flex: none; }
+
+/* — explore home — */
+.ticket { cursor: pointer; }
+a.ticket { text-decoration: none; }
+.class-card { flex: none; width: 250px; cursor: pointer; }
+.home-hero { margin: 0 var(--space-3); padding: var(--space-4) var(--space-4) var(--space-6); border-radius: var(--radius-lg); }
+.home-top { display: flex; align-items: center; justify-content: space-between; }
+.loc { display: inline-flex; align-items: center; gap: 4px; font: inherit; font-size: 14px; font-weight: 500; color: var(--color-on-carbon); background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.2); border-radius: 999px; padding: 6px 12px; min-height: 36px; cursor: pointer; }
+.beginner { margin: var(--space-6) var(--space-4) 0; padding: var(--space-4); display: grid; grid-template-columns: minmax(0,1fr) 110px; gap: var(--space-3); align-items: center; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-md); }
+.flow3 { display: flex; flex-wrap: wrap; gap: 4px 6px; font-size: 14px; color: var(--color-neutral-700); align-items: center; margin: 6px 0 12px; }
+a.row-item, a.card, a.tab { color: inherit; text-decoration: none; }
+/* buttons that look like the prototype's placeholder links / rows */
+.linklike { background: none; border: 0; padding: 0; font: inherit; font-size: 14px; font-weight: 500; color: var(--color-text); cursor: pointer; text-decoration: underline; text-decoration-color: var(--color-accent-700); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.linklike:hover { background: var(--color-accent-200); }
+button.row-item { width: 100%; background: none; border: 0; border-bottom: 1px solid var(--color-line); font: inherit; color: inherit; text-align: left; cursor: pointer; }
+button.row-item:last-child { border-bottom: 0; }
+a.tab { color: var(--color-on-carbon-muted); }
+a.tab:hover { color: var(--color-on-carbon); }
+a.tab[aria-current="page"] { color: var(--color-on-accent); }
+
+/* — court illustration (kitchen line motif) — */
+.court { height: 64px; border: 1.5px solid var(--color-text); position: relative; background: var(--color-accent-2-100); }
+.court i { position: absolute; top: 0; bottom: 0; width: 1.5px; background: var(--color-text); }
+.court b { position: absolute; top: 50%; height: 1.5px; background: var(--color-text); }
+.court .kz { position: absolute; top: 0; bottom: 0; left: 34%; right: 34%; background: var(--color-accent-200); }
+.court .net { position: absolute; left: 50%; top: -5px; bottom: -5px; width: 2.5px; margin-left: -1.25px; background: var(--color-text); }
+.court .ball { position: absolute; width: 11px; height: 11px; border-radius: 50%; background: var(--color-accent); border: 1.5px solid var(--color-text); right: 12px; top: 10px; }
+
+/* — game list — */
+.date-h { display: flex; align-items: baseline; justify-content: space-between; padding: var(--space-6) var(--space-4) var(--space-3); position: sticky; top: 0; background: var(--color-bg); z-index: 1; }
+.date-h b { font-size: 17px; }
+.date-h span { font-size: 13px; color: var(--color-muted); }
+.list-head { padding: var(--space-2) var(--space-4) var(--space-3); display: flex; flex-direction: column; gap: var(--space-3); border-bottom: 1px solid var(--color-line); }
+.list-head .t { display: flex; align-items: baseline; justify-content: space-between; }
+.list-head h1 { margin: 0; }
+.filter-btn { position: relative; }
+.filter-btn .dot { position: absolute; top: 6px; right: 6px; min-width: 18px; height: 18px; padding: 0 4px; background: var(--color-accent); border: 1px solid var(--color-text); font-size: 11px; font-weight: 700; display: grid; place-items: center; font-family: var(--font-num); }
+.empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--space-3); padding: var(--space-12) var(--space-6); }
+.empty .court { width: 132px; height: 72px; }
+
+/* — game detail — */
+.dblock { padding: var(--space-4); border-bottom: 1px solid var(--color-line); }
+.dblock h3 { font-size: 15px; color: var(--color-muted); margin: 0 0 var(--space-3); font-weight: 700; }
+.kv { display: grid; grid-template-columns: 72px minmax(0,1fr); gap: 6px 12px; font-size: 15px; }
+.kv dt { color: var(--color-muted); }
+.kv dd { margin: 0; }
+.who { display: flex; align-items: center; gap: var(--space-3); }
+.who .nm { font-weight: 700; }
+.who .sub { font-size: 13px; color: var(--color-muted); }
+.people { display: flex; flex-direction: column; }
+.people .row-item { min-height: 48px; }
+.detail-ticket { margin: var(--space-4) var(--space-4) 0; }
+.seat { transition: background .35s, transform .35s, border-color .35s; }
+.seat.pop { animation: pop .5s ease-out; }
+@keyframes pop { 0% { transform: scale(.4); } 60% { transform: scale(1.15); } 100% { transform: scale(1); } }
+.notice { display: flex; gap: 8px; padding: 10px 12px; border-radius: var(--radius-sm); font-size: 14px; line-height: 1.5; }
+.notice svg { flex: none; margin-top: 2px; }
+
+/* — sheets: confirm + filter — */
+.sheet h2 { margin: 0 0 var(--space-3); }
+.sum { background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-md); padding: var(--space-3); display: flex; flex-direction: column; gap: 4px; font-size: 15px; }
+.sum .big { font-family: var(--font-num); font-weight: 600; font-size: 24px; line-height: 1.1; }
+.opt-group { display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-4); }
+.opt-group > b { font-size: 15px; }
+.wrapchips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.lv-pick { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); gap: 4px; }
+.lv-pick button { border-radius: var(--radius-sm); font: inherit; font-family: var(--font-num); font-weight: 600; font-size: 15px; min-height: 44px; border: 1px solid var(--color-line); background: var(--color-surface); cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; padding: 6px 0; color: var(--color-text); }
+.lv-pick button i { width: 60%; display: block; }
+.lv-pick button[aria-pressed="true"] { border-color: var(--color-text); box-shadow: inset 0 0 0 1px var(--color-text); }
+
+/* — join success — */
+.success { flex: 1; display: flex; flex-direction: column; padding: var(--space-8) var(--space-4) var(--space-4); overflow-y: auto; }
+.success .hero { display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--space-3); padding: var(--space-8) 0 var(--space-6); }
+.success h1 { font-size: 28px; margin: 0; }
+.success .actions { margin-top: auto; padding-top: var(--space-6); display: flex; flex-direction: column; gap: var(--space-2); }
+}
