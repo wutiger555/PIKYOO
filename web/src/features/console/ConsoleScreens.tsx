@@ -9,14 +9,15 @@ import { useToast } from "@/components/pk/Toast";
 import { PAYOUT_METHODS, RECEIVED_BEFORE, TODAY_AGENDA } from "@/lib/data/coaches";
 import { useDemo } from "@/lib/demo-store";
 import { money } from "@/lib/format";
+import { AnswerCard } from "@/features/coaches/QuestionBoard";
 import type { BookingRequest, PaymentRow } from "@/lib/types";
 
 type ConsoleTab = "today" | "lessons" | "page" | "pay";
 
 /** Coach tab bar: 今天 · 課程時段 · 教練頁 · 收款, with pending/reported badges. */
 export function CoachTabs({ active }: { active: ConsoleTab }) {
-  const { requests, payments } = useDemo();
-  const pend = requests.filter((r) => r.status === "pending").length;
+  const { requests, payments, questions, myCoach } = useDemo();
+  const pend = requests.filter((r) => r.status === "pending").length + questions.filter((q) => q.coachId === myCoach.id && !q.answer).length;
   const rep = payments.filter((p) => p.status === "reported").length;
   const tab = (key: ConsoleTab, href: string, icon: IconName, label: string, badge?: number) => (
     <Link className="tab" href={href} aria-current={active === key ? "page" : undefined}>
@@ -77,8 +78,9 @@ function RequestCard({ r }: { r: BookingRequest }) {
 /** F5-5 教練首頁「今天」: pending bookings, this week, money still due; one-tap confirm sends payment info via LINE. */
 export function CoachTodayScreen() {
   const toast = useToast();
-  const { requests, payments, myCoach } = useDemo();
+  const { requests, payments, myCoach, questions } = useDemo();
   const pend = requests.filter((r) => r.status === "pending");
+  const ask = questions.filter((q) => q.coachId === myCoach.id && !q.answer);
   const due = payments.filter((p) => p.status !== "paid").reduce((a, p) => a + p.amount, 0);
   return (
     <>
@@ -92,7 +94,7 @@ export function CoachTodayScreen() {
             </span>
           </div>
           <h1 style={{ margin: "20px 0 2px", fontSize: 28 }}>早安，{myCoach.name.split(" ")[0]}</h1>
-          <p style={{ margin: 0, color: "var(--color-on-carbon-muted)" }}>今天 2 堂課，<span className="hl">{pend.length} 筆預約</span>等你確認</p>
+          <p style={{ margin: 0, color: "var(--color-on-carbon-muted)" }}>今天 2 堂課，<span className="hl">{pend.length} 筆預約</span>等你確認{ask.length > 0 && `、${ask.length} 則提問待回覆`}</p>
           <div className="stats" style={{ marginTop: 16 }}>
             <div><b className="num">{pend.length}</b><span>待確認</span></div>
             <div><b className="num">6</b><span>本週課</span></div>
@@ -105,6 +107,13 @@ export function CoachTodayScreen() {
             <span className="text-muted" style={{ fontSize: 14 }}>確認後自動送付款資訊</span>
           </div>
           <div className="stack">{requests.map((r) => <RequestCard key={r.id} r={r} />)}</div>
+        </section>
+        <section className="sec">
+          <div className="sec-head">
+            <h2><span className="en">Questions</span>學生提問</h2>
+            <Link className="linklike" href={`/coaches/${myCoach.id}`}>看教練頁</Link>
+          </div>
+          {ask.length ? <div className="stack">{ask.map((q) => <AnswerCard key={q.id} q={q} />)}</div> : <p className="text-muted" style={{ margin: 0 }}>沒有待回覆的提問。回覆會公開在教練頁，其他學生也看得到。</p>}
         </section>
         <section className="sec">
           <div className="sec-head">

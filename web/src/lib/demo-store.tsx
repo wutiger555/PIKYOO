@@ -3,7 +3,9 @@
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import { BOOKING_DAYS, COACHES, getCoach, initialGroups, initialPayments, initialRequests } from "./data/coaches";
 import { GAMES, ME } from "./data/games";
-import type { Booking, BookingRequest, Coach, Game, Group, Level, LessonType, MyGameStatus, PaymentRow, Profile } from "./types";
+import { initialQuestions } from "./data/questions";
+import { LEVELS } from "./format";
+import type { Booking, BookingRequest, Coach, Game, Group, Level, LessonType, MyGameStatus, PaymentRow, Profile, Question } from "./types";
 
 // In-memory demo state shared across screens (the MVP runs on mock data; Supabase replaces this).
 // Lives in the root layout so it survives client-side navigation; a full reload resets it.
@@ -46,6 +48,7 @@ interface DemoState {
   /** the signed-in coach's own page, edited in the console (Mia in the demo) */
   myCoach: Coach;
   groups: Group[];
+  questions: Question[];
 }
 
 const init = (): DemoState => ({
@@ -61,6 +64,7 @@ const init = (): DemoState => ({
   payments: initialPayments(),
   myCoach: structuredClone(getCoach("mia")!),
   groups: initialGroups(),
+  questions: initialQuestions(),
 });
 
 type Updater<T> = T | ((prev: T) => T);
@@ -107,6 +111,12 @@ function useDemoValue() {
       return { ...p, groups: p.groups.map((x) => (x.id === id ? { ...x, status: "requested" as const } : x)), requests: [req, ...p.requests.filter((r) => r.id !== req.id)] };
     }), []);
 
+  const askQuestion = useCallback((coachId: string, text: string) =>
+    setS((p) => ({
+      ...p,
+      questions: [...p.questions, { id: `q-${Date.now()}`, coachId, name: p.profile.name, level: LEVELS[p.profile.level], text, askedAt: "剛剛", mine: true }],
+    })), []);
+
   return useMemo(() => ({
     ...s,
     setProfile: (u: Updater<Profile>) => set("profile", u),
@@ -124,7 +134,9 @@ function useDemoValue() {
     addGroup: (g: Group) => set("groups", (gs) => [g, ...gs.filter((x) => x.id !== g.id)]),
     updateGroup: (id: string, u: (g: Group) => Group) => set("groups", (gs) => gs.map((g) => (g.id === id ? u(g) : g))),
     submitGroup,
-  }), [s, set, setMine, confirmRequest, submitGroup]);
+    askQuestion,
+    answerQuestion: (id: string, text: string) => set("questions", (qs) => qs.map((q) => (q.id === id ? { ...q, answer: { text, at: "剛剛" } } : q))),
+  }), [s, set, setMine, confirmRequest, submitGroup, askQuestion]);
 }
 
 type Demo = ReturnType<typeof useDemoValue>;
@@ -165,4 +177,10 @@ export function useCoaches() {
 
 export function useCoach(id: string) {
   return useCoaches().find((c) => c.id === id);
+}
+
+/** 問與答 a visitor sees on a coach page: answered ones, plus my own still waiting for a reply. */
+export function usePublicQuestions(coachId: string) {
+  const { questions } = useDemo();
+  return useMemo(() => questions.filter((q) => q.coachId === coachId && (q.answer || q.mine)), [questions, coachId]);
 }

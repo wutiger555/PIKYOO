@@ -141,7 +141,7 @@ export function BookingStatusScreen({ demo }: { demo?: BookingStatus }) {
             <div className="row-item">
               <Photo coach={c} size="xs" />
               <div style={{ flex: 1 }}><b>{c.name}</b><div className="text-muted" style={{ fontSize: 13 }}>{p.venues[0].name}</div></div>
-              <SoonButton className="btn btn-secondary" style={{ minHeight: 38, padding: "0 14px" }} msg="開啟 LINE 聯絡教練"><Icon name="msg" size={16} />LINE</SoonButton>
+              <SoonButton className="btn btn-secondary" style={{ minHeight: 38, padding: "0 14px" }} msg="預約訊息（下一輪）：確認後可以在 PIKYOO 裡跟教練聯絡"><Icon name="msg" size={16} />訊息</SoonButton>
             </div>
             <div className="row-item" style={{ fontSize: 14 }}>
               <span className="text-muted" style={{ flex: 1 }}>{plan.durationMin} 分鐘・{plan.unit === "/人" ? `${b.headcount} 人` : "1 人"}</span>
