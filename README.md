@@ -7,4 +7,4 @@ A pickleball platform for Taiwan to find courts, coaches, classes, and games.
 
 ## Documents
 
-- [市場分析與產品計劃 v0.2](docs/PLAN.md)
+- [市場分析與產品計劃 v0.3](docs/PLAN.md)
