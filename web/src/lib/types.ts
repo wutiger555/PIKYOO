@@ -259,3 +259,18 @@ export interface PaymentRow {
   ref?: string;
   at: string;
 }
+
+/** 問與答: a student asks on the coach page; once the coach replies, question and answer are public on that page.
+ *  Replaces "ask on LINE" so students and coaches talk inside PIKYOO (docs/PRD.md F3-11). */
+export interface Question {
+  id: string;
+  coachId: string;
+  name: string;
+  /** asker's level label, e.g. 新手 / 2.5 */
+  level: string;
+  text: string;
+  askedAt: string;
+  answer?: { text: string; at: string };
+  /** asked by the signed-in student; an unanswered question is shown only to its asker (and the coach) */
+  mine?: boolean;
+}

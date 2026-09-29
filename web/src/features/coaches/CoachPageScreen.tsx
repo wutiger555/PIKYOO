@@ -2,19 +2,19 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Cred, LevelChip } from "@/components/pk/Badges";
 import { Icon, type IconName } from "@/components/pk/Icon";
-import { SoonButton } from "@/components/pk/Shell";
 import { useToast } from "@/components/pk/Toast";
 import { BOOKING_DAYS, slotsFor } from "@/lib/data/coaches";
 import { useCoach } from "@/lib/demo-store";
 import { levelText, money } from "@/lib/format";
 import type { Coach, TimelineItem } from "@/lib/types";
 import { Img, Rating } from "./CoachCard";
+import { AskSheet, QuestionBoard } from "./QuestionBoard";
 
 const TL_ICON: Record<TimelineItem["kind"], IconName> = { cert: "shield", trophy: "trophy", users: "users", cap: "cap" };
-const SECTIONS = [["plans", "課程"], ["about", "關於我"], ["play", "匹克球檔案"], ["time", "可約時段"], ["exp", "經歷"], ["where", "地點"]] as const;
+const SECTIONS = [["plans", "課程"], ["about", "關於我"], ["play", "匹克球檔案"], ["time", "可約時段"], ["exp", "經歷"], ["qa", "問與答"], ["where", "地點"]] as const;
 
 /** F3-4 教練頁（招生頁）. Reads the live coach so the console's edits show up here. */
 export function CoachPageScreen({ coach }: { coach: Coach }) {
@@ -28,6 +28,7 @@ export function CoachPublicPage({ coach: c, preview }: { coach: Coach; preview?:
   const toast = useToast();
   const router = useRouter();
   const scroller = useRef<HTMLDivElement>(null);
+  const [asking, setAsking] = useState(false);
   const [cover, ...gallery] = p.photos;
   const groupPlan = p.plans.find((x) => x.group);
   const days = BOOKING_DAYS.map((d) => ({ d, slots: slotsFor(c, d) })).filter((x) => x.slots.length);
@@ -166,7 +167,7 @@ export function CoachPublicPage({ coach: c, preview }: { coach: Coach; preview?:
               ))}
             </div>
           ) : (
-            <p className="text-muted">這週還沒開放時段，可以先用 LINE 詢問。</p>
+            <p className="text-muted">這週還沒開放時段，可以先在<button className="linkbtn" onClick={() => jump("qa")}>問與答</button>問教練。</p>
           )}
         </section>
 
@@ -202,6 +203,8 @@ export function CoachPublicPage({ coach: c, preview }: { coach: Coach; preview?:
           )}
         </section>
 
+        <QuestionBoard coach={c} onAsk={preview ? undefined : () => setAsking(true)} />
+
         <section className="blk" id="a-where" style={{ borderBottom: 0 }}>
           <h2>授課地點</h2>
           {p.venues.map((v) =>
@@ -218,9 +221,6 @@ export function CoachPublicPage({ coach: c, preview }: { coach: Coach; preview?:
               </div>
             ),
           )}
-          <SoonButton className="btn btn-secondary btn-block" style={{ marginTop: 12 }} msg={`開啟 LINE 聯絡 ${c.name}`}>
-            <Icon name="msg" size={18} />先用 LINE 問問題
-          </SoonButton>
         </section>
       </div>
       <div className="sticky-cta">
@@ -233,6 +233,7 @@ export function CoachPublicPage({ coach: c, preview }: { coach: Coach; preview?:
         </div>
         {p.plans[0] && <Link className="btn btn-primary btn-lg" href={bookHref(p.plans[0].id)}>選時段預約</Link>}
       </div>
+      {asking && <AskSheet coach={c} onClose={() => setAsking(false)} onSent={() => jump("qa")} />}
     </>
   );
 }
