@@ -1,22 +1,38 @@
 "use client";
 
 import Link from "next/link";
-import { CourtArt } from "@/components/pk/Badges";
+import { useRouter } from "next/navigation";
 import { Icon } from "@/components/pk/Icon";
 import { PkMark } from "@/components/pk/Logo";
-import { SoonButton, TabBar } from "@/components/pk/Shell";
-import { GameTicket } from "@/components/pk/Ticket";
-import { GAMES, LESSONS, ME, NEARBY_COURTS } from "@/lib/data/games";
-import { useDemo } from "@/lib/demo-store";
-import { money } from "@/lib/format";
+import { TabBar } from "@/components/pk/Shell";
+import { BOOKING_DAYS, slotsFor } from "@/lib/data/coaches";
+import { shortAreas } from "@/lib/data/courts";
+import { useCoaches, useDemo } from "@/lib/demo-store";
+import { LEVELS, money } from "@/lib/format";
+import type { LessonType } from "@/lib/types";
+import { CoachMini } from "../coaches/CoachCard";
 
-/** F7 探索首頁: carbon greeting, today's open games, beginner entry, lessons, nearby courts. */
+const TYPES: LessonType[] = ["體驗課", "一對一", "小班", "團體"];
+
+/** 首頁 — courses first: pick what you want to learn, recommended coaches, sessions you can book soon, 揪朋友. Games and courts sit below. */
 export function HomeScreen() {
-  const { mine } = useDemo();
-  const today = GAMES.filter((g) => {
-    const count = g.participants.length + (mine[g.id] === "joined" ? 1 : 0);
-    return g.group === "today" && g.capacity - count > 0;
-  });
+  const router = useRouter();
+  const { profile, setCoachFilters, booking, groups } = useDemo();
+  const coaches = useCoaches();
+  const fit = coaches.filter((c) => profile.level >= c.levelMin && profile.level <= c.levelMax);
+  const rail = [...fit, ...coaches.filter((c) => !fit.includes(c))];
+  const gathering = groups.find((g) => g.status === "gathering");
+  const gMin = gathering ? coaches.find((c) => c.id === gathering.coachId)?.profile.plans.find((p) => p.id === gathering.planId)?.group?.min ?? 2 : 0;
+
+  // Soonest open sessions across coaches whose level range fits me.
+  const soon = BOOKING_DAYS.flatMap((d) =>
+    fit.flatMap((c) => slotsFor(c, d).filter(([, left]) => left > 0).map(([t, left]) => ({ c, d, t, left, plan: c.profile.plans[0] }))),
+  ).slice(0, 4);
+
+  const want = (t: LessonType) => {
+    setCoachFilters((p) => ({ ...p, type: t, level: profile.level }));
+    router.push("/coaches");
+  };
 
   return (
     <>
@@ -24,94 +40,83 @@ export function HomeScreen() {
         <div className="home-hero carbon">
           <div className="home-top">
             <PkMark size={30} style={{ color: "#fff" }} />
-            <SoonButton className="loc" msg="切換常打區域（下一輪）">
+            <Link className="loc" href="/welcome">
               <Icon name="pin" size={16} />
-              大安・信義・中山
+              {shortAreas(profile.areas)}
               <Icon name="down" size={16} />
-            </SoonButton>
+            </Link>
           </div>
-          <h1 style={{ margin: "var(--space-6) 0 0", fontSize: 30 }}>嗨，{ME.name}</h1>
-          <p style={{ margin: "2px 0 0", color: "var(--color-on-carbon-muted)" }}>
-            今天有 <span className="hl">{today.length} 局</span>還有位子，想打嗎？
+          <h1 style={{ margin: "var(--space-6) 0 0", fontSize: 30 }}>嗨，{profile.name}</h1>
+          <p style={{ margin: "2px 0 var(--space-4)", color: "var(--color-on-carbon-muted)" }}>
+            你是 <span className="hl">{LEVELS[profile.level]}</span>，想上什麼課？
           </p>
+          <div className="want">
+            {TYPES.map((t) => (
+              <button key={t} className="want-b" onClick={() => want(t)}>
+                <Icon name={t === "一對一" ? "user" : t === "體驗課" ? "sprout" : "users"} size={20} />
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {(booking.slot || gathering) && (
+          <Link href={gathering && !booking.slot ? `/groups/${gathering.id}` : "/me/booking"} className="card next-lesson">
+            <Icon name="cal" size={22} />
+            <div style={{ flex: 1 }}>
+              <div className="card-title" style={{ fontSize: 16 }}>{gathering && !booking.slot ? (gathering.members.length >= gMin ? "揪團人數到齊了，送給教練吧" : `揪團中：還差 ${gMin - gathering.members.length} 人`) : "你的下一堂課"}</div>
+              <div className="text-muted" style={{ fontSize: 13 }}>點進去看進度</div>
+            </div>
+            <Icon name="right" size={18} />
+          </Link>
+        )}
+
+        <div className="sec" style={{ paddingLeft: 0, paddingRight: 0 }}>
+          <div className="sec-head pad">
+            <h2><span className="en">Coaches</span>適合你的教練</h2>
+            <Link href="/coaches">看全部</Link>
+          </div>
+          <div className="hscroll">{rail.map((c) => <CoachMini key={c.id} coach={c} />)}</div>
         </div>
 
         <div className="sec">
           <div className="sec-head">
-            <h2><span className="en">Play today</span>今天可以打</h2>
-            <Link href="/games">看全部</Link>
+            <h2><span className="en">Book soon</span>近期可約</h2>
+            <Link href="/coaches">更多時段</Link>
           </div>
-          <div className="stack">
-            {today.map((g) => <GameTicket key={g.id} game={g} />)}
-          </div>
-        </div>
-
-        <div className="beginner">
-          <div>
-            <h3 style={{ margin: 0 }}>第一次打匹克球？</h3>
-            <div className="flow3">
-              <span>了解規則</span><Icon name="right" size={14} /><span>上體驗課</span><Icon name="right" size={14} /><span>新手局</span>
-            </div>
-            <SoonButton className="btn btn-secondary" style={{ minHeight: 40 }} msg="新手專區（下一輪）">從這裡開始</SoonButton>
-          </div>
-          <CourtArt ball />
-        </div>
-
-        <div className="sec" style={{ paddingLeft: 0, paddingRight: 0 }}>
-          <div className="sec-head pad">
-            <h2><span className="en">Lessons</span>近期課程</h2>
-            <Link href="/coaches">看全部</Link>
-          </div>
-          <div className="hscroll">
-            {LESSONS.map((l) => (
-              <Link key={l.id} href={`/coaches/${l.coachId}`} className="card class-card">
-                <div className="card-kicker">{l.when}</div>
-                <div className="card-title">{l.title}</div>
-                <div className="who">
-                  <span className="avatar" style={l.avatarBg ? { background: l.avatarBg } : undefined}>{l.initial}</span>
-                  <div>
-                    <div className="nm">{l.coach}</div>
-                    <span className="cred" style={{ fontSize: 12 }}>
-                      <span className="cred-issuer">{l.issuer}</span>
-                      <span className="cred-level">{l.credLevel}</span>
-                    </span>
-                  </div>
-                </div>
-                <div className="card-meta" style={{ justifyContent: "space-between" }}>
-                  <span>{l.where}</span>
-                  <span className="num" style={{ fontSize: 20, color: "var(--color-text)", fontWeight: 600 }}>{money(l.price)}</span>
-                </div>
+          <div className="card" style={{ padding: "0 var(--space-4)", gap: 0 }}>
+            {soon.map(({ c, d, t, left, plan }) => (
+              <Link key={c.id + d.key + t} href={`/coaches/${c.id}/book?plan=${plan.id}`} className="row-item soon">
+                <span className="soon-t"><b className="num">{t}</b><small>{d.date} 週{d.weekday}</small></span>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <b>{plan.name}</b>
+                  <small className="text-muted" style={{ display: "block", fontSize: 13 }}>{c.name}・剩 {left} 位</small>
+                </span>
+                <span className="num" style={{ fontSize: 18, fontWeight: 600 }}>{money(plan.price)}</span>
               </Link>
             ))}
           </div>
         </div>
 
-        <div className="sec" style={{ paddingBottom: "var(--space-6)" }}>
-          <div className="sec-head">
-            <h2><span className="en">Courts</span>附近球場</h2>
-            <SoonLink msg="球場列表與地圖（下一輪）">看地圖</SoonLink>
+        <Link href="/coaches" className="friends" onClick={() => setCoachFilters((p) => ({ ...p, type: "小班" }))}>
+          <div style={{ flex: 1 }}>
+            <span className="en">Bring friends</span>
+            <h3 style={{ margin: "0 0 4px" }}>揪朋友一起上課</h3>
+            <p style={{ margin: 0, fontSize: 14 }}>選一堂小班課，傳連結給朋友，各自用自己的帳號加入、各自付款，每人比一對一便宜。</p>
           </div>
-          {NEARBY_COURTS.map((c) => (
-            <SoonButton key={c.name} className="row-item court-row" msg="球場詳情（下一輪）">
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 700 }}>{c.name}</div>
-                <div className="text-muted" style={{ fontSize: 14 }}>{c.sub}</div>
-              </div>
-              <span className="num text-muted">{c.distance}</span>
-              <Icon name="right" size={18} />
-            </SoonButton>
-          ))}
+          <span className="friends-seats" aria-hidden="true"><i className="you" /><i /><i className="open" /><i className="open" /></span>
+        </Link>
+
+        <div className="sec" style={{ paddingBottom: "var(--space-6)" }}>
+          <div className="sec-head"><h2><span className="en">More</span>也可以</h2></div>
+          <div className="card" style={{ padding: "0 var(--space-4)", gap: 0 }}>
+            <Link href="/games" className="row-item"><Icon name="court" size={22} /><span style={{ flex: 1 }}>找球友打球<small className="text-muted" style={{ display: "block", fontSize: 13 }}>上完課，找一局程度差不多的來打</small></span><Icon name="right" size={18} /></Link>
+            <Link href="/courts" className="row-item"><Icon name="pin" size={22} /><span style={{ flex: 1 }}>找球場<small className="text-muted" style={{ display: "block", fontSize: 13 }}>雙北球場與預約方式</small></span><Icon name="right" size={18} /></Link>
+            <Link href="/learn" className="row-item"><Icon name="sprout" size={22} /><span style={{ flex: 1 }}>第一次打匹克球？<small className="text-muted" style={{ display: "block", fontSize: 13 }}>規則與程度自評</small></span><Icon name="right" size={18} /></Link>
+          </div>
         </div>
       </div>
       <TabBar active="home" />
     </>
-  );
-}
-
-function SoonLink({ msg, children }: { msg: string; children: React.ReactNode }) {
-  return (
-    <SoonButton className="linklike" msg={msg}>
-      {children}
-    </SoonButton>
   );
 }

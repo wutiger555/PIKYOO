@@ -4,9 +4,9 @@ import Link from "next/link";
 import { useState } from "react";
 import { Icon } from "@/components/pk/Icon";
 import { LevelPicker } from "@/components/pk/LevelPicker";
-import { AppBar, Sheet, SoonButton } from "@/components/pk/Shell";
-import { COACHES, getCoach, isCertified } from "@/lib/data/coaches";
-import { emptyCoachFilters, useDemo, type CoachFilters } from "@/lib/demo-store";
+import { Sheet, SoonButton, TabBar } from "@/components/pk/Shell";
+import { isCertified } from "@/lib/data/coaches";
+import { emptyCoachFilters, useCoaches, useDemo, type CoachFilters } from "@/lib/demo-store";
 import { LEVELS, levelText, money } from "@/lib/format";
 import type { Coach, LessonType } from "@/lib/types";
 import { CoachCard, Photo } from "./CoachCard";
@@ -24,8 +24,10 @@ export function filterCoaches(list: Coach[], f: CoachFilters) {
 /** F3-3 找教練: "我是【程度】，想上【類型】" need sentence, standard cards, compare up to 3. */
 export function FindCoachesScreen() {
   const { coachFilters: f, setCoachFilters, compare } = useDemo();
+  const coaches = useCoaches();
   const [sheet, setSheet] = useState<"lv" | "cmp" | null>(null);
-  const list = filterCoaches(COACHES, f);
+  const list = filterCoaches(coaches, f);
+  const initialOf = (id: string) => coaches.find((c) => c.id === id)?.initial;
 
   const typeChip = (t: LessonType) => (
     <button className="chip" aria-pressed={f.type === t} onClick={() => setCoachFilters((p) => ({ ...p, type: p.type === t ? null : t }))}>{t}</button>
@@ -36,18 +38,14 @@ export function FindCoachesScreen() {
 
   return (
     <>
-      <AppBar
-        title="找教練"
-        back="/"
-        historyBack
-        action={
-          <SoonButton className="btn btn-ghost btn-icon" msg="收藏的教練" aria-label="收藏">
-            <Icon name="heart" size={22} />
-          </SoonButton>
-        }
-      />
       <div className="scroll" style={{ paddingBottom: compare.length ? 96 : 24 }}>
         <div className="need">
+          <div className="need-top">
+            <h1>找教練</h1>
+            <SoonButton className="btn btn-ghost btn-icon" msg="收藏的教練" aria-label="收藏">
+              <Icon name="heart" size={22} />
+            </SoonButton>
+          </div>
           <div className="need-q">
             我是
             <button className="need-pick" onClick={() => setSheet("lv")}>
@@ -82,14 +80,15 @@ export function FindCoachesScreen() {
             </div>
           )}
         </div>
-        <p className="fine pad">所有教練用同一張卡片格式，價格、程度、認證都寫在同一個位置，方便比較。</p>
+        <p className="fine pad">所有教練用同一張卡片格式，價格、程度、認證都寫在同一個位置，方便比較。Demo 的教練照片為 AI 生成示意照。</p>
       </div>
+      {compare.length === 0 && <TabBar active="coaches" />}
 
       {compare.length > 0 && (
         <div className="cmpbar carbon">
           <div className="cmp-avs">
             {compare.map((id) => (
-              <span key={id} className="avatar" style={{ background: "#fff", color: "#121412" }}>{getCoach(id)?.initial}</span>
+              <span key={id} className="avatar" style={{ background: "#fff", color: "#121412" }}>{initialOf(id)}</span>
             ))}
           </div>
           <span style={{ flex: 1 }}>已選 {compare.length} 位</span>
@@ -111,7 +110,7 @@ export function FindCoachesScreen() {
               setSheet(null);
             }}
           />
-          <SoonButton className="btn btn-secondary btn-block" style={{ marginTop: "var(--space-4)" }} msg="程度自評（6–8 題，3 分鐘）">做程度自評</SoonButton>
+          <Link className="btn btn-secondary btn-block" style={{ marginTop: "var(--space-4)" }} href="/learn/level-check">做程度自評</Link>
         </Sheet>
       )}
       {sheet === "cmp" && <CompareSheet ids={compare} onClose={() => setSheet(null)} />}
@@ -121,7 +120,8 @@ export function FindCoachesScreen() {
 
 /** 比較教練: same field in the same row; lowest price flagged; DUPR marked self-reported. */
 function CompareSheet({ ids, onClose }: { ids: string[]; onClose: () => void }) {
-  const cs = ids.map(getCoach).filter((c): c is Coach => !!c);
+  const coaches = useCoaches();
+  const cs = ids.map((id) => coaches.find((c) => c.id === id)).filter((c): c is Coach => !!c);
   const low = Math.min(...cs.map((c) => c.priceFrom));
   const row = (label: string, cell: (c: Coach) => React.ReactNode) => (
     <tr>

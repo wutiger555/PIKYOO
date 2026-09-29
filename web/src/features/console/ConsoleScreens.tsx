@@ -4,20 +4,17 @@ import Link from "next/link";
 import { useState } from "react";
 import { Status } from "@/components/pk/Badges";
 import { Icon, type IconName } from "@/components/pk/Icon";
-import { PkMark } from "@/components/pk/Logo";
 import { AppBar, Sheet, SoonButton } from "@/components/pk/Shell";
 import { useToast } from "@/components/pk/Toast";
-import { CoachCard } from "@/features/coaches/CoachCard";
-import { PAGE_CHECKLIST, PAYOUT_METHODS, RECEIVED_BEFORE, TODAY_AGENDA, getCoach } from "@/lib/data/coaches";
+import { PAYOUT_METHODS, RECEIVED_BEFORE, TODAY_AGENDA } from "@/lib/data/coaches";
 import { useDemo } from "@/lib/demo-store";
 import { money } from "@/lib/format";
 import type { BookingRequest, PaymentRow } from "@/lib/types";
 
-type ConsoleTab = "today" | "pay" | "page";
+type ConsoleTab = "today" | "lessons" | "page" | "pay";
 
-/** Coach tab bar: 今天 · 收款 · 我的招生頁 · 課程與時段, with pending/reported badges. */
-function CoachTabs({ active }: { active: ConsoleTab }) {
-  const toast = useToast();
+/** Coach tab bar: 今天 · 課程時段 · 教練頁 · 收款, with pending/reported badges. */
+export function CoachTabs({ active }: { active: ConsoleTab }) {
   const { requests, payments } = useDemo();
   const pend = requests.filter((r) => r.status === "pending").length;
   const rep = payments.filter((p) => p.status === "reported").length;
@@ -33,12 +30,9 @@ function CoachTabs({ active }: { active: ConsoleTab }) {
   return (
     <nav className="tabbar tabbar-4">
       {tab("today", "/coach", "sun", "今天", pend)}
+      {tab("lessons", "/coach/lessons", "cal", "課程時段")}
+      {tab("page", "/coach/profile", "user", "教練頁")}
       {tab("pay", "/coach/payments", "wallet", "收款", rep)}
-      {tab("page", "/coach/profile", "user", "我的招生頁")}
-      <button className="tab" onClick={() => toast("課程與時段：建立課程範本、批次新增場次（下一輪）")}>
-        <span style={{ position: "relative" }}><Icon name="cal" size={22} /></span>
-        課程與時段
-      </button>
     </nav>
   );
 }
@@ -52,7 +46,8 @@ function RequestCard({ r }: { r: BookingRequest }) {
         <span className="avatar">{r.initial}</span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <b>{r.name}</b>
-          <div className="text-muted" style={{ fontSize: 13 }}>{r.level}・{r.firstTime ? "第一次上你的課" : `上過 ${r.times} 次`}</div>
+          {r.groupId && <span className="tag tag-accent" style={{ marginLeft: 6, fontSize: 11, padding: "3px 6px" }}>揪團 {r.headcount} 人</span>}
+          <div className="text-muted" style={{ fontSize: 13 }}>{r.level}・{r.groupId ? "朋友各自付款" : r.firstTime ? "第一次上你的課" : `上過 ${r.times} 次`}</div>
         </div>
         <span className="num req-p">{money(r.amount)}</span>
       </div>
@@ -82,7 +77,7 @@ function RequestCard({ r }: { r: BookingRequest }) {
 /** F5-5 教練首頁「今天」: pending bookings, this week, money still due; one-tap confirm sends payment info via LINE. */
 export function CoachTodayScreen() {
   const toast = useToast();
-  const { requests, payments } = useDemo();
+  const { requests, payments, myCoach } = useDemo();
   const pend = requests.filter((r) => r.status === "pending");
   const due = payments.filter((p) => p.status !== "paid").reduce((a, p) => a + p.amount, 0);
   return (
@@ -91,9 +86,12 @@ export function CoachTodayScreen() {
         <div className="home-hero home-hero-coach carbon">
           <div className="home-top">
             <span className="role-pill"><Icon name="cap" size={14} />教練模式</span>
-            <button className="rbtn" onClick={() => toast("通知")} aria-label="通知"><Icon name="bell" size={20} /></button>
+            <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <Link className="me-link" href="/">切換到學生</Link>
+              <button className="rbtn" onClick={() => toast("通知")} aria-label="通知"><Icon name="bell" size={20} /></button>
+            </span>
           </div>
-          <h1 style={{ margin: "20px 0 2px", fontSize: 28 }}>早安，Mia</h1>
+          <h1 style={{ margin: "20px 0 2px", fontSize: 28 }}>早安，{myCoach.name.split(" ")[0]}</h1>
           <p style={{ margin: 0, color: "var(--color-on-carbon-muted)" }}>今天 2 堂課，<span className="hl">{pend.length} 筆預約</span>等你確認</p>
           <div className="stats" style={{ marginTop: 16 }}>
             <div><b className="num">{pend.length}</b><span>待確認</span></div>
@@ -253,109 +251,5 @@ function PayoutSettingsSheet({ onClose }: { onClose: () => void }) {
       </div>
       <button className="btn btn-primary btn-lg btn-block" style={{ marginTop: 12 }} onClick={onClose}>完成</button>
     </Sheet>
-  );
-}
-
-/** F5-2/F5-7 我的招生頁: short link for IG/Threads bios, funnel stats, one-tap share assets, completeness, card preview. */
-export function CoachProfileScreen() {
-  const c = getCoach("mia")!;
-  const slug = c.profile!.slug;
-  const pct = Math.round((PAGE_CHECKLIST.filter((x) => x[1]).length / PAGE_CHECKLIST.length) * 100);
-  return (
-    <>
-      <AppBar
-        title="我的招生頁"
-        action={<SoonButton className="btn btn-ghost btn-icon" msg="編輯教練頁（所見即所得）" aria-label="編輯"><Icon name="edit" size={22} /></SoonButton>}
-      />
-      <div className="scroll" style={{ paddingBottom: 24 }}>
-        <section className="sec" style={{ paddingTop: 16 }}>
-          <div className="linkcard">
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <small className="text-muted">你的專屬連結，放在 IG／Threads 個人簡介</small>
-              <div className="num" style={{ fontSize: 20, fontWeight: 600 }}>{slug}</div>
-            </div>
-            <CopyButton text={`https://${slug}`} label={slug} />
-          </div>
-          <div className="kpis">
-            <div><b className="num">412</b><span>本週瀏覽</span></div>
-            <div><b className="num">18</b><span>點預約</span></div>
-            <div><b className="num">9</b><span>成功預約</span></div>
-          </div>
-        </section>
-
-        <section className="sec">
-          <div className="sec-head"><h2><span className="en">Share</span>分享招生素材</h2></div>
-          <p className="fine" style={{ margin: "-4px 0 12px" }}>一鍵產生，圖上自動帶課程、時間、價格和短網址</p>
-          <div className="assets">
-            <SoonButton className="asset" msg="下載 IG 限動圖 1080×1920">
-              <div className="a-story carbon">
-                <PkMark size={22} style={{ color: "#fff" }} />
-                <b>新手體驗課</b>
-                <span className="num">10/4 SUN 10:00</span>
-                <span className="num a-price">NT$600</span>
-                <i>{slug}</i>
-              </div>
-              <span>限動 9:16</span>
-            </SoonButton>
-            <SoonButton className="asset" msg="下載 Threads／IG 貼文圖 1080×1350">
-              <div className="a-post">
-                <div className="ph" style={{ height: "52%", borderRadius: 4 }}>照片</div>
-                <b>Mia 林｜協會認證</b>
-                <span>新手體驗 NT$600 起</span>
-              </div>
-              <span>貼文 4:5</span>
-            </SoonButton>
-            <SoonButton className="asset" msg="分享 LINE Flex 卡片到群組">
-              <div className="a-flex">
-                <div className="carbon" style={{ padding: 8, borderRadius: "6px 6px 0 0" }}>
-                  <span className="num" style={{ fontSize: 18, fontWeight: 600 }}>10:00</span>
-                  <small style={{ display: "block", opacity: 0.7 }}>10/4 大安運動中心</small>
-                </div>
-                <div style={{ padding: "6px 8px", fontSize: 10 }}>新手體驗課・剩 2</div>
-                <div className="a-btn">預約</div>
-              </div>
-              <span>LINE 卡片</span>
-            </SoonButton>
-          </div>
-        </section>
-
-        <section className="sec">
-          <div className="sec-head"><h2>頁面完整度</h2><b className="num" style={{ fontSize: 20 }}>{pct}%</b></div>
-          <div className="bar light"><i style={{ width: `${pct}%` }} /></div>
-          <ul className="checklist">
-            {PAGE_CHECKLIST.map(([t, ok]) => (
-              <li key={t} className={ok ? "ok" : ""}>
-                <i>{ok && <Icon name="check" size={12} stroke={3} />}</i>
-                {t}
-                {!ok && <SoonButton className="linkbtn" msg="上傳 30 秒教學影片">補上</SoonButton>}
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section className="sec">
-          <div className="sec-head"><h2>預覽</h2></div>
-          <p className="fine" style={{ margin: "-4px 0 12px" }}>學生在列表看到的卡片</p>
-          <CoachCard coach={c} />
-          <Link className="btn btn-secondary btn-block" style={{ marginTop: 12 }} href={`/coaches/${c.id}`}>看學生看到的完整頁面</Link>
-        </section>
-      </div>
-      <CoachTabs active="page" />
-    </>
-  );
-}
-
-function CopyButton({ text, label }: { text: string; label: string }) {
-  const toast = useToast();
-  return (
-    <button
-      className="btn btn-primary"
-      onClick={async () => {
-        try { await navigator.clipboard.writeText(text); } catch { /* clipboard may be blocked (e.g. LINE in-app browser) */ }
-        toast(`已複製 ${label}`);
-      }}
-    >
-      <Icon name="copy" size={18} />複製
-    </button>
   );
 }

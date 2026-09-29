@@ -62,10 +62,10 @@ export default function Page() {
 
       <div className="eyebrow">尚未設計（下一輪）</div>
       <ul className="note">
-        <li>開團／AI 一貼成局、LINE 聊天室裡的球局 Flex 卡片</li>
-        <li>新手專區、程度自評、球場列表／地圖、我的</li>
-        <li>空白、載入、錯誤狀態（目前只有篩選結果為零的空狀態）與深色模式</li>
-        <li>桌機版教練後台；地圖與照片目前是斜紋佔位，需要真實素材</li>
+        <li>教練與上課的真實照片（目前是 AI 示意照，清單見 docs/PHOTOS.md）</li>
+        <li>團主管理（編輯、移除參加者、代報名、點名）、Email 登入</li>
+        <li>載入與錯誤狀態（目前有空狀態與 AI 解析中的 Skeleton）與深色模式</li>
+        <li>桌機版首頁、教練頁與教練後台；地圖與照片目前是斜紋佔位，需要真實素材</li>
       </ul>
     </main>
   );

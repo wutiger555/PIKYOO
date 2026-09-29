@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Icon } from "@/components/pk/Icon";
+import { ShareSheet } from "@/components/pk/ShareSheet";
 import { SoonButton } from "@/components/pk/Shell";
 import { Seats } from "@/components/pk/Ticket";
 import { Status } from "@/components/pk/Badges";
@@ -14,6 +16,7 @@ export function JoinSuccessScreen({ game: g }: { game: Game }) {
   const router = useRouter();
   const { setPopSeat } = useDemo();
   const { my, waitN } = useGameView(g);
+  const [share, setShare] = useState(false);
 
   if (!my) {
     return (
@@ -56,9 +59,9 @@ export function JoinSuccessScreen({ game: g }: { game: Game }) {
         <span className="text-muted">NT${g.fee}・{g.payNote}</span>
       </div>
       <div className="actions">
-        <SoonButton className="btn btn-primary btn-lg btn-block" msg="已開啟 LINE 分享（選擇群組）">
+        <button className="btn btn-primary btn-lg btn-block" onClick={() => setShare(true)}>
           <Icon name="share" size={20} />分享到 LINE 群組
-        </SoonButton>
+        </button>
         <SoonButton className="btn btn-secondary btn-lg btn-block" msg="已加入行事曆">
           <Icon name="calplus" size={20} />加入行事曆
         </SoonButton>
@@ -73,6 +76,7 @@ export function JoinSuccessScreen({ game: g }: { game: Game }) {
           回到球局
         </button>
       </div>
+      {share && <ShareSheet game={g} onClose={() => setShare(false)} />}
     </div>
   );
 }

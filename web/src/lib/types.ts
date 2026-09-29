@@ -43,9 +43,50 @@ export interface Game {
   beginnerFriendly: boolean;
   waitlist: number;
   notes: string;
+  /** courts.id when the venue is in the court database */
+  courtId?: string;
+  /** free-cancel window before start; PRD default 12 */
+  cancelHours?: number;
 }
 
 export type MyGameStatus = "joined" | "wait";
+
+/** docs/PRD.md §7 profiles (the part the MVP screens show). */
+export interface Profile {
+  name: string;
+  level: Level;
+  /** 常打區域, e.g. 大安區 */
+  areas: string[];
+}
+
+export type CourtKind = "室內" | "室外" | "風雨";
+
+/** docs/PRD.md F4-2 預約方式 */
+export type BookingMethod = "公立預約系統" | "官網預約" | "LINE 預約" | "電話預約" | "免預約";
+
+export interface Court {
+  id: string;
+  name: string;
+  district: string;
+  address: string;
+  kind: CourtKind;
+  courtCount: number;
+  surface: string;
+  free: boolean;
+  priceNote: string;
+  hours: string;
+  amenities: string[];
+  aircon: boolean;
+  lights: boolean;
+  booking: BookingMethod;
+  bookingNote: string;
+  rules: string;
+  /** PIKYOO 已確認 (YYYY/MM) */
+  verified?: string;
+  distance: string;
+  /** pin position on the placeholder map, % from left/top */
+  map: [number, number];
+}
 
 export interface Credential {
   issuer: string;
@@ -62,6 +103,8 @@ export interface Plan {
   unit: "/人" | "/堂" | "/10 堂";
   note: string;
   tag?: string;
+  /** 可揪朋友一起上: headcount range for a group booking; absent = book alone */
+  group?: { min: number; max: number };
 }
 
 export interface TimelineItem {
@@ -72,13 +115,42 @@ export interface TimelineItem {
 
 export type PayMethod = "LINE Pay" | "銀行轉帳" | "現場付現";
 
+export interface CoachPhoto {
+  src: string;
+  alt: string;
+  caption?: string;
+}
+
+export type Weekday = "一" | "二" | "三" | "四" | "五" | "六" | "日";
+
+/** 匹克球檔案: the pickleball-specific facts students compare coaches on. */
+export interface PlayProfile {
+  /** 開始打匹克球的年份 */
+  since: string;
+  hand: "右手" | "左手";
+  /** 雙打為主 / 單打雙打都教 */
+  format: string;
+  /** 其他運動背景, e.g. 網球教練 8 年 */
+  background: string;
+  /** 擅長教的技術 */
+  strengths: string[];
+}
+
 export interface CoachProfile {
   slug: string;
   reply: string;
   bio: string;
+  /** first photo is the cover */
+  photos: CoachPhoto[];
+  play: PlayProfile;
+  /** 適合誰 */
+  audience: string[];
+  languages: string[];
+  /** weekly open start times the coach publishes (F5-4) */
+  availability: Partial<Record<Weekday, string[]>>;
   plans: Plan[];
   timeline: TimelineItem[];
-  venues: { name: string; sub: string }[];
+  venues: { name: string; sub: string; courtId?: string }[];
   steps: string[];
   pay: PayMethod[];
   policy: string;
@@ -105,13 +177,12 @@ export interface Coach {
   rating: number | null;
   reviews: number;
   tagline: string;
-  /** Full public page — only Mia has one in the MVP demo. */
-  profile?: CoachProfile;
+  profile: CoachProfile;
 }
 
 export interface BookingDay {
   key: string;
-  weekday: string;
+  weekday: Weekday;
   date: string;
 }
 
@@ -134,6 +205,9 @@ export interface Booking {
 
 export interface BookingRequest {
   id: string;
+  /** set when the request is a 揪團 group booking */
+  groupId?: string;
+  headcount?: number;
   initial: string;
   name: string;
   level: string;
@@ -146,6 +220,29 @@ export interface BookingRequest {
   expiresIn: string;
   pay: PayMethod;
   status: "pending" | "ok" | "no";
+}
+
+export interface GroupMember {
+  name: string;
+  initial: string;
+  you?: boolean;
+  paid?: boolean;
+}
+
+/** 揪朋友一起上: gathering → (min reached) requested → coach confirms → each member pays their share. */
+export type GroupStatus = "gathering" | "requested" | "confirmed" | "declined";
+
+export interface Group {
+  id: string;
+  coachId: string;
+  planId: string;
+  dayKey: string;
+  slot: string;
+  /** organiser's name; members[0] is the organiser */
+  host: string;
+  members: GroupMember[];
+  status: GroupStatus;
+  note: string;
 }
 
 export interface PaymentRow {

@@ -1,0 +1,89 @@
+/* Player screens added after the handoff — 開團／AI 一貼成局, LINE 分享卡, 球場, 新手專區, 程度自評, 我的, Onboarding.
+ * Composed from tokens.css + pikyoo.css only; no new colors. */
+
+@layer components {
+a.loc { text-decoration: none; }
+
+/* — 開團 — */
+.host-mode { padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-line); }
+.hfield { margin: 0 0 var(--space-4); padding: 0; border: 0; min-width: 0; }
+/* float takes the legend out of the fieldset border so the unsure wash starts above it */
+fieldset.hfield > legend { float: left; width: 100%; padding: 0; font-size: 14px; font-weight: 500; margin-bottom: 6px; color: var(--color-neutral-800); }
+/* AI low-confidence: a highlighter wash around the field, the label carries `.hl-check` */
+.hfield.is-unsure { margin-inline: calc(-1 * var(--space-2)); padding: var(--space-2); background: var(--color-accent-100); border-radius: var(--radius-md); box-shadow: inset 0 0 0 1.5px var(--color-accent-700); }
+fieldset.hfield > legend + * { clear: both; }
+.field-err { margin: 6px 0 0; font-size: 14px; font-weight: 500; color: var(--color-danger); }
+.time-row { display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); align-items: center; gap: var(--space-2); }
+.time-row .input { font-size: 18px; }
+select.input { appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--color-text) 50%), linear-gradient(-45deg, transparent 50%, var(--color-text) 50%); background-position: calc(100% - 18px) 55%, calc(100% - 13px) 55%; background-size: 5px 5px; background-repeat: no-repeat; padding-right: 32px; }
+.switch-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); min-height: var(--tap); margin-top: var(--space-2); font-size: 15px; }
+.switch-row.hfield { margin: 0 0 var(--space-4); }
+.money-input { display: flex; align-items: center; gap: var(--space-2); }
+.money-input .num { font-size: 18px; font-weight: 600; }
+.money-input .input { width: 120px; font-size: 20px; }
+.src-text { margin-top: var(--space-2); font-size: 14px; color: var(--color-muted); }
+.src-text summary { cursor: pointer; font-weight: 500; min-height: var(--tap); display: flex; align-items: center; }
+.src-text p { margin: 0; padding: var(--space-3); background: var(--color-surface); border: 1px dashed var(--color-neutral-400); border-radius: var(--radius-md); white-space: pre-wrap; color: var(--color-text); }
+
+/* — LINE group chat preview with the Flex card — */
+.line-preview { padding: var(--space-4) var(--space-3); background: var(--color-neutral-200); border-radius: var(--radius-md); }
+.line-msg { display: flex; align-items: flex-start; gap: var(--space-2); }
+.flex-card { width: 240px; max-width: calc(100% - 40px); background: var(--color-surface); border-radius: 14px; overflow: hidden; box-shadow: var(--shadow-sm); }
+.flex-head { padding: 10px 14px 12px; display: flex; flex-direction: column; gap: 2px; }
+.flex-brand { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; letter-spacing: .04em; color: var(--color-accent); }
+.flex-day { font-size: 13px; font-weight: 700; margin-top: 6px; }
+.flex-time { font-size: 28px; font-weight: 700; line-height: 1; }
+.flex-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; font-size: 15px; }
+.flex-row { display: flex; align-items: baseline; justify-content: space-between; padding-top: 6px; border-top: 1px solid var(--color-neutral-100); font-size: 14px; }
+.flex-btn { margin: 0 12px 12px; min-height: 40px; display: grid; place-items: center; background: var(--color-accent); border: 1.5px solid var(--color-text); border-radius: var(--radius-full); font-weight: 700; font-size: 15px; }
+
+/* — 球場 — */
+.court-item { align-items: center; }
+.court-card { flex-direction: row; align-items: center; gap: var(--space-3); color: inherit; text-decoration: none; }
+.court-map-wrap { padding-bottom: var(--space-6); }
+.court-map { position: relative; height: 380px; margin: var(--space-3) var(--space-4) 0; }
+.court-map-note { position: absolute; left: 12px; top: 10px; }
+.map-pin { position: absolute; transform: translate(-50%, -100%); width: var(--tap); height: var(--tap); display: grid; place-items: center; border-radius: 50% 50% 50% 0; rotate: -45deg; background: var(--color-text); color: var(--color-on-carbon); border: 2px solid var(--color-surface); cursor: pointer; box-shadow: var(--shadow-md); }
+.map-pin svg { rotate: 45deg; }
+.map-pin[aria-pressed="true"] { background: var(--color-accent); color: var(--color-on-accent); border-color: var(--color-text); }
+.book-how { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); font-size: 15px; }
+
+/* — 新手專區 — */
+.learn-hero { padding-top: var(--space-6); }
+.learn-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: var(--space-2); }
+.learn-steps a { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-height: 72px; padding: var(--space-3); border: 1px solid rgba(255,255,255,.2); border-radius: var(--radius-md); color: var(--color-on-carbon); text-decoration: none; font-size: 14px; font-weight: 700; }
+.learn-steps a:hover { background: rgba(255,255,255,.08); }
+.learn-steps b { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; background: var(--color-accent); color: var(--color-on-accent); font-size: 16px; }
+.level-cta { margin: var(--space-4) var(--space-4) 0; flex-direction: row; align-items: center; gap: var(--space-3); color: inherit; text-decoration: none; }
+.level-cta:hover { border-color: var(--color-neutral-400); }
+.rules { background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-md); padding: 0 var(--space-4); }
+.rule + .rule { border-top: 1px solid var(--color-line); }
+.rule-q { width: 100%; display: flex; align-items: center; gap: var(--space-3); min-height: 56px; padding: 0; background: none; border: 0; font: inherit; font-weight: 700; color: inherit; text-align: left; cursor: pointer; }
+.rule-q[aria-expanded="true"] svg { rotate: 180deg; }
+.rule-n { width: 28px; height: 28px; flex: none; display: grid; place-items: center; border-radius: 50%; border: 1.5px solid var(--color-text); font-weight: 700; }
+.rule-a { margin: 0 0 var(--space-4) 40px; font-size: 15px; color: var(--color-neutral-800); }
+.rules-court { margin-top: var(--space-4); }
+
+/* — 程度自評 / onboarding progress — */
+.quiz-progress { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0,1fr); gap: 4px; }
+.quiz-progress i { height: 6px; border-radius: 3px; background: var(--color-neutral-200); }
+.quiz-progress i.on { background: var(--color-text); }
+.quiz-opts { display: flex; flex-direction: column; gap: var(--space-2); }
+.quiz-opt { position: relative; display: flex; align-items: center; gap: var(--space-3); min-height: 56px; padding: var(--space-2) var(--space-4); background: var(--color-surface); border: 1.5px solid var(--color-neutral-300); border-radius: var(--radius-md); font-size: 16px; font-weight: 500; cursor: pointer; }
+.quiz-opt:hover { border-color: var(--color-text); }
+.quiz-opt input { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+.quiz-opt .dot { width: 22px; height: 22px; flex: none; border-radius: 50%; border: 1.5px solid var(--color-neutral-500); background: var(--color-surface); }
+.quiz-opt:has(input:checked) { border-color: var(--color-text); box-shadow: inset 0 0 0 1px var(--color-text); }
+.quiz-opt input:checked + .dot { border-color: var(--color-text); background: var(--color-accent); box-shadow: inset 0 0 0 4px var(--color-surface); }
+.quiz-opt:has(input:focus-visible) { outline: 2px solid var(--color-text); outline-offset: 2px; }
+.onb-top { display: flex; align-items: center; gap: var(--space-2); min-height: 52px; padding: 0 var(--space-2); }
+
+/* — 我的 — */
+.me-top { display: flex; align-items: center; gap: var(--space-3); padding-top: var(--space-2); }
+.me-avatar { width: 56px; height: 56px; font-size: 22px; background: var(--color-accent); color: var(--color-on-accent); }
+.me-level { display: flex; align-items: center; gap: var(--space-3); margin-top: var(--space-4); }
+.me-link { color: var(--color-on-carbon); font-size: 14px; }
+.row-card { flex-direction: row; align-items: center; gap: var(--space-3); color: inherit; text-decoration: none; }
+.row-card:hover, a.court-card:hover { border-color: var(--color-neutral-400); }
+.empty-s.card { padding: var(--space-6) var(--space-4); }
+}

@@ -1,8 +1,9 @@
 "use client";
 
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
-import { initialPayments, initialRequests } from "./data/coaches";
-import type { Booking, BookingRequest, Game, Level, LessonType, MyGameStatus, PaymentRow } from "./types";
+import { BOOKING_DAYS, COACHES, getCoach, initialGroups, initialPayments, initialRequests } from "./data/coaches";
+import { GAMES, ME } from "./data/games";
+import type { Booking, BookingRequest, Coach, Game, Group, Level, LessonType, MyGameStatus, PaymentRow, Profile } from "./types";
 
 // In-memory demo state shared across screens (the MVP runs on mock data; Supabase replaces this).
 // Lives in the root layout so it survives client-side navigation; a full reload resets it.
@@ -30,7 +31,10 @@ export const newBooking = (coachId = "mia", planId = "trial"): Booking => ({
 });
 
 interface DemoState {
+  profile: Profile;
   mine: Record<string, MyGameStatus>;
+  /** games I opened via 開團, newest first */
+  hosted: Game[];
   /** game id whose "你" seat should pop on the next detail render */
   popSeat: string | null;
   gameFilters: GameFilters;
@@ -39,10 +43,15 @@ interface DemoState {
   booking: Booking;
   requests: BookingRequest[];
   payments: PaymentRow[];
+  /** the signed-in coach's own page, edited in the console (Mia in the demo) */
+  myCoach: Coach;
+  groups: Group[];
 }
 
 const init = (): DemoState => ({
+  profile: { name: ME.name, level: ME.level, areas: ["大安區", "信義區", "中山區"] },
   mine: {},
+  hosted: [],
   popSeat: null,
   gameFilters: emptyGameFilters(),
   compare: [],
@@ -50,6 +59,8 @@ const init = (): DemoState => ({
   booking: newBooking(),
   requests: initialRequests(),
   payments: initialPayments(),
+  myCoach: structuredClone(getCoach("mia")!),
+  groups: initialGroups(),
 });
 
 type Updater<T> = T | ((prev: T) => T);
@@ -72,14 +83,34 @@ function useDemoValue() {
       const r = p.requests.find((x) => x.id === id);
       if (!r) return p;
       const requests = p.requests.map((x) => (x.id === id ? { ...x, status: ok ? ("ok" as const) : ("no" as const) } : x));
+      const groups = r.groupId ? p.groups.map((g) => (g.id === r.groupId ? { ...g, status: ok ? ("confirmed" as const) : ("declined" as const) } : g)) : p.groups;
       const payments: PaymentRow[] = ok
         ? [{ id: "n" + id, initial: r.initial, name: r.name, what: `${r.plan}・${r.when}`, amount: r.amount, via: r.pay, status: "wait", at: "剛剛已傳付款資訊" }, ...p.payments]
         : p.payments;
-      return { ...p, requests, payments };
+      return { ...p, requests, payments, groups };
+    }), []);
+
+  /** 人數到了 → send the group to the coach as one booking request */
+  const submitGroup = useCallback((id: string) =>
+    setS((p) => {
+      const g = p.groups.find((x) => x.id === id);
+      const c = g && (g.coachId === p.myCoach.id ? p.myCoach : getCoach(g.coachId));
+      const plan = c?.profile.plans.find((x) => x.id === g?.planId);
+      if (!g || !c || !plan) return p;
+      const n = g.members.length;
+      const day = BOOKING_DAYS.find((d) => d.key === g.dayKey);
+      const req: BookingRequest = {
+        id: "r-" + g.id, groupId: g.id, headcount: n, initial: g.members[0].initial, name: `${g.host} 等 ${n} 人`, level: "新手",
+        firstTime: true, when: day ? `${day.date}（${day.weekday}）${g.slot}` : g.slot, plan: `${plan.name} ×${n}（揪團）`, amount: plan.price * n,
+        note: g.note, expiresIn: "48 小時", pay: c.profile.pay[0], status: "pending",
+      };
+      return { ...p, groups: p.groups.map((x) => (x.id === id ? { ...x, status: "requested" as const } : x)), requests: [req, ...p.requests.filter((r) => r.id !== req.id)] };
     }), []);
 
   return useMemo(() => ({
     ...s,
+    setProfile: (u: Updater<Profile>) => set("profile", u),
+    addHosted: (g: Game) => set("hosted", (hs) => [g, ...hs]),
     setMine,
     setPopSeat: (id: string | null) => set("popSeat", id),
     setGameFilters: (u: Updater<GameFilters>) => set("gameFilters", u),
@@ -89,7 +120,11 @@ function useDemoValue() {
     confirmRequest,
     markPaid: (id: string) => set("payments", (ps) => ps.map((x) => (x.id === id ? { ...x, status: "paid" as const } : x))),
     resetConsole: () => setS((p) => ({ ...p, requests: initialRequests(), payments: initialPayments() })),
-  }), [s, set, setMine, confirmRequest]);
+    setMyCoach: (u: Updater<Coach>) => set("myCoach", u),
+    addGroup: (g: Group) => set("groups", (gs) => [g, ...gs.filter((x) => x.id !== g.id)]),
+    updateGroup: (id: string, u: (g: Group) => Group) => set("groups", (gs) => gs.map((g) => (g.id === id ? u(g) : g))),
+    submitGroup,
+  }), [s, set, setMine, confirmRequest, submitGroup]);
 }
 
 type Demo = ReturnType<typeof useDemoValue>;
@@ -114,4 +149,20 @@ export function useGameView(g: Game) {
   const spots = g.capacity - count;
   const waitN = g.waitlist + (my === "wait" ? 1 : 0);
   return { my, count, spots, waitN };
+}
+
+/** Mock games plus the ones I opened this session. */
+export function useAllGames() {
+  const { hosted } = useDemo();
+  return useMemo(() => [...GAMES, ...hosted], [hosted]);
+}
+
+/** All coaches, with the signed-in coach's live edits applied (so the console preview and public page match). */
+export function useCoaches() {
+  const { myCoach } = useDemo();
+  return useMemo(() => COACHES.map((c) => (c.id === myCoach.id ? myCoach : c)), [myCoach]);
+}
+
+export function useCoach(id: string) {
+  return useCoaches().find((c) => c.id === id);
 }
