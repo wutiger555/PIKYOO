@@ -5,6 +5,7 @@ import { Icon } from "@/components/pk/Icon";
 import { AppBar, SoonButton } from "@/components/pk/Shell";
 import { GameTicket } from "@/components/pk/Ticket";
 import { useToast } from "@/components/pk/Toast";
+import { Img } from "@/features/coaches/CoachCard";
 import { LESSONS } from "@/lib/data/games";
 import { useAllGames } from "@/lib/demo-store";
 import { money } from "@/lib/format";
@@ -38,7 +39,9 @@ export function CourtDetailScreen({ court: c }: { court: Court }) {
         }
       />
       <div className="scroll">
-        <div className="ph" style={{ height: 150, borderRadius: 0 }}>球場照片</div>
+        <div className="court-photo">
+          {c.photo ? <Img src={c.photo.src} alt={c.photo.alt} sizes="480px" priority /> : <div className="ph img-ph">球場照片</div>}
+        </div>
         <div className="dblock">
           <h1 style={{ margin: 0, fontSize: 24, overflowWrap: "anywhere" }}>{c.name}</h1>
           <div className="text-muted" style={{ fontSize: 14 }}>{c.district}・{c.kind} {c.courtCount} 面・{c.surface}</div>

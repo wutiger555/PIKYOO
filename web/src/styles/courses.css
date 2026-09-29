@@ -4,7 +4,8 @@
 @layer components {
 /* — AI demo photo label — */
 .img-ph { position: absolute; inset: 0; border-radius: 0; }
-.ai-tag { position: absolute; left: 8px; bottom: 8px; z-index: 1; font-size: 11px; font-weight: 700; line-height: 1; padding: 4px 6px; border-radius: 4px; background: color-mix(in srgb, var(--color-carbon) 78%, transparent); color: var(--color-on-carbon); pointer-events: none; }
+.court-photo { position: relative; aspect-ratio: 16 / 9; max-height: 240px; width: 100%; background: var(--color-neutral-200); overflow: hidden; }
+.demo-tag { position: absolute; left: 8px; bottom: 8px; z-index: 1; font-size: 11px; font-weight: 700; line-height: 1; padding: 4px 6px; border-radius: 4px; background: color-mix(in srgb, var(--color-carbon) 78%, transparent); color: var(--color-on-carbon); pointer-events: none; }
 
 /* — coach card: photo first — */
 .ccard-link { display: block; color: inherit; text-decoration: none; }
@@ -34,7 +35,7 @@
 
 /* — coach page — */
 .cover { position: relative; height: min(118vw, 460px); background: var(--color-neutral-200); }
-.cover .ai-tag { bottom: 36px; }
+.cover .demo-tag { bottom: 36px; }
 .cover-bar { position: absolute; top: 8px; left: 12px; right: 12px; z-index: 2; display: flex; gap: 8px; }
 .cover-bar .rbtn { background: color-mix(in srgb, var(--color-carbon) 60%, transparent); }
 .cover + .chero { position: relative; margin-top: -24px; border-radius: 24px 24px 24px 24px; padding: 18px 16px 20px; }

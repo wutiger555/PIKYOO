@@ -10,9 +10,10 @@ import { useDemo } from "@/lib/demo-store";
 import { money } from "@/lib/format";
 import type { Coach, CoachProfile } from "@/lib/types";
 
-/** A photo filling its (position: relative) parent. The demo's bundled photos are AI-generated, so they carry the
- *  「AI 示意照」 tag; blob: URLs are the coach's own uploads (console preview) and don't. A missing file shows `fallback`. */
-export function Img({ src, alt, sizes, priority, ai = !src.startsWith("blob:"), fallback }: { src: string; alt: string; sizes: string; priority?: boolean; ai?: boolean; fallback?: React.ReactNode }) {
+/** A photo filling its (position: relative) parent. The demo's bundled photos are free stock photos (docs/PHOTOS.md), not
+ *  the coaches themselves, so they carry the「示意照」tag; blob: URLs are the coach's own uploads (console preview) and don't.
+ *  A missing file shows `fallback`. */
+export function Img({ src, alt, sizes, priority, demo = !src.startsWith("blob:"), fallback }: { src: string; alt: string; sizes: string; priority?: boolean; demo?: boolean; fallback?: React.ReactNode }) {
   const [st, setSt] = useState<{ src: string; ok: boolean } | null>(null);
   const status = st?.src === src ? (st.ok ? "ok" : "err") : "loading";
   // An image that finished (or failed) before hydration fires no event; read its state when the node attaches.
@@ -21,14 +22,14 @@ export function Img({ src, alt, sizes, priority, ai = !src.startsWith("blob:"), 
   return (
     <>
       <Image ref={onRef} src={src} alt={alt} fill sizes={sizes} priority={priority} unoptimized={src.startsWith("blob:")} style={{ objectFit: "cover" }} onLoad={() => setSt({ src, ok: true })} onError={() => setSt({ src, ok: false })} />
-      {ai && status === "ok" && <AiTag />}
+      {demo && status === "ok" && <DemoTag />}
     </>
   );
 }
 
-/** The demo photos are AI-generated; say so wherever one is shown large. */
-function AiTag() {
-  return <span className="ai-tag">AI 示意照</span>;
+/** The demo photos are stock photos of other players; say so wherever one is shown large. */
+function DemoTag() {
+  return <span className="demo-tag">示意照</span>;
 }
 
 /** Coach's cover photo, or the carbon initial placeholder until one is uploaded. */
@@ -37,7 +38,7 @@ export function Photo({ coach, size }: { coach: Pick<Coach, "initial" | "name"> 
   return (
     <div className={`photo${size ? " " + size : ""}`}>
       {cover ? (
-        <Img src={cover.src} alt={coach.name} sizes="100px" ai={false} fallback={<span>{coach.initial}</span>} />
+        <Img src={cover.src} alt={coach.name} sizes="100px" demo={false} fallback={<span>{coach.initial}</span>} />
       ) : (
         <>
           <span>{coach.initial}</span>

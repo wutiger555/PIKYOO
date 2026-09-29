@@ -86,6 +86,8 @@ export interface Court {
   distance: string;
   /** pin position on the placeholder map, % from left/top */
   map: [number, number];
+  /** 16:9 venue photo (demo: stock photo, see docs/PHOTOS.md) */
+  photo?: { src: string; alt: string };
 }
 
 export interface Credential {
