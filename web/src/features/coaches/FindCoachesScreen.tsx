@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Icon } from "@/components/pk/Icon";
 import { LevelPicker } from "@/components/pk/LevelPicker";
 import { Sheet, SoonButton, TabBar } from "@/components/pk/Shell";
+import { TopNav } from "@/components/pk/TopNav";
 import { isCertified } from "@/lib/data/coaches";
 import { emptyCoachFilters, useCoaches, useDemo, type CoachFilters } from "@/lib/demo-store";
 import { LEVELS, levelText, money } from "@/lib/format";
@@ -21,7 +22,8 @@ export function filterCoaches(list: Coach[], f: CoachFilters) {
   });
 }
 
-/** F3-3 找教練: "我是【程度】，想上【類型】" need sentence, standard cards, compare up to 3. */
+/** F3-3 找教練: "我是【程度】，想上【類型】" need sentence, standard cards, compare up to 3.
+ *  Desktop (`.dk`, ≥1024px): top nav, the sentence as a header, filter sidebar, two-column card grid. */
 export function FindCoachesScreen() {
   const { coachFilters: f, setCoachFilters, compare } = useDemo();
   const coaches = useCoaches();
@@ -35,10 +37,19 @@ export function FindCoachesScreen() {
   const flagChip = (k: "cert" | "beg", label: string) => (
     <button className="chip" aria-pressed={f[k]} onClick={() => setCoachFilters((p) => ({ ...p, [k]: !p[k] }))}>{label}</button>
   );
+  const flagCheck = (k: "cert" | "beg", label: string, sub: string) => (
+    <label className="fc-check">
+      <input type="checkbox" checked={f[k]} onChange={() => setCoachFilters((p) => ({ ...p, [k]: !p[k] }))} />
+      <span><b>{label}</b><small>{sub}</small></span>
+    </label>
+  );
+  const anyFilter = f.level != null || f.type != null || f.cert || f.beg;
 
   return (
     <>
-      <div className="scroll" style={{ paddingBottom: compare.length ? 96 : 24 }}>
+      <div className="scroll dk fc" style={{ paddingBottom: compare.length ? 96 : 24 }}>
+        <TopNav active="coaches" />
+        <div className="fc-wrap">
         <div className="need">
           <div className="need-top">
             <h1>找教練</h1>
@@ -57,7 +68,7 @@ export function FindCoachesScreen() {
           <div className="chips">
             {typeChip("體驗課")}{typeChip("一對一")}{typeChip("小班")}{typeChip("團體")}
           </div>
-          <div className="chips">
+          <div className="chips mb-only">
             {flagChip("cert", "已認證教練")}
             {flagChip("beg", "新手友善")}
             <SoonButton className="chip" msg="區域：大安・信義・中山（可多選）">
@@ -65,11 +76,24 @@ export function FindCoachesScreen() {
             </SoonButton>
           </div>
         </div>
+        <div className="fc-cols">
+        <aside className="fc-side dk-only" aria-label="篩選">
+          <h3>篩選</h3>
+          {flagCheck("cert", "已認證教練", "協會、總會、PPR、IPTPA 查驗過")}
+          {flagCheck("beg", "新手友善", "專帶第一次拿拍的人")}
+          <h3>區域</h3>
+          <SoonButton className="chip fc-soon" msg="區域：大安・信義・中山（可多選）"><Icon name="pin" size={15} />大安・信義・中山</SoonButton>
+          <h3>價格與時段</h3>
+          <SoonButton className="chip fc-soon" msg="價格區間（下一輪）">價格區間</SoonButton>
+          <SoonButton className="chip fc-soon" msg="平日晚上／週末（下一輪）">平日晚上・週末</SoonButton>
+          {anyFilter && <button className="linkbtn fc-clear" onClick={() => setCoachFilters(emptyCoachFilters())}>清除所有條件</button>}
+        </aside>
+        <div className="fc-main">
         <div className="list-meta">
           <span><b>{list.length}</b> 位教練符合</span>
           <SoonButton className="sortbtn" msg="排序：最近可約／價格／評價">最近可約<Icon name="down" size={14} /></SoonButton>
         </div>
-        <div className="stack pad">
+        <div className="stack pad fc-grid">
           {list.length ? (
             list.map((c) => <CoachCard key={c.id} coach={c} />)
           ) : (
@@ -81,6 +105,9 @@ export function FindCoachesScreen() {
           )}
         </div>
         <p className="fine pad">所有教練用同一張卡片格式，價格、程度、認證都寫在同一個位置，方便比較。Demo 的教練照片為免費圖庫的示意照，不是教練本人。</p>
+        </div>
+        </div>
+        </div>
       </div>
       {compare.length === 0 && <TabBar active="coaches" />}
 
@@ -130,7 +157,7 @@ function CompareSheet({ ids, onClose }: { ids: string[]; onClose: () => void }) 
     </tr>
   );
   return (
-    <Sheet onClose={onClose} style={{ maxHeight: "88%", display: "flex", flexDirection: "column" }}>
+    <Sheet className="sheet-wide" onClose={onClose} style={{ maxHeight: "88%", display: "flex", flexDirection: "column" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <h2 style={{ margin: 0 }}>比較教練</h2>
         <button className="btn btn-ghost btn-icon" onClick={onClose} aria-label="關閉"><Icon name="x" size={22} /></button>

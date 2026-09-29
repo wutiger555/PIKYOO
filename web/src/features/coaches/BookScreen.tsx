@@ -19,7 +19,7 @@ export const bookingTotal = (b: Booking, p: CoachProfile) => {
 };
 
 /** F3-7 預約：一頁完成 — ① plan ② day + slot ③ alone or 揪朋友 + note ④ pay method; sticky live total. */
-export function BookScreen({ coach, planId, friends }: { coach: Coach; planId: string; friends?: boolean }) {
+export function BookScreen({ coach, planId, friends, dayKey, slot }: { coach: Coach; planId: string; friends?: boolean; dayKey?: string; slot?: string }) {
   const router = useRouter();
   const toast = useToast();
   const { setBooking, addGroup, profile } = useDemo();
@@ -29,7 +29,9 @@ export function BookScreen({ coach, planId, friends }: { coach: Coach; planId: s
     const first = p.plans.find((x) => x.id === planId) ?? p.plans[0];
     const days = BOOKING_DAYS.filter((d) => slotsFor(c, d).some((s) => s[1] > 0));
     const base = newBooking(c.id, first.id);
-    return { ...base, note: friends ? "" : base.note, dayKey: days.find((d) => d.key === "d5")?.key ?? days[0]?.key ?? "d1" };
+    const picked = days.find((d) => d.key === dayKey);
+    const pickedSlot = picked && slotsFor(c, picked).some(([t, left]) => t === slot && left > 0) ? slot! : null;
+    return { ...base, note: friends ? "" : base.note, dayKey: picked?.key ?? days.find((d) => d.key === "d5")?.key ?? days[0]?.key ?? "d1", slot: pickedSlot };
   });
   const set = (patch: Partial<Booking>) => setB((prev) => ({ ...prev, ...patch }));
   const { plan, total } = bookingTotal(b, p);

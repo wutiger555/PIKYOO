@@ -1,0 +1,87 @@
+/* Desktop pages (docs/DESKTOP.md). A screen opts in by putting `.dk` on its scroller; phones, screens without `.dk`
+   and the console's phone preview are unaffected. 640–1023px is the phone layout, widened. */
+
+.dk-only { display: none; }
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  .app-shell:has(.dk) { max-width: 720px; }
+  .dk .fc-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (min-width: 1024px) {
+  /* the page scrolls, not the phone frame */
+  body:has(.dk) { background: var(--color-bg); }
+  .app-shell:has(.dk) { max-width: none; height: auto; min-height: 100dvh; overflow: visible; box-shadow: none; }
+  .dk.scroll { flex: none; overflow: visible; padding-bottom: 64px !important; }
+  .app-shell:has(.dk) > .sticky-cta, .app-shell:has(.dk) > .tabbar { display: none; }
+  .dk .mb-only { display: none; }
+
+  /* bottom sheets become centred dialogs; toast and compare bar stick to the viewport */
+  .app-shell:has(.dk) .sheet-backdrop { position: fixed; z-index: 50; }
+  .app-shell:has(.dk) .sheet { position: fixed; left: 50%; right: auto; top: 50%; bottom: auto; transform: translate(-50%, -50%); z-index: 51; width: min(520px, calc(100vw - 48px)); max-height: calc(100dvh - 64px); overflow: auto; border-radius: var(--radius-lg); padding: var(--space-6); }
+  .app-shell:has(.dk) .sheet.sheet-wide { width: min(960px, calc(100vw - 48px)); }
+  .app-shell:has(.dk) .sheet-grip { display: none; }
+  .app-shell:has(.dk) .toast-wrap { position: fixed; bottom: 32px; }
+  .app-shell:has(.dk) .cmpbar { position: fixed; left: 50%; right: auto; bottom: 24px; transform: translateX(-50%); width: min(560px, calc(100vw - 48px)); }
+
+  /* top nav */
+  .dk .topnav { display: block; position: sticky; top: 0; z-index: 30; background: var(--color-bg); border-bottom: 1px solid var(--color-line); }
+  .topnav-in { max-width: 1200px; height: 64px; margin: 0 auto; padding: 0 32px; display: flex; align-items: center; gap: 32px; }
+  .topnav-brand { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-num); font-size: 22px; font-weight: 700; letter-spacing: .02em; color: var(--color-text); text-decoration: none; }
+  .topnav-links { flex: 1; display: flex; gap: 4px; }
+  .topnav-links a, .topnav-link { padding: 8px 12px; border-radius: 999px; font-size: 15px; font-weight: 500; color: var(--color-text); text-decoration: none; }
+  .topnav-links a:hover, .topnav-link:hover { background: var(--color-neutral-100); }
+  .topnav-links a[aria-current="page"] { font-weight: 700; border-radius: 0; box-shadow: inset 0 -3px 0 var(--color-accent-600); }
+  .topnav-r { display: flex; align-items: center; gap: 8px; }
+  .topnav-r .btn { min-height: 40px; padding: 0 18px; }
+  .topnav-me { position: relative; }
+  .topnav-me summary { list-style: none; display: flex; align-items: center; gap: 8px; padding: 4px 12px 4px 4px; border-radius: 999px; font-size: 15px; font-weight: 700; cursor: pointer; }
+  .topnav-me summary::-webkit-details-marker { display: none; }
+  .topnav-me summary:hover { background: var(--color-neutral-100); }
+  .topnav-menu { position: absolute; right: 0; top: calc(100% + 6px); min-width: 220px; display: flex; flex-direction: column; padding: 6px; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); }
+  .topnav-menu a, .topnav-menu button { padding: 10px 12px; border: 0; border-radius: 8px; background: none; font: inherit; font-size: 14px; text-align: left; color: var(--color-text); text-decoration: none; cursor: pointer; }
+  .topnav-menu a:hover, .topnav-menu button:hover { background: var(--color-neutral-100); }
+  .dk .crumbs { display: flex; align-items: center; gap: 8px; max-width: 1200px; margin: 16px auto 12px; padding: 0 32px; font-size: 14px; color: var(--color-muted); }
+  .crumbs a { color: var(--color-neutral-700); text-decoration: none; } .crumbs a:hover { text-decoration: underline; }
+  .crumbs [aria-current] { color: var(--color-text); font-weight: 700; }
+
+  /* coach page: photo mosaic, content left, sticky booking card right */
+  .dk .cp-media { max-width: 1200px; margin: 0 auto; padding: 0 32px; display: grid; grid-template-columns: 2fr 1fr; grid-template-rows: 208px 208px; gap: 8px; }
+  .dk .cp-media.n0 { grid-template-columns: 1fr; }
+  .dk .cp-media .cover { grid-row: 1 / 3; height: auto; border-radius: 16px 0 0 16px; overflow: hidden; }
+  .dk .cp-media.n0 .cover { border-radius: 16px; }
+  .dk .cp-media .cover .demo-tag { bottom: 12px; }
+  .dk .cp-tile { display: block; position: relative; overflow: hidden; background: var(--color-neutral-200); }
+  .dk .cp-media.n1 .cp-tile { grid-row: 1 / 3; border-radius: 0 16px 16px 0; }
+  .dk .cp-media.n2 .cp-tile:nth-child(2) { border-top-right-radius: 16px; }
+  .dk .cp-media.n2 .cp-tile:nth-child(3) { border-bottom-right-radius: 16px; }
+  .dk .cp-cols { max-width: 1200px; margin: 24px auto 0; padding: 0 32px; display: grid; grid-template-columns: minmax(0, 1fr) clamp(320px, 28vw, 380px); gap: clamp(28px, 3.5vw, 48px); align-items: start; }
+  .dk .cp-main > .chero:first-child { margin-top: 0; padding: 24px 28px; border-radius: 20px; }
+  .dk .chero h1 { font-size: 40px; }
+  .dk .anchors { top: 64px; margin-top: 12px; padding: 10px 0; }
+  .dk .blk { padding: 28px 0; }
+  .dk .blk h2 { font-size: 24px; }
+  .dk .plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dk .group-cta { margin: 0; }
+  .dk .quotes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; padding: 0; overflow: visible; }
+  .dk .quote { flex: none; }
+  .dk .lockpanel { min-height: 300px; }
+  .dk .cp-aside { display: block; position: sticky; top: 88px; }
+
+  /* find coaches: sentence header, filter sidebar, two-column cards */
+  .dk .fc-wrap { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+  .dk.fc .need { padding: 28px 0 24px; border-bottom: 0; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 14px 16px; }
+  .dk.fc .need-top { flex-basis: 100%; }
+  .dk.fc .need-top h1 { font-size: 40px; }
+  .dk.fc .need-q { font-size: 26px; }
+  .dk .fc-cols { display: grid; grid-template-columns: 248px minmax(0, 1fr); gap: 32px; align-items: start; }
+  .dk .fc-side { display: flex; flex-direction: column; gap: 10px; position: sticky; top: 88px; padding: 18px; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-lg); }
+  .dk .fc-side h3 { margin: 8px 0 0; font-size: 13px; color: var(--color-neutral-700); }
+  .dk .fc-side h3:first-child { margin-top: 0; }
+  .dk .list-meta { padding: 0 0 12px; }
+  .dk .fc-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding: 0; }
+  .dk .fc-grid > .empty-s { grid-column: 1 / -1; }
+  .dk.fc .fine.pad { padding: 0; }
+  .dk .ccard { transition: box-shadow .15s, transform .15s; }
+  .dk .ccard:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+}

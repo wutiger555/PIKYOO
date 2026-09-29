@@ -5,6 +5,7 @@ import { useState } from "react";
 import { LevelChip } from "@/components/pk/Badges";
 import { Icon, type IconName } from "@/components/pk/Icon";
 import { SoonButton, TabBar } from "@/components/pk/Shell";
+import { LoginSheet } from "@/components/pk/LoginSheet";
 import { GameTicket } from "@/components/pk/Ticket";
 import { useToast } from "@/components/pk/Toast";
 import { shortAreas } from "@/lib/data/courts";
@@ -18,7 +19,8 @@ const RECORD = { played: 12, attended: 11, late: 1, noShow: 0 };
 /** 我的: profile, my games (joined / waitlist / hosted), bookings, attendance record, settings. */
 export function MeScreen() {
   const toast = useToast();
-  const { profile, mine, hosted } = useDemo();
+  const { profile, mine, hosted, signedIn, setSignedIn } = useDemo();
+  const [login, setLogin] = useState(false);
   const games = useAllGames();
   const [tab, setTab] = useState<Tab>(hosted.length ? "hosted" : "joined");
   const joined = games.filter((g) => mine[g.id]);
@@ -94,6 +96,10 @@ export function MeScreen() {
               <span style={{ flex: 1 }}>我是教練：教練後台</span>
               <Icon name="right" size={18} />
             </Link>
+            <button className="row-item" onClick={() => (signedIn ? (setSignedIn(false), toast("已登出，現在看到的是訪客畫面")) : setLogin(true))}>
+              <Icon name="user" size={22} />
+              <span style={{ flex: 1 }}>{signedIn ? "登出（Demo：看訪客畫面）" : "登入／註冊"}</span>
+            </button>
             <button className="row-item" onClick={() => toast("刪除帳號會匿名化你的資料（接上後端後開放）")}>
               <Icon name="x" size={22} />
               <span style={{ flex: 1, color: "var(--color-danger)" }}>刪除帳號</span>
@@ -102,6 +108,7 @@ export function MeScreen() {
         </div>
       </div>
       <TabBar active="me" />
+      {login && <LoginSheet onClose={() => setLogin(false)} />}
     </>
   );
 }
