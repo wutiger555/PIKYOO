@@ -10,6 +10,7 @@ export const COURTS: Court[] = [
     hours: "每天 06:00–22:00", amenities: ["冷氣", "淋浴", "停車", "租拍"], aircon: true, lights: true,
     booking: "公立預約系統", bookingNote: "運動中心官網線上預約，開放 14 天內的時段", rules: "需穿室內運動鞋；每次預約最多 2 小時。",
     verified: "2026/09", distance: "1.2 km", map: [44, 58],
+    photo: { src: "/photos/court-daan.jpg", alt: "空無一人的室內 PU 球場，藍色地板與白線" },
   },
   {
     id: "xinyi", name: "信義運動中心", district: "信義區", address: "台北市信義區松勤街 100 號",
@@ -17,6 +18,7 @@ export const COURTS: Court[] = [
     hours: "每天 06:00–22:00", amenities: ["冷氣", "淋浴", "停車"], aircon: true, lights: true,
     booking: "公立預約系統", bookingNote: "運動中心官網線上預約", rules: "需穿室內運動鞋。",
     verified: "2026/09", distance: "2.6 km", map: [70, 52],
+    photo: { src: "/photos/court-xinyi.jpg", alt: "室內球場上兩位球員在對打" },
   },
   {
     id: "dajia", name: "大佳河濱公園", district: "中山區", address: "台北市中山區濱江街 5 號",
@@ -24,6 +26,7 @@ export const COURTS: Court[] = [
     hours: "全天開放・夜間照明到 22:00", amenities: ["夜間照明", "停車"], aircon: false, lights: true,
     booking: "免預約", bookingNote: "先到先打，週末早上人多", rules: "下雨地滑請勿使用；請自備球網以外的器材。",
     verified: "2026/09", distance: "3.8 km", map: [40, 20],
+    photo: { src: "/photos/court-dajia.jpg", alt: "綠樹環繞、有圍網的戶外球場" },
   },
   {
     id: "zhongshan", name: "中山運動中心", district: "中山區", address: "台北市中山區中山北路二段 44 巷 2 號",
@@ -31,6 +34,7 @@ export const COURTS: Court[] = [
     hours: "每天 06:00–22:00", amenities: ["冷氣", "淋浴", "租拍"], aircon: true, lights: true,
     booking: "公立預約系統", bookingNote: "運動中心官網線上預約", rules: "需穿室內運動鞋。",
     distance: "4.1 km", map: [30, 34],
+    photo: { src: "/photos/court-zhongshan.jpg", alt: "室內球場上女球員在網前擊球" },
   },
   {
     id: "neihu", name: "內湖運動中心", district: "內湖區", address: "台北市內湖區洲子街 12 號",
@@ -38,6 +42,7 @@ export const COURTS: Court[] = [
     hours: "每天 06:00–22:00", amenities: ["冷氣", "停車"], aircon: true, lights: true,
     booking: "公立預約系統", bookingNote: "運動中心官網線上預約", rules: "需穿室內運動鞋。",
     distance: "7.9 km", map: [82, 18],
+    photo: { src: "/photos/court-neihu.jpg", alt: "室內球場上男球員準備擊球" },
   },
   {
     id: "banqiao", name: "新北市板橋第一運動場風雨球場", district: "板橋區", address: "新北市板橋區漢生東路 278 號",
@@ -45,6 +50,7 @@ export const COURTS: Court[] = [
     hours: "每天 06:00–22:00", amenities: ["夜間照明", "停車"], aircon: false, lights: true,
     booking: "電話預約", bookingNote: "打電話到場館管理室預約", rules: "颱風與豪雨停開。",
     distance: "9.5 km", map: [12, 76],
+    photo: { src: "/photos/court-banqiao.jpg", alt: "夜間打燈的兩面球場空拍" },
   },
 ];
 

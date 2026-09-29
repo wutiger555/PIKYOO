@@ -80,7 +80,7 @@ export function FindCoachesScreen() {
             </div>
           )}
         </div>
-        <p className="fine pad">所有教練用同一張卡片格式，價格、程度、認證都寫在同一個位置，方便比較。Demo 的教練照片為 AI 生成示意照。</p>
+        <p className="fine pad">所有教練用同一張卡片格式，價格、程度、認證都寫在同一個位置，方便比較。Demo 的教練照片為免費圖庫的示意照，不是教練本人。</p>
       </div>
       {compare.length === 0 && <TabBar active="coaches" />}
 

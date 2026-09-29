@@ -62,10 +62,10 @@ export default function Page() {
 
       <div className="eyebrow">尚未設計（下一輪）</div>
       <ul className="note">
-        <li>教練與上課的真實照片（目前是 AI 示意照，清單見 docs/PHOTOS.md）</li>
+        <li>教練與上課的真實照片（目前是免費圖庫的示意照，清單與授權見 docs/PHOTOS.md）</li>
         <li>團主管理（編輯、移除參加者、代報名、點名）、Email 登入</li>
         <li>載入與錯誤狀態（目前有空狀態與 AI 解析中的 Skeleton）與深色模式</li>
-        <li>桌機版首頁、教練頁與教練後台；地圖與照片目前是斜紋佔位，需要真實素材</li>
+        <li>桌機版首頁、教練頁與教練後台；地圖目前是斜紋佔位，需要真實素材</li>
       </ul>
     </main>
   );
