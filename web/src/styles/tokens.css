@@ -1,0 +1,101 @@
+/* PIKYOO design tokens — source of truth: design handoff styles.css / theme.json.
+ * Values in @theme are emitted as CSS variables on :root AND become Tailwind
+ * utilities (bg-accent, text-muted, border-line, rounded-md, shadow-lg, font-num). */
+
+@theme static {
+  --color-*: initial;
+
+  /* Brand roles */
+  --color-bg: #F2F3EF;        /* 霧白 mist — reading surface */
+  --color-surface: #FFFFFF;   /* 白 cards and tickets */
+  --color-text: #121412;      /* 碳黑 carbon ink */
+  --color-muted: #5F645E;     /* 灰碳 secondary text (5.4:1 on mist) */
+  --color-line: #DFE1DA;      /* 線 hairlines */
+  --color-accent: #D4EE3A;    /* 螢光球 optic — fill only, never text on light */
+  --color-accent-2: #4A513B;  /* 橄欖碳 — level scale family */
+  --color-carbon: #1A1D1B;    /* 碳纖維 brand surface */
+  --color-on-carbon: #FFFFFF;
+  --color-on-carbon-muted: #B9BEB6;
+  --color-on-accent: #121412;
+  --color-hl: #D4EE3A;
+  --color-divider: var(--color-line);
+  --color-ink: var(--color-text);
+  --color-pik: var(--color-accent);
+
+  --color-neutral-100: #EBECE7;
+  --color-neutral-200: #DFE1DA;
+  --color-neutral-300: #CFD2CA;
+  --color-neutral-400: #ADB1A9;
+  --color-neutral-500: #8A8F88;
+  --color-neutral-600: #6E736C;
+  --color-neutral-700: #535852;
+  --color-neutral-800: #363A35;
+  --color-neutral-900: #121412;
+
+  --color-accent-100: #F6FBDC;
+  --color-accent-200: #EEF8B8;
+  --color-accent-300: #E4F488;
+  --color-accent-400: #DBF15E;
+  --color-accent-500: #D4EE3A;
+  --color-accent-600: #C3DD2A;
+  --color-accent-700: #A9C11B;
+  --color-accent-800: #6F7F10;
+  --color-accent-900: #3B4409;
+
+  --color-accent-2-100: #EEF0E8;
+  --color-accent-2-200: #D7DBCC;
+  --color-accent-2-300: #B8BEA9;
+  --color-accent-2-400: #949B82;
+  --color-accent-2-500: #6F775D;
+  --color-accent-2-600: #5B634A;
+  --color-accent-2-700: #4A513B;
+  --color-accent-2-800: #30352A;
+  --color-accent-2-900: #1E221A;
+
+  /* 程度色階：新手 · 2.0 · 2.5 · 3.0 · 3.5 · 4.0 · 4.5+（橄欖碳，由淺到深） */
+  --color-level-0: #EEF0E8;
+  --color-level-1: #D7DBCC;
+  --color-level-2: #B8BEA9;
+  --color-level-3: #949B82;
+  --color-level-4: #6F775D;
+  --color-level-5: #4A513B;
+  --color-level-6: #1E221A;
+
+  --color-success: #2E6A3F;   --color-success-bg: #E2EFE4;
+  --color-warning: #875A00;   --color-warning-bg: #FBEFD3;
+  --color-danger:  #A8322A;   --color-danger-bg:  #F8E1DD;
+  --color-info:    #2F5D73;   --color-info-bg:    #E1EBF0;
+
+  /* next/font sets --font-barlow / --font-barlow-condensed / --font-noto-tc on <html> */
+  --font-heading: var(--font-barlow), var(--font-noto-tc), system-ui, sans-serif;
+  --font-body: var(--font-barlow), var(--font-noto-tc), system-ui, sans-serif;
+  --font-num: var(--font-barlow-condensed), var(--font-noto-tc), sans-serif;
+
+  --radius-sm: 6px;   /* tags, chips-in-cards, level */
+  --radius-md: 10px;  /* cards, tickets, inputs */
+  --radius-lg: 20px;  /* sheets, dialogs */
+  --radius-full: 999px; /* buttons, chips, seats — the ball */
+
+  --shadow-sm: 0 1px 2px color-mix(in srgb, #121412 8%, transparent);
+  --shadow-md: 0 6px 18px color-mix(in srgb, #121412 10%, transparent);
+  --shadow-lg: 0 18px 44px color-mix(in srgb, #121412 22%, transparent);
+}
+
+:root {
+  /* level aliases used across the design (var(--level-N)) */
+  --level-0: var(--color-level-0);
+  --level-1: var(--color-level-1);
+  --level-2: var(--color-level-2);
+  --level-3: var(--color-level-3);
+  --level-4: var(--color-level-4);
+  --level-5: var(--color-level-5);
+  --level-6: var(--color-level-6);
+
+  --font-heading-weight: 700;
+
+  /* 8pt grid */
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-6: 24px; --space-8: 32px; --space-10: 40px; --space-12: 48px;
+
+  --carbon-weave: repeating-linear-gradient(45deg, rgba(255,255,255,.035) 0 2px, transparent 2px 5px), repeating-linear-gradient(-45deg, rgba(0,0,0,.22) 0 2px, transparent 2px 5px);
+  --tap: 44px;
+}

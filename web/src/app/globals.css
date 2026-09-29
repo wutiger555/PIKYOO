@@ -1,0 +1,16 @@
+/*
+ * PIKYOO 匹友 — Optic × Carbon.
+ * Tailwind v4 without preflight: the design system (src/styles/pikyoo.css) owns
+ * the base layer so screens render exactly like the Claude Design prototypes.
+ * Tokens live in src/styles/tokens.css and double as Tailwind theme values
+ * (bg-accent, text-muted, rounded-md, font-num, …).
+ */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@import "../styles/tokens.css";
+@import "../styles/pikyoo.css";
+@import "../styles/screens.css";
+@import "../styles/coach.css";
+@import "../styles/design.css";
