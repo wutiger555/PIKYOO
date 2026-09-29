@@ -3,12 +3,16 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Icon } from "@/components/pk/Icon";
+import { Crumbs } from "@/components/pk/Crumbs";
+import { LoginSheet } from "@/components/pk/LoginSheet";
 import { AppBar } from "@/components/pk/Shell";
 import { useToast } from "@/components/pk/Toast";
+import { TopNav } from "@/components/pk/TopNav";
 import { BOOKING_DAYS, PAY_HINT, slotsFor } from "@/lib/data/coaches";
 import { newBooking, useCoach, useDemo } from "@/lib/demo-store";
 import { money } from "@/lib/format";
 import type { Booking, Coach, CoachProfile } from "@/lib/types";
+import { Photo } from "./CoachCard";
 
 /** Called from the 開始揪團 click only. */
 const newGroupId = () => "grp" + Date.now().toString(36);
@@ -18,11 +22,13 @@ export const bookingTotal = (b: Booking, p: CoachProfile) => {
   return { plan, total: plan.price * (plan.unit === "/人" ? b.headcount : 1) };
 };
 
-/** F3-7 預約：一頁完成 — ① plan ② day + slot ③ alone or 揪朋友 + note ④ pay method; sticky live total. */
+/** F3-7 預約：一頁完成 — ① plan ② day + slot ③ alone or 揪朋友 + note ④ pay method; sticky live total.
+ *  Desktop: the steps on the left, a sticky order summary on the right. A visitor is asked to sign in on submit. */
 export function BookScreen({ coach, planId, friends, dayKey, slot }: { coach: Coach; planId: string; friends?: boolean; dayKey?: string; slot?: string }) {
   const router = useRouter();
   const toast = useToast();
-  const { setBooking, addGroup, profile } = useDemo();
+  const { setBooking, addGroup, profile, signedIn } = useDemo();
+  const [login, setLogin] = useState(false);
   const c = useCoach(coach.id) ?? coach;
   const p = c.profile;
   const [b, setB] = useState<Booking>(() => {
@@ -50,11 +56,23 @@ export function BookScreen({ coach, planId, friends, dayKey, slot }: { coach: Co
     toast("揪團開好了，把邀請連結傳給朋友");
     router.push(`/groups/${id}`);
   };
+  const send = () => {
+    setBooking({ ...b, status: "pending" });
+    router.push("/me/booking");
+  };
+  const submit = () => (!signedIn ? setLogin(true) : group ? startGroup() : send());
+  const cta = !signedIn ? "登入後送出" : group ? "開始揪團" : "送出預約";
+  const when = b.slot ? `${day.date}（${day.weekday}）${b.slot}` : null;
 
   return (
     <>
       <AppBar title={`預約 ${c.name}`} back={`/coaches/${c.id}`} historyBack />
-      <div className="scroll" style={{ paddingBottom: 16 }}>
+      <div className="scroll dk bk" style={{ paddingBottom: 16 }}>
+        <TopNav active="coaches" />
+        <Crumbs items={[["首頁", "/"], ["找教練", "/coaches"], [c.name, `/coaches/${c.id}`], ["預約"]]} />
+        <h1 className="dk-title dk-only">預約 {c.name}</h1>
+        <div className="bk-cols">
+        <div className="bk-main">
         <section className="blk">
           <h3 className="step-h"><span className="num">1</span>選課程</h3>
           <div className="seg-list" role="radiogroup">
@@ -142,27 +160,31 @@ export function BookScreen({ coach, planId, friends, dayKey, slot }: { coach: Co
             ))}
           </div>
         </section>
+        </div>
+        <aside className="bk-aside dk-only" aria-label="訂單摘要">
+          <div className="bcard">
+            <div className="bk-coach"><Photo coach={c} size="sm" /><div><b>{c.name}</b><div className="text-muted" style={{ fontSize: 13 }}>{p.venues[0].name}</div></div></div>
+            <dl className="bcard-kv">
+              <dt>課程</dt><dd>{plan.name}・{plan.durationMin} 分</dd>
+              <dt>時間</dt><dd>{when ?? <span className="text-muted">還沒選時段</span>}</dd>
+              <dt>人數</dt><dd>{group ? `揪朋友 ${group.min}–${group.max} 人，各自付款` : perHead ? `${b.headcount} 人` : "1 人"}</dd>
+              <dt>付款</dt><dd>{b.pay}</dd>
+            </dl>
+            <div className="bk-total"><span>{group ? "每人" : "合計"}</span><b className="num">{money(group ? plan.price : total)}</b></div>
+            <button className="btn btn-primary btn-lg btn-block" disabled={!b.slot} onClick={submit}>{b.slot ? cta : "請先選時段"}</button>
+            <p className="fine">教練確認後才需要付款，現在不會扣款。{p.policy}</p>
+          </div>
+        </aside>
+        </div>
       </div>
       <div className="sticky-cta">
         <div className="sticky-cta-info">
           <span className="sticky-cta-price">{group ? <>{money(plan.price)}<small style={{ fontSize: 14, fontFamily: "var(--font-body)", color: "var(--color-on-carbon-muted)" }}> /人</small></> : money(total)}</span>
-          <span className="sticky-cta-sub">{b.slot ? `${day.date}（${day.weekday}）${b.slot}・${plan.name}` : "請選時段"}</span>
+          <span className="sticky-cta-sub">{when ? `${when}・${plan.name}` : "請選時段"}</span>
         </div>
-        {group ? (
-          <button className="btn btn-primary btn-lg" disabled={!b.slot} onClick={startGroup}>開始揪團</button>
-        ) : (
-        <button
-          className="btn btn-primary btn-lg"
-          disabled={!b.slot}
-          onClick={() => {
-            setBooking({ ...b, status: "pending" });
-            router.push("/me/booking");
-          }}
-        >
-          送出預約
-        </button>
-        )}
+        <button className="btn btn-primary btn-lg" disabled={!b.slot} onClick={submit}>{cta}</button>
       </div>
+      {login && <LoginSheet onClose={() => setLogin(false)} reason={`登入後就能送出 ${c.name} 的預約`} />}
     </>
   );
 }

@@ -3,6 +3,13 @@
 
 .dk-only { display: none; }
 
+/* phone + tablet: courts list/map toggle; the filter bar stays on top of the list */
+@media (max-width: 1023px) {
+  .m-off { display: none; }
+  .courts .list-head { position: sticky; top: 0; z-index: 3; background: var(--color-bg); }
+  .courts .date-h { position: static; }
+}
+
 @media (min-width: 640px) and (max-width: 1023px) {
   .app-shell:has(.dk) { max-width: 720px; }
   .dk .fc-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -43,6 +50,7 @@
   .topnav-menu a:hover, .topnav-menu button:hover { background: var(--color-neutral-100); }
   .dk .crumbs { display: flex; align-items: center; gap: 8px; max-width: 1200px; margin: 16px auto 12px; padding: 0 32px; font-size: 14px; color: var(--color-muted); }
   .crumbs a { color: var(--color-neutral-700); text-decoration: none; } .crumbs a:hover { text-decoration: underline; }
+  .crumb { display: inline-flex; align-items: center; gap: 8px; }
   .crumbs [aria-current] { color: var(--color-text); font-weight: 700; }
 
   /* coach page: photo mosaic, content left, sticky booking card right */
@@ -84,4 +92,66 @@
   .dk.fc .fine.pad { padding: 0; }
   .dk .ccard { transition: box-shadow .15s, transform .15s; }
   .dk .ccard:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+
+  /* shared: the phone AppBar gives way to TopNav + breadcrumbs + a page title */
+  .app-shell:has(.dk) > .appbar { display: none; }
+  .dk .dk-title { display: block; max-width: 1200px; margin: 0 auto 8px; padding: 0 32px; font-size: 32px; }
+
+  /* home (signed in): main column + sticky side column (the side cards are rendered twice: phone order vs. desktop aside) */
+  .dk .home-grid { max-width: 1200px; margin: 24px auto 0; padding: 0 32px; display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 32px; align-items: start; }
+  .dk .hg-main { display: flex; flex-direction: column; gap: 32px; }
+  .dk .hg-main > * { margin: 0; }
+  .dk .hg-side { display: flex; flex-direction: column; gap: 20px; position: sticky; top: 88px; }
+  .dk .hg-side > * { margin: 0; }
+  .dk .home-grid .sec { padding: 0; }
+  .dk .home-grid .sec-head.pad { padding: 0; }
+  .dk .home-hero { padding: 24px 28px 28px; }
+  .dk .home-hero h1 { font-size: 36px !important; }
+  .dk .home-rail { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); overflow: visible; padding: 0; }
+  .dk .home-rail .cmini { width: auto; }
+  .dk .home-rail .cmini:hover { box-shadow: var(--shadow-md); }
+
+  /* home (visitor): landing */
+  .dk .guest { max-width: 1200px; margin: 24px auto 0; padding: 0 32px; }
+  .dk .gh-hero { margin: 0; padding: 48px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 520px); gap: 40px; align-items: stretch; }
+  .dk .gh-copy { align-self: center; }
+  .dk .gh-hero h1 { font-size: 52px; }
+  .dk .gh-hero p { font-size: 17px; max-width: 34em; }
+  .dk .gh-photo { display: block; position: relative; min-height: 360px; border-radius: 16px; overflow: hidden; }
+  .dk .guest .sec { padding: 40px 0 0; }
+  .dk .guest .sec-head.pad { padding: 0; }
+  .dk .gh-entries { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  .dk .gh-entry { padding: 20px; }
+  .dk .gh-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+  .dk .gh-final { margin: 40px 0 0; padding: 28px 32px; flex-direction: row; align-items: center; justify-content: space-between; }
+
+  /* booking + booking status: steps left, sticky summary right */
+  .dk .bk-cols { max-width: 1200px; margin: 0 auto; padding: 0 32px; display: grid; grid-template-columns: minmax(0, 1fr) clamp(320px, 28vw, 380px); gap: clamp(28px, 3.5vw, 48px); align-items: start; }
+  .dk .bk-aside { display: block; position: sticky; top: 88px; }
+  .dk.bs { padding-inline: 0 !important; }
+  .dk.bs .bk-aside { margin-top: 20px; }
+
+  /* courts: list left, sticky map right */
+  .dk .ct-wrap { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+  .dk .ct-h1 { display: block; margin: 0; font-size: 32px; }
+  .dk.courts .list-head { padding: 0 0 16px; border-bottom: 0; }
+  .dk .ct-cols { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 24px; align-items: start; }
+  .dk .ct-list .pad { padding: 0; }
+  .dk .ct-list .date-h { padding: 0 0 8px; position: static; }
+  .dk .court-row { padding-inline: 8px; border-radius: 8px; }
+  .dk .court-row.on { background: var(--color-accent-100); }
+  .dk .ct-map { position: sticky; top: 88px; padding-bottom: 0; }
+  .dk .ct-map .court-map { margin: 0; height: calc(100dvh - 120px); max-height: 720px; border-radius: var(--radius-lg); }
+  .dk .ct-map > p { display: none; }
+  .dk .ct-pick { display: block; position: absolute; left: 16px; right: 16px; bottom: 16px; }
+
+  /* court detail */
+  .dk .cd-cols { max-width: 1200px; margin: 0 auto; padding: 0 32px; display: grid; grid-template-columns: minmax(0, 1fr) clamp(320px, 28vw, 380px); gap: clamp(28px, 3.5vw, 48px); align-items: start; }
+  .dk .cd-main, .dk .cd-aside { display: block; }
+  .dk .cd-aside { position: sticky; top: 88px; }
+  .dk.cd .court-photo { max-height: 420px; border-radius: var(--radius-lg); }
+  .dk.cd .dblock { padding: 20px 0; }
+  .dk.cd .o2 h1 { font-size: 32px !important; }
+  .dk .cd-book { display: block; margin-bottom: 8px; }
+  .dk .cd-book .btn { width: 100%; }
 }

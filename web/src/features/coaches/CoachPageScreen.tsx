@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { Cred, LevelChip } from "@/components/pk/Badges";
+import { Crumbs } from "@/components/pk/Crumbs";
 import { Icon, type IconName } from "@/components/pk/Icon";
 import { LoginSheet } from "@/components/pk/LoginSheet";
 import { useToast } from "@/components/pk/Toast";
@@ -70,11 +71,7 @@ export function CoachPublicPage({ coach: c, preview }: { coach: Coach; preview?:
     <>
       <div className={`scroll cp${preview ? "" : " dk"}`} ref={scroller} style={{ paddingBottom: 16 }}>
         {!preview && <TopNav active="coaches" />}
-        {!preview && (
-          <nav className="crumbs dk-only" aria-label="目前位置">
-            <Link href="/">首頁</Link><span aria-hidden="true">›</span><Link href="/coaches">找教練</Link><span aria-hidden="true">›</span><span aria-current="page">{c.name}</span>
-          </nav>
-        )}
+        {!preview && <Crumbs items={[["首頁", "/"], ["找教練", "/coaches"], [c.name]]} />}
 
         <div className={`cp-media n${tiles.length}`}>
           <div className="cover">

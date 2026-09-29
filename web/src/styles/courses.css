@@ -216,3 +216,34 @@ button.plan { width: 100%; cursor: pointer; }
 .bcard-kv dt { color: var(--color-muted); font-weight: 700; } .bcard-kv dd { margin: 0; }
 .bcard-lock { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--color-line); text-align: center; }
 .bcard-lock p { margin: 0; font-size: 14px; } .bcard-lock .fine { margin: 0; }
+
+/* — visitor landing (首頁 when signed out) — */
+.guest { padding-top: var(--space-2); }
+.gh-hero { margin: 0 var(--space-3); padding: 20px 20px 28px; border-radius: var(--radius-lg); }
+.gh-hero .en { margin-top: 20px; }
+.gh-hero h1 { font-size: 32px; line-height: 1.2; margin: 6px 0 10px; }
+.gh-hero p { margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: var(--color-on-carbon-muted); }
+.gh-cta { display: flex; flex-wrap: wrap; gap: 10px; }
+.gh-entries { display: grid; gap: 10px; }
+.gh-entry { gap: 4px; color: inherit; text-decoration: none; }
+.gh-entry:hover { border-color: var(--color-text); }
+.gh-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.gh-steps li { display: flex; gap: 12px; align-items: flex-start; }
+.gh-steps .num { width: 32px; height: 32px; flex: none; display: grid; place-items: center; border-radius: 50%; background: var(--color-accent); border: 1.5px solid var(--color-text); font-weight: 700; }
+.gh-steps b { font-size: 16px; } .gh-steps p { margin: 2px 0 0; font-size: 14px; color: var(--color-neutral-700); }
+.gh-final { margin: var(--space-6) var(--space-4); padding: 20px; display: flex; flex-direction: column; align-items: flex-start; gap: 12px; border-radius: var(--radius-lg); background: var(--color-accent-100); border: 1.5px solid var(--color-accent-700); }
+.gh-final h2 { margin: 0; font-size: 20px; } .gh-final p { margin: 4px 0 0; font-size: 14px; }
+
+/* — booking summary (desktop aside) — */
+.bk-coach { display: flex; align-items: center; gap: 12px; padding-bottom: 4px; }
+.bk-total { display: flex; justify-content: space-between; align-items: baseline; margin: 16px 0 12px; }
+.bk-total span { font-weight: 700; } .bk-total b { font-size: 30px; font-weight: 600; line-height: 1; }
+
+/* — court rows: photo thumbnail — */
+.court-thumb { position: relative; width: 64px; height: 48px; flex: none; display: grid; place-items: center; border-radius: 8px; overflow: hidden; background: var(--color-neutral-200); color: var(--color-muted); }
+
+/* — court detail: two desktop columns, phone keeps its single-column order — */
+.cd-cols { display: flex; flex-direction: column; }
+.cd-main, .cd-aside { display: contents; }
+.cd-cols .o1 { order: 1; } .cd-cols .o2 { order: 2; } .cd-cols .o3 { order: 3; } .cd-cols .o4 { order: 4; }
+.cd-cols .o5 { order: 5; } .cd-cols .o6 { order: 6; } .cd-cols .o7 { order: 7; } .cd-cols .o8 { order: 8; }

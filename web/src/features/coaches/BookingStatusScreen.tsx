@@ -4,8 +4,10 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Status } from "@/components/pk/Badges";
 import { Icon } from "@/components/pk/Icon";
+import { Crumbs } from "@/components/pk/Crumbs";
 import { AppBar, SoonButton } from "@/components/pk/Shell";
 import { useToast } from "@/components/pk/Toast";
+import { TopNav } from "@/components/pk/TopNav";
 import { BOOKING_DAYS, getCoach } from "@/lib/data/coaches";
 import { newBooking, useDemo } from "@/lib/demo-store";
 import type { BookingStatus } from "@/lib/types";
@@ -15,7 +17,8 @@ import { bookingTotal } from "./BookScreen";
 
 const STEPS = ["送出申請", "教練確認", "付款", "上課"];
 
-/** docs/PRD.md §6.3 — 送出申請 → 教練確認 → 付款 → 上課. Payment happens only after the coach confirms. */
+/** docs/PRD.md §6.3 — 送出申請 → 教練確認 → 付款 → 上課. Payment happens only after the coach confirms.
+ *  Desktop: progress and the current step on the left, the lesson summary on the right. */
 export function BookingStatusScreen({ demo }: { demo?: BookingStatus }) {
   const toast = useToast();
   const { booking: b, setBooking } = useDemo();
@@ -31,7 +34,8 @@ export function BookingStatusScreen({ demo }: { demo?: BookingStatus }) {
     return (
       <>
         <AppBar title="我的預約" back="/me/lessons" />
-        <div className="scroll">
+        <div className="scroll dk">
+          <TopNav />
           <div className="empty-s" style={{ paddingTop: 64 }}>
             <h3>還沒有預約</h3>
             <p className="text-muted">先找一位教練，選好時段就能送出。</p>
@@ -122,7 +126,11 @@ export function BookingStatusScreen({ demo }: { demo?: BookingStatus }) {
   return (
     <>
       <AppBar title="我的預約" back="/me/lessons" />
-      <div className="scroll" style={{ padding: "0 16px 24px" }}>
+      <div className="scroll dk bs" style={{ padding: "0 16px 24px" }}>
+        <TopNav />
+        <Crumbs items={[["首頁", "/"], ["我的課", "/me/lessons"], ["我的預約"]]} />
+        <div className="bk-cols">
+        <div className="bk-main">
         <ol className="tracker">
           {STEPS.map((s, i) => (
             <li key={s} className={i < idx ? "done" : i === idx ? "now" : ""}>
@@ -132,6 +140,8 @@ export function BookingStatusScreen({ demo }: { demo?: BookingStatus }) {
           ))}
         </ol>
         {main}
+        </div>
+        <aside className="bk-aside">
         <div className="sum-card">
           <div className="sum-top carbon">
             <div><small>{day.date}（{day.weekday}）</small><b className="num">{b.slot}</b></div>
@@ -153,6 +163,8 @@ export function BookingStatusScreen({ demo }: { demo?: BookingStatus }) {
           <SoonButton className="btn btn-secondary btn-block btn-lg" style={{ marginTop: 16 }} msg="已加入行事曆"><Icon name="cal" size={18} />加入行事曆</SoonButton>
         )}
         <SoonButton className="btn btn-ghost btn-block" style={{ marginTop: 8 }} msg="改期或取消（依教練取消規則）">改期或取消</SoonButton>
+        </aside>
+        </div>
       </div>
     </>
   );
