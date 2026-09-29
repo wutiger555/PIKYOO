@@ -4,10 +4,12 @@ import { useState } from "react";
 import { CourtArt } from "@/components/pk/Badges";
 import { Icon } from "@/components/pk/Icon";
 import { LevelPicker } from "@/components/pk/LevelPicker";
-import { Sheet, SoonButton, TabBar } from "@/components/pk/Shell";
+import Link from "next/link";
+import { Sheet, TabBar } from "@/components/pk/Shell";
 import { GameTicket } from "@/components/pk/Ticket";
-import { AREAS, DAY_GROUPS, GAMES } from "@/lib/data/games";
-import { emptyGameFilters, useDemo, type GameFilters } from "@/lib/demo-store";
+import { shortAreas } from "@/lib/data/courts";
+import { AREAS, DAY_GROUPS } from "@/lib/data/games";
+import { emptyGameFilters, useAllGames, useDemo, type GameFilters } from "@/lib/demo-store";
 import type { DayGroup } from "@/lib/types";
 import { filterGames, sheetFilterCount } from "./filters";
 
@@ -15,9 +17,9 @@ const toggle = <T,>(arr: T[], v: T) => (arr.includes(v) ? arr.filter((x) => x !=
 
 /** F2 球局列表: quick chips, filter sheet, date-grouped tickets, empty state. */
 export function GamesScreen() {
-  const { gameFilters: f, setGameFilters, mine } = useDemo();
+  const { gameFilters: f, setGameFilters, mine, profile } = useDemo();
   const [sheet, setSheet] = useState(false);
-  const list = filterGames(GAMES, f, mine);
+  const list = filterGames(useAllGames(), f, mine);
   const fc = sheetFilterCount(f);
 
   const dayChip = (k: NonNullable<GameFilters["day"]>, label: string) => (
@@ -31,8 +33,8 @@ export function GamesScreen() {
     <>
       <div className="list-head">
         <div className="t">
-          <h1>球局</h1>
-          <span className="text-muted" style={{ fontSize: 14 }}>大安・信義・中山</span>
+          <h1>找球友打球</h1>
+          <span className="text-muted" style={{ fontSize: 14 }}>{shortAreas(profile.areas)}</span>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <div className="chips" style={{ flex: 1 }}>
@@ -69,12 +71,12 @@ export function GamesScreen() {
             <p className="text-muted" style={{ margin: 0 }}>或放寬篩選條件看看。</p>
             <div className="btnrow" style={{ width: "100%" }}>
               <button className="btn btn-secondary" onClick={() => setGameFilters(emptyGameFilters())}>清除篩選</button>
-              <SoonButton className="btn btn-primary" msg="開團／AI 一貼成局（下一輪）">開一團</SoonButton>
+              <Link className="btn btn-primary" href="/games/new">開一團</Link>
             </div>
           </div>
         )}
       </div>
-      <TabBar active="games" />
+      <TabBar />
 
       {sheet && <FilterSheet count={list.length} onClose={() => setSheet(false)} />}
     </>

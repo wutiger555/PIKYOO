@@ -30,7 +30,7 @@ export function BookingStatusScreen({ demo }: { demo?: BookingStatus }) {
   if (!c || !p || !b.slot) {
     return (
       <>
-        <AppBar title="我的預約" back="/coaches" />
+        <AppBar title="我的預約" back="/me/lessons" />
         <div className="scroll">
           <div className="empty-s" style={{ paddingTop: 64 }}>
             <h3>還沒有預約</h3>
@@ -121,7 +121,7 @@ export function BookingStatusScreen({ demo }: { demo?: BookingStatus }) {
 
   return (
     <>
-      <AppBar title="我的預約" back="/coaches" />
+      <AppBar title="我的預約" back="/me/lessons" />
       <div className="scroll" style={{ padding: "0 16px 24px" }}>
         <ol className="tracker">
           {STEPS.map((s, i) => (
