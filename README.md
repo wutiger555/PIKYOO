@@ -37,6 +37,7 @@ A pickleball platform for Taiwan to find courts, coaches, classes, and games.
 
 - [產品計劃書（MVP PRD）v1.0](docs/PRD.md)：功能規格、流程、資料模型、時程
 - [市場分析與產品策略 v0.3](docs/PLAN.md)：競品、差異化、可行性、金流與平台決策
+- [商業模式與收費設計（草案）](docs/BUSINESS_MODEL.md)：教練平台費（首堂 12%／回頭 3%）、Pro 訂閱、場館與匹克球溢價、收入估算、待決定事項
 - [品牌與 UI/UX 設計簡報 v1.0](docs/BRAND_DESIGN_BRIEF.md)：給 Claude Design 的 Logo 與設計系統簡報
 - [設計系統](docs/DESIGN_SYSTEM.md)：螢光球 × 碳纖維，token、元件與規則
 - [電腦版設計規劃與實作狀態](docs/DESKTOP.md)：斷點、元件對應、每頁版型、已確認的決定
