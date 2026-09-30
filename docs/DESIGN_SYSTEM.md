@@ -77,6 +77,10 @@
 | `.avail` | 教練頁未來 7 天可約時段 |
 | `.group-cta`、`.group-how`、`.grp-*` | 揪朋友一起上：入口、流程說明、揪團頁（座位、成員、邀請連結） |
 | `.lesson` | 我的課列表：碳纖維日期票根＋課程＋狀態 |
+| `.dk` + `TopNav`、`Crumbs` | 電腦版（≥1024px）：頁面捲動容器加 `.dk` 才啟用；頂部導覽取代底部分頁、麵包屑取代 AppBar；`.dk-only`／`.mb-only` 切換、`.dk-narrow` 置中 760px、`.dk-float` 底部按鈕浮起來。規則都在 `styles/desktop.css`，詳見 DESKTOP.md |
+| `LoginSheet`、`.lockpanel` | 訪客登入框（用 LINE 登入／註冊）與教練頁「登入看完整教練頁」鎖定區 |
+| `.bcard`（`BookCard`） | 電腦版教練頁右側預約卡；預約頁、球場詳情的右側摘要卡也用同一個外觀 |
+| `ConsoleFrame`、`.con-*` | 教練後台外框：電腦版左側選單、`.con-table` 表格 |
 | `.qa`、`.qa-*` | 教練頁問與答：「問」墨色方塊、「答」螢光方塊；未回覆顯示「等教練回覆」；提問用底部 Sheet＋常見問題 chip |
 | `Img` + `.demo-tag` | 照片：Demo 的圖庫照自動標「示意照」；教練自己上傳的不標；檔案缺失時顯示佔位 |
 | `.console-wide`、`.ed-*`、`.pv-frame` | 教練後台編輯器：卡片式表單；桌機 ≥1024px 左表單、右手機框即時預覽 |
