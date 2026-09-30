@@ -26,6 +26,7 @@ A pickleball platform for Taiwan to find courts, coaches, classes, and games.
 
 | 日期 | PR | 內容 |
 |---|---|---|
+| 2026-09-30 | [#7](https://github.com/wutiger555/PIKYOO/pull/7) | 文件：[商業模式與收費設計（草案）](docs/BUSINESS_MODEL.md)，含教練平台費（首堂 12%／回頭 3%）、Pro 訂閱、學生不收服務費、匹克球場地溢價與場館時段機會、收入估算與待決定事項 |
 | 2026-09-30 | [#6](https://github.com/wutiger555/PIKYOO/pull/6) | 文件：README 寫上正式網址與更新紀錄、新增給 AI 助理的專案說明 `CLAUDE.md`、`web/README` 與設計系統文件補上電腦版與訪客限制 |
 | 2026-09-30 | [#5](https://github.com/wutiger555/PIKYOO/pull/5) | **電腦版全部完成**（[DESKTOP.md](docs/DESKTOP.md)）：頂部導覽、教練頁右側預約卡、找教練篩選欄與比較表、首頁兩欄、預約與球場兩欄、教練後台左側選單＋表格、其他頁面置中單欄。**訪客限制**：未登入只看教練的照片、認證、價格、自介，其餘登入解鎖；訪客首頁引導「用 LINE 免費註冊」 |
 | 2026-09-29 | [#4](https://github.com/wutiger555/PIKYOO/pull/4) | 教練頁 **問與答** 取代「用 LINE 問問題」，擋掉電話／LINE／Email，避免學生與教練私下約課；教練後台可回覆 |
@@ -37,6 +38,7 @@ A pickleball platform for Taiwan to find courts, coaches, classes, and games.
 
 - [產品計劃書（MVP PRD）v1.0](docs/PRD.md)：功能規格、流程、資料模型、時程
 - [市場分析與產品策略 v0.3](docs/PLAN.md)：競品、差異化、可行性、金流與平台決策
+- [商業模式與收費設計（草案）](docs/BUSINESS_MODEL.md)：教練平台費（首堂 12%／回頭 3%）、Pro 訂閱、場館與匹克球溢價、收入估算、待決定事項
 - [品牌與 UI/UX 設計簡報 v1.0](docs/BRAND_DESIGN_BRIEF.md)：給 Claude Design 的 Logo 與設計系統簡報
 - [設計系統](docs/DESIGN_SYSTEM.md)：螢光球 × 碳纖維，token、元件與規則
 - [電腦版設計規劃與實作狀態](docs/DESKTOP.md)：斷點、元件對應、每頁版型、已確認的決定

@@ -4,7 +4,7 @@ A pickleball platform for 雙北 (Taipei / New Taipei): find coaches and book le
 
 - **Live:** <https://pikyoo.vercel.app> is `main`, auto-deployed by Vercel (project `pikyoo`, root directory `web/`).
 - **Code:** `web/` (Next.js App Router + TypeScript + Tailwind v4). Its own notes are in `web/CLAUDE.md` / `web/AGENTS.md`. Read the Next.js docs in `web/node_modules/next/dist/docs/` before relying on memory, because this Next.js version has breaking changes.
-- **Docs:** `docs/PRD.md` (spec, F-numbers), `docs/PLAN.md` (strategy), `docs/DESIGN_SYSTEM.md`, `docs/DESKTOP.md` (desktop layouts and decisions), `docs/PHOTOS.md` (photo sources), `docs/SETUP.md`.
+- **Docs:** `docs/PRD.md` (spec, F-numbers), `docs/PLAN.md` (strategy), `docs/BUSINESS_MODEL.md` (pricing and revenue draft), `docs/DESIGN_SYSTEM.md`, `docs/DESKTOP.md` (desktop layouts and decisions), `docs/PHOTOS.md` (photo sources), `docs/SETUP.md`.
 
 ## Working with the owner
 
