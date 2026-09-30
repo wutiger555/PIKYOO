@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Icon } from "@/components/pk/Icon";
 import { ShareSheet } from "@/components/pk/ShareSheet";
 import { SoonButton } from "@/components/pk/Shell";
+import { TopNav } from "@/components/pk/TopNav";
 import { Seats } from "@/components/pk/Ticket";
 import { Status } from "@/components/pk/Badges";
 import { useDemo, useGameView } from "@/lib/demo-store";
@@ -20,7 +21,8 @@ export function JoinSuccessScreen({ game: g }: { game: Game }) {
 
   if (!my) {
     return (
-      <div className="success">
+      <div className="success dk dk-narrow">
+        <TopNav active="games" />
         <div className="hero">
           <h1>還沒報名這一局</h1>
           <p className="text-muted" style={{ margin: 0 }}>回到球局詳情就可以報名。</p>
@@ -36,7 +38,8 @@ export function JoinSuccessScreen({ game: g }: { game: Game }) {
   const see = g.dayLabel === "今天" ? (parseInt(g.startsAt, 10) >= 17 ? "今晚見" : "待會見") : g.dayLabel + "見";
 
   return (
-    <div className="success">
+    <div className="success dk dk-narrow">
+      <TopNav active="games" />
       <div className="hero">
         {wait ? (
           <>

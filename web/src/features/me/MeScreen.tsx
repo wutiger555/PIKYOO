@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useState } from "react";
 import { LevelChip } from "@/components/pk/Badges";
 import { Icon, type IconName } from "@/components/pk/Icon";
+import { Crumbs } from "@/components/pk/Crumbs";
 import { SoonButton, TabBar } from "@/components/pk/Shell";
+import { TopNav } from "@/components/pk/TopNav";
 import { LoginSheet } from "@/components/pk/LoginSheet";
 import { GameTicket } from "@/components/pk/Ticket";
 import { useToast } from "@/components/pk/Toast";
@@ -35,7 +37,9 @@ export function MeScreen() {
 
   return (
     <>
-      <div className="scroll">
+      <div className="scroll dk dk-narrow">
+        <TopNav />
+        <Crumbs items={[["首頁", "/"], ["我的"]]} />
         <div className="home-hero carbon">
           <div className="me-top">
             <span className="avatar me-avatar">{profile.name.slice(0, 1)}</span>

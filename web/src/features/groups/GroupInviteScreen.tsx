@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Cred } from "@/components/pk/Badges";
 import { Icon } from "@/components/pk/Icon";
+import { Crumbs } from "@/components/pk/Crumbs";
 import { AppBar } from "@/components/pk/Shell";
+import { TopNav } from "@/components/pk/TopNav";
 import { useToast } from "@/components/pk/Toast";
 import { useDemo } from "@/lib/demo-store";
 import { money } from "@/lib/format";
@@ -24,7 +26,7 @@ export function GroupInviteScreen({ id }: { id: string }) {
     return (
       <>
         <AppBar title="邀請" back="/" />
-        <div className="scroll"><div className="empty-s" style={{ paddingTop: 64 }}><h3>這個邀請已失效</h3><Link className="btn btn-primary" href="/coaches">看看其他教練</Link></div></div>
+        <div className="scroll dk dk-narrow"><TopNav /><div className="empty-s" style={{ paddingTop: 64 }}><h3>這個邀請已失效</h3><Link className="btn btn-primary" href="/coaches">看看其他教練</Link></div></div>
       </>
     );
   }
@@ -34,7 +36,9 @@ export function GroupInviteScreen({ id }: { id: string }) {
   return (
     <>
       <AppBar title="朋友邀你上課" back={`/groups/${g.id}`} />
-      <div className="scroll" style={{ paddingBottom: 24 }}>
+      <div className="scroll dk dk-narrow dk-float" style={{ paddingBottom: 24 }}>
+        <TopNav />
+        <Crumbs items={[["首頁", "/"], ["朋友邀你上課"]]} />
         <div className="invite-cover">
           {cover && <Img src={cover.src} alt={cover.alt} sizes="480px" />}
         </div>

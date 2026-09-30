@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Status } from "@/components/pk/Badges";
 import { Icon, type IconName } from "@/components/pk/Icon";
 import { AppBar, Sheet, SoonButton } from "@/components/pk/Shell";
+import { TopNav } from "@/components/pk/TopNav";
 import { useToast } from "@/components/pk/Toast";
 import { PAYOUT_METHODS, RECEIVED_BEFORE, TODAY_AGENDA } from "@/lib/data/coaches";
 import { useDemo } from "@/lib/demo-store";
@@ -14,11 +15,48 @@ import type { BookingRequest, PaymentRow } from "@/lib/types";
 
 type ConsoleTab = "today" | "lessons" | "page" | "pay";
 
+const CONSOLE_LINKS: [ConsoleTab, string, IconName, string][] = [
+  ["today", "/coach", "sun", "今天"],
+  ["lessons", "/coach/lessons", "cal", "課程時段"],
+  ["page", "/coach/profile", "user", "教練頁"],
+  ["pay", "/coach/payments", "wallet", "收款"],
+];
+
+/** Badge counts: 今天 = pending bookings + unanswered questions, 收款 = transfers students reported. */
+function useConsoleBadges(): Partial<Record<ConsoleTab, number>> {
+  const { requests, payments, questions, myCoach } = useDemo();
+  return {
+    today: requests.filter((r) => r.status === "pending").length + questions.filter((q) => q.coachId === myCoach.id && !q.answer).length,
+    pay: payments.filter((p) => p.status === "reported").length,
+  };
+}
+
+/** Console page frame. Phone: the scroller between AppBar and CoachTabs. Desktop (`.dk`): coach TopNav, a left
+ *  menu in place of the bottom tabs, content on the right (docs/DESKTOP.md §5.8). */
+export function ConsoleFrame({ active, children, className }: { active: ConsoleTab; children: React.ReactNode; className?: string }) {
+  const badges = useConsoleBadges();
+  return (
+    <div className={`scroll dk con${className ? " " + className : ""}`}>
+      <TopNav coach />
+      <div className="con-cols">
+        <nav className="con-side dk-only" aria-label="教練後台">
+          {CONSOLE_LINKS.map(([k, href, icon, label]) => (
+            <Link key={k} href={href} className="con-link" aria-current={active === k ? "page" : undefined}>
+              <Icon name={icon} size={20} />
+              <span style={{ flex: 1 }}>{label}</span>
+              {!!badges[k] && <span className="con-badge">{badges[k]}</span>}
+            </Link>
+          ))}
+        </nav>
+        <div className="con-main">{children}</div>
+      </div>
+    </div>
+  );
+}
+
 /** Coach tab bar: 今天 · 課程時段 · 教練頁 · 收款, with pending/reported badges. */
 export function CoachTabs({ active }: { active: ConsoleTab }) {
-  const { requests, payments, questions, myCoach } = useDemo();
-  const pend = requests.filter((r) => r.status === "pending").length + questions.filter((q) => q.coachId === myCoach.id && !q.answer).length;
-  const rep = payments.filter((p) => p.status === "reported").length;
+  const { today: pend, pay: rep } = useConsoleBadges();
   const tab = (key: ConsoleTab, href: string, icon: IconName, label: string, badge?: number) => (
     <Link className="tab" href={href} aria-current={active === key ? "page" : undefined}>
       <span style={{ position: "relative" }}>
@@ -38,9 +76,18 @@ export function CoachTabs({ active }: { active: ConsoleTab }) {
   );
 }
 
-function RequestCard({ r }: { r: BookingRequest }) {
+/** 確認／婉拒 a booking request, with the toast that says what the student gets. */
+function useRequestActions() {
   const toast = useToast();
   const { confirmRequest } = useDemo();
+  return {
+    decline: (r: BookingRequest) => { confirmRequest(r.id, false); toast("已婉拒，會通知學生並推薦其他時段"); },
+    accept: (r: BookingRequest) => { confirmRequest(r.id, true); toast(`已確認，並用 LINE 傳 ${r.pay} 付款資訊給 ${r.name}`); },
+  };
+}
+
+function RequestCard({ r }: { r: BookingRequest }) {
+  const { accept, decline } = useRequestActions();
   return (
     <article className={`req${r.status !== "pending" ? " done" : ""}`}>
       <div className="req-top">
@@ -57,8 +104,8 @@ function RequestCard({ r }: { r: BookingRequest }) {
       {r.status === "pending" ? (
         <>
           <div className="btnrow btnrow-tight">
-            <button className="btn btn-secondary" onClick={() => { confirmRequest(r.id, false); toast("已婉拒，會通知學生並推薦其他時段"); }}>婉拒</button>
-            <button className="btn btn-primary" onClick={() => { confirmRequest(r.id, true); toast(`已確認，並用 LINE 傳 ${r.pay} 付款資訊給 ${r.name}`); }}>確認預約</button>
+            <button className="btn btn-secondary" onClick={() => decline(r)}>婉拒</button>
+            <button className="btn btn-primary" onClick={() => accept(r)}>確認預約</button>
           </div>
           <div className="fine">{r.expiresIn}內未處理會自動取消</div>
         </>
@@ -75,6 +122,37 @@ function RequestCard({ r }: { r: BookingRequest }) {
   );
 }
 
+/** Desktop: the same requests as one table — who, when and what, note, amount, deadline, actions. */
+function RequestTable({ requests }: { requests: BookingRequest[] }) {
+  const { accept, decline } = useRequestActions();
+  return (
+    <table className="con-table dk-only">
+      <thead><tr><th>學生</th><th>時間與方案</th><th>備註</th><th className="r">金額</th><th>處理</th></tr></thead>
+      <tbody>
+        {requests.map((r) => (
+          <tr key={r.id} className={r.status !== "pending" ? "done" : undefined}>
+            <td>
+              <div className="con-who"><span className="avatar">{r.initial}</span><div><b>{r.name}</b><small>{r.level}・{r.groupId ? `揪團 ${r.headcount} 人` : r.firstTime ? "第一次上課" : `上過 ${r.times} 次`}</small></div></div>
+            </td>
+            <td><b>{r.when}</b><small>{r.plan}</small></td>
+            <td className="con-note">{r.note || <span className="text-muted">—</span>}</td>
+            <td className="r num con-amt">{money(r.amount)}</td>
+            <td>
+              {r.status === "pending" ? (
+                <div className="con-acts">
+                  <button className="btn btn-secondary" onClick={() => decline(r)}>婉拒</button>
+                  <button className="btn btn-primary" onClick={() => accept(r)}>確認</button>
+                  <small>{r.expiresIn}內未處理自動取消</small>
+                </div>
+              ) : r.status === "ok" ? <Status tone="open">已確認</Status> : <Status tone="ended">已婉拒</Status>}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
 /** F5-5 教練首頁「今天」: pending bookings, this week, money still due; one-tap confirm sends payment info via LINE. */
 export function CoachTodayScreen() {
   const toast = useToast();
@@ -84,7 +162,7 @@ export function CoachTodayScreen() {
   const due = payments.filter((p) => p.status !== "paid").reduce((a, p) => a + p.amount, 0);
   return (
     <>
-      <div className="scroll" style={{ paddingBottom: 24 }}>
+      <ConsoleFrame active="today" className="con-pb">
         <div className="home-hero home-hero-coach carbon">
           <div className="home-top">
             <span className="role-pill"><Icon name="cap" size={14} />教練模式</span>
@@ -106,16 +184,18 @@ export function CoachTodayScreen() {
             <h2><span className="en">Requests</span>待確認預約</h2>
             <span className="text-muted" style={{ fontSize: 14 }}>確認後自動送付款資訊</span>
           </div>
-          <div className="stack">{requests.map((r) => <RequestCard key={r.id} r={r} />)}</div>
+          <div className="stack mb-only">{requests.map((r) => <RequestCard key={r.id} r={r} />)}</div>
+          <RequestTable requests={requests} />
         </section>
+        <div className="con-grid">
         <section className="sec">
           <div className="sec-head">
             <h2><span className="en">Questions</span>學生提問</h2>
             <Link className="linklike" href={`/coaches/${myCoach.id}`}>看教練頁</Link>
           </div>
-          {ask.length ? <div className="stack">{ask.map((q) => <AnswerCard key={q.id} q={q} />)}</div> : <p className="text-muted" style={{ margin: 0 }}>沒有待回覆的提問。回覆會公開在教練頁，其他學生也看得到。</p>}
+          {ask.length ? <div className="stack con-qs">{ask.map((q) => <AnswerCard key={q.id} q={q} />)}</div> : <p className="text-muted" style={{ margin: 0 }}>沒有待回覆的提問。回覆會公開在教練頁，其他學生也看得到。</p>}
         </section>
-        <section className="sec">
+        <section className="sec con-today">
           <div className="sec-head">
             <h2><span className="en">Today</span>今天的課</h2>
             <SoonButton className="linklike" msg="行事曆（週檢視）">行事曆</SoonButton>
@@ -134,7 +214,8 @@ export function CoachTodayScreen() {
             ))}
           </div>
         </section>
-      </div>
+        </div>
+      </ConsoleFrame>
       <CoachTabs active="today" />
     </>
   );
@@ -164,7 +245,11 @@ export function CoachPaymentsScreen() {
         title="收款"
         action={<button className="btn btn-ghost btn-icon" onClick={() => setSettings(true)} aria-label="收款設定"><Icon name="sliders" size={22} /></button>}
       />
-      <div className="scroll" style={{ paddingBottom: 24 }}>
+      <ConsoleFrame active="pay" className="con-pb">
+        <div className="con-titlebar dk-only">
+          <h1>收款</h1>
+          <button className="btn btn-secondary" onClick={() => setSettings(true)}><Icon name="sliders" size={18} />收款設定</button>
+        </div>
         <div className="paysum carbon">
           <small>10 月</small>
           <div className="paysum-row">
@@ -173,7 +258,7 @@ export function CoachPaymentsScreen() {
           </div>
           <div className="bar"><i style={{ width: `${Math.round((got / (got + due)) * 100)}%` }} /></div>
         </div>
-        <div className="pad" style={{ paddingTop: 16 }}>
+        <div className="pad con-filter" style={{ paddingTop: 16 }}>
           <div className="seg seg-tight" style={{ display: "flex" }} role="radiogroup">
             {opts.map(([k, l]) => (
               <label key={k} className="seg-opt">
@@ -183,7 +268,35 @@ export function CoachPaymentsScreen() {
             ))}
           </div>
         </div>
-        <div className="pad stack" style={{ paddingTop: 12 }}>
+        <table className="con-table dk-only">
+          <thead><tr><th>學生</th><th>項目</th><th>方式</th><th>狀態</th><th className="r">金額</th><th>處理</th></tr></thead>
+          <tbody>
+            {list.map((p) => (
+              <tr key={p.id}>
+                <td><div className="con-who"><span className="avatar">{p.initial}</span><b>{p.name}</b></div></td>
+                <td>{p.what}</td>
+                <td><span className="tag tag-neutral">{p.via}</span>{p.status === "reported" && <small>末五碼 <b className="num">{p.ref}</b></small>}</td>
+                <td><Status tone={PAY_LABEL[p.status][1]}>{PAY_LABEL[p.status][0]}</Status><small>{p.status === "paid" ? `${p.at} 入帳` : p.at}</small></td>
+                <td className="r num con-amt">{money(p.amount)}</td>
+                <td>
+                  {p.status === "reported" && (
+                    <div className="con-acts">
+                      <button className="btn btn-secondary" onClick={() => toast("已請學生重新確認")}>還沒收到</button>
+                      <button className="btn btn-primary" onClick={() => { markPaid(p.id); toast("已確認收款，學生會收到通知"); }}>確認收到</button>
+                    </div>
+                  )}
+                  {p.status === "wait" && (
+                    <div className="con-acts">
+                      <button className="btn btn-secondary" onClick={() => toast("已改為現場收款")}>改現場收</button>
+                      <button className="btn btn-secondary" onClick={() => toast(`已用 LINE 傳付款提醒給 ${p.name}`)}><Icon name="bell" size={16} />提醒</button>
+                    </div>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div className="pad stack mb-only" style={{ paddingTop: 12 }}>
           {list.map((p) => (
             <article key={p.id} className="payrow">
               <div className="payrow-top">
@@ -223,7 +336,7 @@ export function CoachPaymentsScreen() {
           ))}
         </div>
         <p className="fine pad" style={{ marginTop: 12 }}>MVP：錢直接進教練自己的帳戶，PIKYOO 幫你發付款資訊與對帳。Phase 3 接藍新金流後可線上刷卡並自動對帳。</p>
-      </div>
+      </ConsoleFrame>
       <CoachTabs active="pay" />
       {settings && <PayoutSettingsSheet onClose={() => setSettings(false)} />}
     </>

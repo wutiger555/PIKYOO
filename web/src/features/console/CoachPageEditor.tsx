@@ -12,7 +12,7 @@ import { COURTS } from "@/lib/data/courts";
 import { useDemo } from "@/lib/demo-store";
 import { LEVELS } from "@/lib/format";
 import type { Coach, CoachProfile, Level, PayMethod, PlayProfile, TimelineItem } from "@/lib/types";
-import { CoachTabs } from "./ConsoleScreens";
+import { CoachTabs, ConsoleFrame } from "./ConsoleScreens";
 
 const STRENGTHS = ["零基礎入門", "發球與接發球", "網前小球（dink）", "第三拍 drop", "重置球（reset）", "截擊", "快速對抽（hands battle）", "雙打站位與換位", "單打戰術", "比賽策略", "網球轉匹克球的揮拍修正", "親子課"];
 const AUDIENCE = ["第一次拿拍", "打過網球、羽球想轉項", "想先上課再去打新手局", "2.5–3.0 想升級", "準備參加積分賽", "一個人想找球伴", "跟朋友一起來的小班", "親子一起學", "銀髮族", "英文授課需求"];
@@ -73,8 +73,10 @@ export function CoachPageEditor() {
         title="我的教練頁"
         action={<button className="btn btn-ghost btn-icon ed-preview-btn" onClick={() => setPreview(true)} aria-label="預覽"><Icon name="image" size={22} /></button>}
       />
+      <ConsoleFrame active="page">
+      <h1 className="con-titlebar dk-only">我的教練頁</h1>
       <div className="console-wide">
-        <div className="scroll editor">
+        <div className="editor">
           <section className="ed-card ed-head">
             <div className="linkcard">
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -284,6 +286,7 @@ export function CoachPageEditor() {
           <div className="pv-frame"><CoachPublicPage coach={c} preview /></div>
         </aside>
       </div>
+      </ConsoleFrame>
       <CoachTabs active="page" />
     </>
   );

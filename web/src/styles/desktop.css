@@ -10,9 +10,16 @@
   .courts .date-h { position: static; }
 }
 
+/* console: the editor's phone preview overlay now sits inside the scroller, so pin it to the viewport */
+.con-pb { padding-bottom: 24px; }
+@media (max-width: 1023px) {
+  .con .ed-preview.open { position: fixed; inset: 0; max-width: 480px; margin: 0 auto; }
+}
+
 @media (min-width: 640px) and (max-width: 1023px) {
   .app-shell:has(.dk) { max-width: 720px; }
   .dk .fc-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .con .ed-preview.open { max-width: 720px; }
 }
 
 @media (min-width: 1024px) {
@@ -54,27 +61,27 @@
   .crumbs [aria-current] { color: var(--color-text); font-weight: 700; }
 
   /* coach page: photo mosaic, content left, sticky booking card right */
-  .dk .cp-media { max-width: 1200px; margin: 0 auto; padding: 0 32px; display: grid; grid-template-columns: 2fr 1fr; grid-template-rows: 208px 208px; gap: 8px; }
-  .dk .cp-media.n0 { grid-template-columns: 1fr; }
-  .dk .cp-media .cover { grid-row: 1 / 3; height: auto; border-radius: 16px 0 0 16px; overflow: hidden; }
-  .dk .cp-media.n0 .cover { border-radius: 16px; }
-  .dk .cp-media .cover .demo-tag { bottom: 12px; }
-  .dk .cp-tile { display: block; position: relative; overflow: hidden; background: var(--color-neutral-200); }
-  .dk .cp-media.n1 .cp-tile { grid-row: 1 / 3; border-radius: 0 16px 16px 0; }
-  .dk .cp-media.n2 .cp-tile:nth-child(2) { border-top-right-radius: 16px; }
-  .dk .cp-media.n2 .cp-tile:nth-child(3) { border-bottom-right-radius: 16px; }
-  .dk .cp-cols { max-width: 1200px; margin: 24px auto 0; padding: 0 32px; display: grid; grid-template-columns: minmax(0, 1fr) clamp(320px, 28vw, 380px); gap: clamp(28px, 3.5vw, 48px); align-items: start; }
-  .dk .cp-main > .chero:first-child { margin-top: 0; padding: 24px 28px; border-radius: 20px; }
-  .dk .chero h1 { font-size: 40px; }
-  .dk .anchors { top: 64px; margin-top: 12px; padding: 10px 0; }
-  .dk .blk { padding: 28px 0; }
-  .dk .blk h2 { font-size: 24px; }
-  .dk .plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .dk .group-cta { margin: 0; }
-  .dk .quotes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; padding: 0; overflow: visible; }
-  .dk .quote { flex: none; }
-  .dk .lockpanel { min-height: 300px; }
-  .dk .cp-aside { display: block; position: sticky; top: 88px; }
+  .dk.cp .cp-media { max-width: 1200px; margin: 0 auto; padding: 0 32px; display: grid; grid-template-columns: 2fr 1fr; grid-template-rows: 208px 208px; gap: 8px; }
+  .dk.cp .cp-media.n0 { grid-template-columns: 1fr; }
+  .dk.cp .cp-media .cover { grid-row: 1 / 3; height: auto; border-radius: 16px 0 0 16px; overflow: hidden; }
+  .dk.cp .cp-media.n0 .cover { border-radius: 16px; }
+  .dk.cp .cp-media .cover .demo-tag { bottom: 12px; }
+  .dk.cp .cp-tile { display: block; position: relative; overflow: hidden; background: var(--color-neutral-200); }
+  .dk.cp .cp-media.n1 .cp-tile { grid-row: 1 / 3; border-radius: 0 16px 16px 0; }
+  .dk.cp .cp-media.n2 .cp-tile:nth-child(2) { border-top-right-radius: 16px; }
+  .dk.cp .cp-media.n2 .cp-tile:nth-child(3) { border-bottom-right-radius: 16px; }
+  .dk.cp .cp-cols { max-width: 1200px; margin: 24px auto 0; padding: 0 32px; display: grid; grid-template-columns: minmax(0, 1fr) clamp(320px, 28vw, 380px); gap: clamp(28px, 3.5vw, 48px); align-items: start; }
+  .dk.cp .cp-main > .chero:first-child { margin-top: 0; padding: 24px 28px; border-radius: 20px; }
+  .dk.cp .chero h1 { font-size: 40px; }
+  .dk.cp .anchors { top: 64px; margin-top: 12px; padding: 10px 0; }
+  .dk:is(.cp, .bk) .blk { padding: 28px 0; }
+  .dk:is(.cp, .bk) .blk h2 { font-size: 24px; }
+  .dk.cp .plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dk.cp .group-cta { margin: 0; }
+  .dk.cp .quotes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; padding: 0; overflow: visible; }
+  .dk.cp .quote { flex: none; }
+  .dk.cp .lockpanel { min-height: 300px; }
+  .dk.cp .cp-aside { display: block; position: sticky; top: 88px; }
 
   /* find coaches: sentence header, filter sidebar, two-column cards */
   .dk .fc-wrap { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
@@ -154,4 +161,72 @@
   .dk.cd .o2 h1 { font-size: 32px !important; }
   .dk .cd-book { display: block; margin-bottom: 8px; }
   .dk .cd-book .btn { width: 100%; }
+
+  /* coach console: coach TopNav, left menu, content; tables for bookings and payments */
+  .dk.con { padding-bottom: 48px !important; }
+  .topnav-coach { gap: 16px; }
+  .topnav-coach .topnav-role { background: var(--color-text); color: var(--color-accent); }
+  .topnav-who { display: flex; align-items: center; gap: 8px; padding-left: 8px; font-size: 15px; font-weight: 700; }
+  .dk .con-cols { max-width: 1320px; margin: 24px auto 0; padding: 0 32px; display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 32px; align-items: start; }
+  .dk .con-side { display: flex; flex-direction: column; gap: 4px; position: sticky; top: 88px; }
+  .con-link { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 10px; font-size: 15px; font-weight: 700; color: var(--color-text); text-decoration: none; }
+  .con-link:hover { background: var(--color-neutral-100); }
+  .con-link[aria-current="page"] { background: var(--color-text); color: var(--color-on-carbon); }
+  .con-link[aria-current="page"] svg { color: var(--color-accent); }
+  .con-badge { min-width: 22px; height: 22px; padding: 0 6px; display: grid; place-items: center; border-radius: 11px; background: var(--color-accent); color: var(--color-text); font-size: 12px; font-weight: 700; }
+  .dk .con-main > .home-hero-coach { margin: 0; padding: 24px 28px; }
+  .dk.con .home-hero-coach .home-top { display: none; }
+  .dk.con .home-hero-coach h1 { margin-top: 0 !important; font-size: 32px !important; }
+  .dk .con-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; align-items: start; }
+  .dk .con-main .sec { padding: 28px 0 0; }
+  .dk .con-main .pad { padding-inline: 0; }
+  .dk .con-titlebar { display: flex; align-items: center; justify-content: space-between; margin: 0 0 16px; font-size: 32px; }
+  .dk .con-titlebar h1 { margin: 0; font-size: 32px; }
+  .dk .con-main > .paysum { margin: 0; }
+  .dk .con-filter { padding: 16px 0 12px !important; }
+  .dk .con-filter .seg { max-width: 560px; }
+  .dk .con-table { display: table; width: 100%; border-collapse: separate; border-spacing: 0; overflow: hidden; font-size: 14px; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-md); }
+  .con-table th { padding: 10px 14px; text-align: left; font-size: 12px; font-weight: 700; color: var(--color-muted); background: var(--color-neutral-100); border-bottom: 1px solid var(--color-line); }
+  .con-table td { padding: 12px 14px; vertical-align: middle; border-bottom: 1px solid var(--color-line); }
+  .con-table tr:last-child td { border-bottom: 0; }
+  .con-table tr.done td:not(:last-child) { opacity: .5; }
+  .con-table .r { text-align: right; }
+  .con-table td > b { display: block; }
+  .con-table small { display: block; margin-top: 2px; font-size: 12px; color: var(--color-muted); }
+  .con-who { display: flex; align-items: center; gap: 10px; } .con-who b { display: block; }
+  .con-note { max-width: 240px; color: var(--color-neutral-700); }
+  .con-amt { font-size: 18px; font-weight: 600; white-space: nowrap; }
+  .con-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .con-acts .btn { min-height: 36px; padding: 0 12px; font-size: 14px; }
+  .con-acts small { flex-basis: 100%; }
+  .dk.con .console-wide { padding: 0; grid-template-rows: auto; gap: 24px; }
+  .dk.con .editor { padding: 0 0 32px; }
+  .dk.con .ed-preview { position: sticky; top: 88px; height: calc(100dvh - 104px); padding: 0; }
+
+  /* reading and step pages: one centred 760px column; the bottom CTA floats over the page */
+  .dk.dk-narrow { padding: 0 0 48px !important; }
+  .dk.dk-narrow.dk-float { padding-bottom: 140px !important; }
+  .dk.dk-narrow > :not(.topnav):not(.sheet):not(.sheet-backdrop) { width: 100%; max-width: 760px; margin-left: auto; margin-right: auto; box-sizing: border-box; }
+  .dk.dk-narrow > .crumbs { padding: 0 16px; }
+  .dk.dk-narrow > .row-card { max-width: 728px; margin: 16px auto 0 !important; }
+  .dk .dk-actions { display: flex; justify-content: flex-end; padding: 0 16px; }
+  .app-shell:has(.dk-float) > .sticky-cta { display: flex; position: fixed; left: 50%; bottom: 24px; z-index: 25; width: min(760px, calc(100vw - 48px)); transform: translateX(-50%); border-radius: 20px; box-shadow: var(--shadow-lg); }
+  .app-shell:has(.onb) > .onb-top { width: 100%; max-width: 760px; margin: 16px auto 0; }
+  .dk.success { padding: 0 0 48px; }
+  .dk.success > .actions { margin-top: 0; }
+  .dk.success > .hero { padding-top: 56px; }
+
+  /* list heads that live above the phone scroller get a desktop copy inside the page */
+  .app-shell:has(.dk) > .list-head, .app-shell:has(.dk) > .host-mode { display: none; }
+  .dk .host-mode.dk-only { display: block; }
+  .dk .dk-head { display: flex; border-bottom: 0; padding: 20px 16px 12px; }
+  .dk .dk-head h1 { font-size: 32px; }
+
+  /* games list: two columns of tickets per day */
+  .dk.games .games-in { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+  .dk.games .dk-head { padding: 28px 0 8px; position: relative; }
+  .dk.games .dk-head h1 { font-size: 40px; }
+  .dk.games .games-new { position: absolute; right: 0; top: 28px; }
+  .dk.games .date-h { padding: 24px 0 10px; position: static; }
+  .dk.games .games-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding: 0; }
 }

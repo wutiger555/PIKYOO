@@ -41,7 +41,7 @@ export function OnboardingScreen() {
         <button className="btn btn-ghost" onClick={finish}>略過</button>
       </div>
 
-      <div className="scroll">
+      <div className="scroll dk dk-narrow dk-float onb">
         <div className="sec" style={{ paddingTop: "var(--space-6)" }}>
           {step === 0 && (
             <>

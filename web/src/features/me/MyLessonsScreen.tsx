@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useState } from "react";
 import { Status } from "@/components/pk/Badges";
 import { Icon } from "@/components/pk/Icon";
+import { Crumbs } from "@/components/pk/Crumbs";
 import { SoonButton, TabBar } from "@/components/pk/Shell";
+import { TopNav } from "@/components/pk/TopNav";
 import { BOOKING_DAYS } from "@/lib/data/coaches";
 import { useCoaches, useDemo } from "@/lib/demo-store";
 import { money } from "@/lib/format";
@@ -97,17 +99,27 @@ export function MyLessonsScreen() {
     );
   }
 
+  // The phone keeps the head above the scroller; desktop renders it inside the page (the outer one is hidden there).
+  const head = (name: string) => (
+    <>
+      <div className="t"><h1>我的課</h1></div>
+      <div className="seg" style={{ display: "flex" }} role="radiogroup" aria-label="課程">
+        {([["next", "即將上課"], ["group", `揪團中${gathering.length ? " " + gathering.length : ""}`], ["done", "上過的"]] as [Tab, string][]).map(([k, l]) => (
+          <label key={k} className="seg-opt"><input type="radio" name={name} checked={tab === k} onChange={() => setTab(k)} />{l}</label>
+        ))}
+      </div>
+    </>
+  );
+
   return (
     <>
-      <div className="list-head">
-        <div className="t"><h1>我的課</h1></div>
-        <div className="seg" style={{ display: "flex" }} role="radiogroup" aria-label="課程">
-          {([["next", "即將上課"], ["group", `揪團中${gathering.length ? " " + gathering.length : ""}`], ["done", "上過的"]] as [Tab, string][]).map(([k, l]) => (
-            <label key={k} className="seg-opt"><input type="radio" name="lt" checked={tab === k} onChange={() => setTab(k)} />{l}</label>
-          ))}
-        </div>
+      <div className="list-head">{head("lt")}</div>
+      <div className="scroll dk dk-narrow" style={{ padding: "var(--space-4) var(--space-4) var(--space-6)" }}>
+        <TopNav />
+        <Crumbs items={[["首頁", "/"], ["我的課"]]} />
+        <div className="list-head dk-only dk-head">{head("lt-dk")}</div>
+        {body}
       </div>
-      <div className="scroll" style={{ padding: "var(--space-4) var(--space-4) var(--space-6)" }}>{body}</div>
       <TabBar active="lessons" />
     </>
   );
