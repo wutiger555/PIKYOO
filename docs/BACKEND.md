@@ -133,7 +133,7 @@ web/src/lib/source/
 | 改名額（直接改 `games`） | 團主加名額 | 名額變多時自動遞補候補；不能少於已報名人數 |
 | `request_booking` | 送出預約申請 | 只能約教練有開的時段；名額要夠；付款方式要是教練收的；48 小時或開課前沒回覆就逾時 |
 | `decide_booking` | 教練確認／婉拒 | 確認後每個人各開一筆應付款（揪團時每人付自己那份）並通知 |
-| `create_lesson_group` → `join_lesson_group` → `submit_lesson_group` | 揪朋友一起上 | 先佔時段、拿邀請碼；朋友用連結加入；滿最少人數才能送給教練；開課前 24 小時還沒送出就逾時取消 |
+| `create_lesson_group` → `join_lesson_group` → `submit_lesson_group` | 揪朋友一起上 | 先佔時段、拿邀請碼：揪團期間保留「成員數」與「方案最少人數」取大者的名額，超過的名額仍可單獨預約；朋友用連結加入；滿最少人數才能送給教練；開課前 24 小時還沒送出就逾時取消 |
 | `report_payment`、`mark_payment_paid`、`payment_instructions` | 付款 | 學生回報（可附末五碼）；教練標記已收；學生只看得到自己那筆的收款資訊 |
 | `answer_question`、`hide_question` | 教練回覆、隱藏提問 | 問題和回覆都不能有電話、Email、LINE／IG 帳號、「私訊我」（跟 `web/src/lib/contact.ts` 同一套規則，兩邊要一起改） |
 | `expire_stale` | 排程：過期預約、逾時揪團 | 每幾分鐘跑一次（pg_cron，B5 設定） |
@@ -291,12 +291,17 @@ B1–B3 是最短的「真的能用」路徑：讀得到資料 → 能登入 →
 | 2026-09-30 | 先只用**一個** Supabase 專案（`pikyoo-dev`），正式與分支預覽共用。有真的使用者之前再另開測試用專案（免費版最多 2 個）；封測前升級 Pro。 |
 | 2026-09-30 | seed 的示範教練與球局會先放在正式資料庫，讓頁面不是空的；**公開上線前清掉**（示意照不能當成真教練）。 |
 | 2026-09-30 | 資料庫操作由 Claude 透過 Supabase MCP 統一處理（§9.4）。 |
+| 2026-09-30 | 本機 Claude Code 也接好 Supabase MCP 與 CLI（`supabase login` + `link`），`supabase db push` 可直接套用 migration。 |
+| 2026-09-30 | **揪團湊人時保留「成員數與最少人數取大者」的名額**。只保留已加入的人時，陌生人可能先訂走剩下的位子，揪團就湊不到最少人數；整堂保留又會把教練的時段佔到開課前 24 小時。這樣揪團一定湊得起來，多出來的名額仍開放給其他人。 |
 
 **目前進度**
 
 - [x] B0：規劃、schema、RLS、函式、seed、檢查（[#8](https://github.com/wutiger555/PIKYOO/pull/8)）
-- [x] Supabase 專案 `pikyoo-dev` 已建立（尚未套用 migration）
-- [ ] Owner：接上 Supabase MCP（§9.4）→ 開新 session
-- [ ] Owner：Vercel `pikyoo` 填 `NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`、`SUPABASE_SECRET_KEY`（SETUP §2.3）；Auth 網址設定（SETUP §2.4）
-- [ ] Owner：Vercel 新增 `pikyoo-demo`
-- [ ] Claude：透過 MCP 套用 `supabase/migrations/` 與 `seed.sql`、跑 advisors → 開始 B1
+- [x] Supabase 專案 `pikyoo-dev` 已建立
+- [x] Owner：接上 Supabase MCP（§9.4）
+- [x] Owner：Vercel 新增 `pikyoo-demo`（`https://pikyoo-demo.vercel.app`）
+- [x] Claude：`pikyoo-dev` 已套用 `init`、`storage` 兩個 migration 與 `seed.sql`（2026-09-30）；`dev/checks.sql` 在 `pikyoo-dev` 上以 transaction 跑過並 rollback，全部通過
+- [ ] Owner：Vercel `pikyoo` 填 `NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`、`SUPABASE_SECRET_KEY`（SETUP §2.3）；Auth 網址設定（SETUP §2.4：Site URL `https://pikyoo.vercel.app`；Redirect URLs `http://localhost:3000/**`、`https://pikyoo.vercel.app/**`、`https://pikyoo-*-max-x1.vercel.app/**`）
+- [ ] Claude：`group_holds_minimum` migration 合併後套用到 `pikyoo-dev`
+- [ ] Claude：開始 B1
+- [ ] 待處理的 advisor 警告：5 個函式沒設 `search_path`（`touch_updated_at`、`contact_kind`、`assert_no_contact`、`tpe_weekday`、`tpe_hhmi`）；security definer 的 RPC 本來就是給前端呼叫的（預期中），但 `is_admin`、`my_coach_id`、`is_group_member` 這類內部 helper 可以考慮移出 `public`

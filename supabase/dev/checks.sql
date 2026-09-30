@@ -169,6 +169,36 @@ end $$;
 reset role;
 do $$ begin assert (select count(*) from public.notifications where kind = 'game_cancelled') = 6, 'everyone signed up is told (not the host or the guest)'; end $$;
 
+-- ── a gathering group holds its minimum (Mia 小班課: 4 seats, 3–4 people) ──
+do $$ begin perform test.login('小安'); end $$;
+set role authenticated;
+do $$
+declare g public.lesson_groups;
+begin
+  g := public.create_lesson_group((select id from public.coach_plans where key = 'small' and coach_id = (select id from public.coaches where slug = 'mia')),
+         test.next_at('五', '20:00'), '');
+  perform set_config('test.hold_code', g.invite_code, false);
+  assert public.lesson_seats_left(g.plan_id, g.starts_at) = 1, 'a group of 1 holds the 3-person minimum';
+end $$;
+do $$ begin perform test.login('Jason'); end $$;
+do $$ begin perform public.request_booking((select id from public.coach_plans where key = 'small' and coach_id = (select id from public.coaches where slug = 'mia')),
+  test.next_at('五', '20:00'), 1, '', 'line_pay'); end $$;
+do $$ begin perform test.login('Peggy'); end $$;
+do $$ begin
+  assert test.fails($q$select public.request_booking((select id from public.coach_plans where key = 'small' and coach_id = (select id from public.coaches where slug = 'mia')),
+    test.next_at('五', '20:00'), 1, '', 'line_pay')$q$) = 'not enough seats', 'held seats are not for solo bookings';
+  assert test.fails($q$select public.create_lesson_group((select id from public.coach_plans where key = 'small' and coach_id = (select id from public.coaches where slug = 'mia')),
+    test.next_at('五', '20:00'), '')$q$) = 'not enough seats', 'a second group needs room for its own minimum';
+end $$;
+do $$ begin perform test.login('葉子'); end $$;
+do $$ begin perform public.join_lesson_group(current_setting('test.hold_code')); end $$;
+do $$ begin perform test.login('阿何'); end $$;
+do $$ begin perform public.join_lesson_group(current_setting('test.hold_code')); end $$;
+do $$ begin perform test.login('小周'); end $$;
+do $$ begin assert test.fails(format('select public.join_lesson_group(%L)', current_setting('test.hold_code'))) = 'group is full',
+  'past the minimum a friend needs a free seat'; end $$;
+reset role;
+
 -- ── housekeeping and account deletion ──
 update public.lesson_bookings set expires_at = now() - interval '1 minute' where status = 'pending';
 select public.expire_stale();
