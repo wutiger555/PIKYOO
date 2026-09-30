@@ -59,7 +59,7 @@
    - **Framework Preset**：選完 Root Directory 後應自動變成 **Next.js**，沒變就手動選
    - Build / Output / Install Command：保持預設
    - **Environment Variables**：現在先不用填（app 目前只用 mock data）
-5. 按 **Deploy**。完成後記下 Production 網址（例如 `https://pikyoo.vercel.app`）。
+5. 按 **Deploy**。完成後記下 Production 網址。本專案已完成這一步：**<https://pikyoo.vercel.app>**（2026-09-30 確認，`main` 合併後自動更新）。
 6. **Function 區域改東京**（預設是美東 `iad1`，離台灣和 Supabase 都很遠）：
    Project → **Settings** → **Functions** → **Function Regions** → 選 **Tokyo (hnd1)** → Save。Hobby 只能選一個區域。
 7. **Preview 部署**：之後每個 PR / 分支都會自動部署，PR 裡會出現 **Visit Preview** 連結。

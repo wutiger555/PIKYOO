@@ -1,0 +1,50 @@
+# PIKYOO 匹友: project notes for Claude
+
+A pickleball platform for 雙北 (Taipei / New Taipei): find coaches and book lessons, find games, find courts. Right now it is a **clickable demo on mock data**. Supabase, LINE Login/LIFF and payments come later (`docs/PLAN.md`, `docs/SETUP.md`).
+
+- **Live:** <https://pikyoo.vercel.app> is `main`, auto-deployed by Vercel (project `pikyoo`, root directory `web/`).
+- **Code:** `web/` (Next.js App Router + TypeScript + Tailwind v4). Its own notes are in `web/CLAUDE.md` / `web/AGENTS.md`. Read the Next.js docs in `web/node_modules/next/dist/docs/` before relying on memory, because this Next.js version has breaking changes.
+- **Docs:** `docs/PRD.md` (spec, F-numbers), `docs/PLAN.md` (strategy), `docs/DESIGN_SYSTEM.md`, `docs/DESKTOP.md` (desktop layouts and decisions), `docs/PHOTOS.md` (photo sources), `docs/SETUP.md`.
+
+## Working with the owner
+
+- The owner writes in Traditional Chinese (Taiwan). Reply in the same language, in plain terms.
+- **Workflow (decided 2026-09-30):**
+  1. Work on the session branch.
+  2. Verify (see below).
+  3. Open a PR and **merge it to `main` yourself** once checks pass.
+  4. Point the owner at the live URL.
+
+  They don't want to review a separate preview URL for every change. Keep one PR per change set.
+- **Records:** after each merged change, add a row to the 更新紀錄 table in `README.md`. When a product decision changes, update the matching doc: PRD F-rows, `DESKTOP.md` §9 onward, `PHOTOS.md`.
+
+## Product decisions to keep
+
+- **No private LINE contact between students and coaches.** It invites off-platform booking. Use the coach page's public 問與答 (PRD F3-11). `lib/contact.ts` blocks phone, email, LINE/IG handles and 「私訊我」. LINE is only PIKYOO's own official account, for notifications. Pickup-game hosts may still use a LINE contact.
+- **Visitors see only the basics.** On a coach page, a visitor sees photos, credentials, tagline, stats, plans and prices, and the bio. Everything else sits behind a sign-in panel (`GUEST_SECTIONS` in `CoachPageScreen.tsx`). Booking, joining a group and asking all open `LoginSheet` (用 LINE 登入／註冊). Signed-out visitors get the landing home page. Content is not hidden completely, so the pages stay useful for SEO and IG links.
+- **Photos** are Unsplash-License stock (mostly Asian players, indoor courts), tagged 「示意照」. They are never presented as the real coach. List every file with source and photographer in `docs/PHOTOS.md`.
+- **Phone first.** The phone layout must not change when desktop work is done. Desktop is ≥1024px. Tablet (640–1023px) is the phone layout widened to 720px.
+
+## Code conventions
+
+- UI copy is Traditional Chinese (Taiwan). Code, comments and commit messages are English. Match the surrounding style: dense one-line JSX, short doc comments that say why.
+- **Desktop opt-in:**
+  - Put `.dk` on a screen's scroller (`scroll dk …`) and render `<TopNav />` (+ `<Crumbs />`) inside it. All desktop CSS lives in `styles/desktop.css`.
+  - Helpers: `.dk-only` / `.mb-only` show or hide elements per layout; `.dk-narrow` is a centred 760px column; `.dk-float` makes the bottom CTA float.
+  - Console pages use `ConsoleFrame`.
+- **Demo state** lives in `lib/demo-store.tsx` (in memory, resets on reload). `signedIn` defaults to true; 登出 in 我的 or in the desktop avatar menu shows the visitor view.
+
+## Verify before pushing
+
+```bash
+cd web && npm run build && npx tsc --noEmit && npm run lint   # build first: it generates the PageProps/LayoutProps types
+```
+
+Then look at the pages. Playwright is installed globally (`$(npm root -g)/playwright`, Chromium preinstalled). Run it against `npx next start -p <port>` at 1280 and 390 wide (plus 1024 and 768 for layout work), and check for console errors and horizontal scroll. Before restarting, kill any old `next-server`: a stale server keeps the port and serves chunks that no longer exist.
+
+## Pitfalls already hit
+
+- A `Sheet` rendered **inside** a phone scroller makes the page jump when its input takes focus. Render sheets after the scroller (see `AskSheet`, `LoginSheet` usage).
+- Elements that sit **above** the phone scroller (list heads, the host mode switch) would land above `TopNav` on desktop. Render a desktop copy inside the scroller and hide the outer one at ≥1024px.
+- Desktop rules written as `.dk .x` also match descendants: the console editor's phone preview sits inside a `.dk` page. Coach-page rules are therefore scoped `.dk.cp`. When `.dk` and another class are on the same element, write them together (`.dk.cd`), not as descendant selectors.
+- Inline `style={{ display / margin }}` beats utility classes such as `.mb-only` or the narrow column. Wrap the element, or override with a targeted rule.
