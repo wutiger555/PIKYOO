@@ -26,6 +26,7 @@ A pickleball platform for 雙北 (Taipei / New Taipei): find coaches and book le
 - **Photos** are Unsplash-License stock (mostly Asian players, indoor courts), tagged 「示意照」. They are never presented as the real coach. List every file with source and photographer in `docs/PHOTOS.md`.
 - **Phone first.** The phone layout must not change when desktop work is done. Desktop is ≥1024px. Tablet (640–1023px) is the phone layout widened to 720px.
 
+- **Environments (decided 2026-09-30):** production is the `pikyoo` Vercel project + Supabase `pikyoo-dev`; the demo is a separate Vercel project `pikyoo-demo`. Current progress and owner to-dos: `docs/BACKEND.md` §13. Database work goes through the Supabase MCP when it is connected (§9.4).
 - **Keep the demo.** One codebase serves both: `NEXT_PUBLIC_DATA_SOURCE=demo` (mock data, the default when unset) and `live` (Supabase). The demo gets its own URL and must keep working. When a feature changes, update the mock data and the live adapter together (`docs/BACKEND.md` §1.3).
 
 ## Code conventions
