@@ -26,6 +26,7 @@ A pickleball platform for Taiwan to find courts, coaches, classes, and games.
 
 | 日期 | PR | 內容 |
 |---|---|---|
+| 2026-09-30 | [#6](https://github.com/wutiger555/PIKYOO/pull/6) | 文件：README 寫上正式網址與更新紀錄、新增給 AI 助理的專案說明 `CLAUDE.md`、`web/README` 與設計系統文件補上電腦版與訪客限制 |
 | 2026-09-30 | [#5](https://github.com/wutiger555/PIKYOO/pull/5) | **電腦版全部完成**（[DESKTOP.md](docs/DESKTOP.md)）：頂部導覽、教練頁右側預約卡、找教練篩選欄與比較表、首頁兩欄、預約與球場兩欄、教練後台左側選單＋表格、其他頁面置中單欄。**訪客限制**：未登入只看教練的照片、認證、價格、自介，其餘登入解鎖；訪客首頁引導「用 LINE 免費註冊」 |
 | 2026-09-29 | [#4](https://github.com/wutiger555/PIKYOO/pull/4) | 教練頁 **問與答** 取代「用 LINE 問問題」，擋掉電話／LINE／Email，避免學生與教練私下約課；教練後台可回覆 |
 | 2026-09-29 | [#3](https://github.com/wutiger555/PIKYOO/pull/3) | 教練與球場照片換成 Unsplash 免費圖庫的示意照（清單與授權見 [PHOTOS.md](docs/PHOTOS.md)） |
