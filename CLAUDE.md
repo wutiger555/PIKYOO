@@ -1,10 +1,11 @@
 # PIKYOO 匹友: project notes for Claude
 
-A pickleball platform for 雙北 (Taipei / New Taipei): find coaches and book lessons, find games, find courts. Right now it is a **clickable demo on mock data**. Supabase, LINE Login/LIFF and payments come later (`docs/PLAN.md`, `docs/SETUP.md`).
+A pickleball platform for 雙北 (Taipei / New Taipei): find coaches and book lessons, find games, find courts. Right now it is a **clickable demo on mock data**, moving to real data on Supabase in stages B1–B8 (`docs/BACKEND.md`). LINE Login/LIFF setup is in `docs/SETUP.md`.
 
 - **Live:** <https://pikyoo.vercel.app> is `main`, auto-deployed by Vercel (project `pikyoo`, root directory `web/`).
 - **Code:** `web/` (Next.js App Router + TypeScript + Tailwind v4). Its own notes are in `web/CLAUDE.md` / `web/AGENTS.md`. Read the Next.js docs in `web/node_modules/next/dist/docs/` before relying on memory, because this Next.js version has breaking changes.
-- **Docs:** `docs/PRD.md` (spec, F-numbers), `docs/PLAN.md` (strategy), `docs/BUSINESS_MODEL.md` (pricing and revenue draft), `docs/DESIGN_SYSTEM.md`, `docs/DESKTOP.md` (desktop layouts and decisions), `docs/PHOTOS.md` (photo sources), `docs/SETUP.md`.
+- **Docs:** `docs/PRD.md` (spec, F-numbers), `docs/PLAN.md` (strategy), `docs/BUSINESS_MODEL.md` (pricing and revenue draft), `docs/DESIGN_SYSTEM.md`, `docs/DESKTOP.md` (desktop layouts and decisions), `docs/PHOTOS.md` (photo sources), `docs/SETUP.md`, `docs/BACKEND.md` (real data: architecture, schema, stages).
+- **Database:** `supabase/` at the repo root: `migrations/` (tables, RLS, RPC), `seed.sql` (generated), `dev/` (plain-Postgres checks).
 
 ## Working with the owner
 
@@ -25,6 +26,8 @@ A pickleball platform for 雙北 (Taipei / New Taipei): find coaches and book le
 - **Photos** are Unsplash-License stock (mostly Asian players, indoor courts), tagged 「示意照」. They are never presented as the real coach. List every file with source and photographer in `docs/PHOTOS.md`.
 - **Phone first.** The phone layout must not change when desktop work is done. Desktop is ≥1024px. Tablet (640–1023px) is the phone layout widened to 720px.
 
+- **Keep the demo.** One codebase serves both: `NEXT_PUBLIC_DATA_SOURCE=demo` (mock data, the default when unset) and `live` (Supabase). The demo gets its own URL and must keep working. When a feature changes, update the mock data and the live adapter together (`docs/BACKEND.md` §1.3).
+
 ## Code conventions
 
 - UI copy is Traditional Chinese (Taiwan). Code, comments and commit messages are English. Match the surrounding style: dense one-line JSX, short doc comments that say why.
@@ -41,6 +44,8 @@ cd web && npm run build && npx tsc --noEmit && npm run lint   # build first: it 
 ```
 
 Then look at the pages. Playwright is installed globally (`$(npm root -g)/playwright`, Chromium preinstalled). Run it against `npx next start -p <port>` at 1280 and 390 wide (plus 1024 and 768 for layout work), and check for console errors and horizontal scroll. Before restarting, kill any old `next-server`: a stale server keeps the port and serves chunks that no longer exist.
+
+For database changes: add a new file under `supabase/migrations/` (never edit an applied one), then `cd web && npm run db:seed && npm run db:check`. Add a check to `supabase/dev/checks.sql` for every new rule (who can see or change what). `lib/contact.ts` and `public.contact_kind()` implement the same rule: change both.
 
 ## Pitfalls already hit
 

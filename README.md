@@ -44,10 +44,13 @@ A pickleball platform for Taiwan to find courts, coaches, classes, and games.
 - [電腦版設計規劃與實作狀態](docs/DESKTOP.md)：斷點、元件對應、每頁版型、已確認的決定
 - [Demo 照片清單](docs/PHOTOS.md)：每張照片的來源、攝影師與授權
 - [帳號與雲端服務設定指南](docs/SETUP.md)：Vercel、Supabase、LINE（MINI App／官方帳號）照順序設定
+- [後端與真實資料規劃](docs/BACKEND.md)：Demo 版怎麼保留、架構、資料庫與權限設計、登入、通知、分階段實作（B1–B8）
 
 ## 程式
 
 `web/` 是 MVP 的 Next.js 專案（目前用 mock data），怎麼跑、路由與結構見 [web/README.md](web/README.md)。
+
+`supabase/` 是資料庫：`migrations/`（資料表、權限規則、報名等函式）、`seed.sql`（由 mock 資料產生的開發用資料）、`dev/`（不需要 Docker 的本機檢查）。說明見 [docs/BACKEND.md](docs/BACKEND.md)。
 
 ## 開發流程
 

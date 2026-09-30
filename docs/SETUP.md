@@ -132,8 +132,7 @@ SUPABASE_SECRET_KEY=sb_secret_xxxxxxxx      # 只在伺服器用；名稱絕不�
 
 ```bash
 brew install supabase/tap/supabase
-cd web            # 或 repo 根目錄，依 Claude 之後的專案結構決定
-supabase init     # 產生 supabase/ 資料夾（config.toml、migrations/）
+# 在 repo 根目錄執行：supabase/ 資料夾（config.toml、migrations/、seed.sql）已經建好，不用再 supabase init
 supabase start    # 用 Docker 起本機 Postgres/Auth/Studio
 supabase login
 supabase link --project-ref <project-ref>   # 會問 Database Password
@@ -141,7 +140,7 @@ supabase migration new init_schema          # 產生新的 SQL migration 檔
 supabase db push                            # 把 migrations 套用到雲端專案
 ```
 
-工作流程：**schema 一律寫成 migration 檔、進 git**，不要在雲端 dashboard 直接改表。
+工作流程：**schema 一律寫成 migration 檔、進 git**，不要在雲端 dashboard 直接改表。完整流程與不需要 Docker 的本機檢查（`npm run db:check`）見 [BACKEND.md](BACKEND.md) §9。
 
 ---
 
