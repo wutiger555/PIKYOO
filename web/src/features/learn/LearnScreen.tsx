@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useState } from "react";
 import { CourtArt, LevelChip } from "@/components/pk/Badges";
 import { Icon } from "@/components/pk/Icon";
+import { Crumbs } from "@/components/pk/Crumbs";
 import { AppBar } from "@/components/pk/Shell";
+import { TopNav } from "@/components/pk/TopNav";
 import { GameTicket } from "@/components/pk/Ticket";
 import { COACHES } from "@/lib/data/coaches";
 import { useAllGames, useDemo } from "@/lib/demo-store";
@@ -28,7 +30,9 @@ export function LearnScreen() {
   return (
     <>
       <AppBar title="新手指南" back="/" historyBack />
-      <div className="scroll">
+      <div className="scroll dk dk-narrow">
+        <TopNav active="learn" />
+        <Crumbs items={[["首頁", "/"], ["第一次打"]]} />
         <div className="home-hero carbon learn-hero" style={{ marginTop: "var(--space-3)" }}>
           <span className="en">Start here</span>
           <h1 style={{ margin: 0, fontSize: 28 }}>第一次打匹克球？</h1>

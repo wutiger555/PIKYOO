@@ -7,7 +7,7 @@ import { useToast } from "@/components/pk/Toast";
 import { useDemo } from "@/lib/demo-store";
 import { money } from "@/lib/format";
 import type { Coach, Plan, Weekday } from "@/lib/types";
-import { CoachTabs } from "./ConsoleScreens";
+import { CoachTabs, ConsoleFrame } from "./ConsoleScreens";
 
 const WEEK: Weekday[] = ["一", "二", "三", "四", "五", "六", "日"];
 const UNITS: Plan["unit"][] = ["/人", "/堂", "/10 堂"];
@@ -34,8 +34,10 @@ export function CoachLessonsScreen() {
   return (
     <>
       <AppBar title="課程與時段" />
+      <ConsoleFrame active="lessons">
+      <h1 className="con-titlebar dk-only">課程與時段</h1>
       <div className="console-wide">
-        <div className="scroll editor editor-2">
+        <div className="editor editor-2">
           <section className="ed-card">
             <div className="sec-head"><h2><span className="en">Plans</span>課程方案</h2><span className="text-muted" style={{ fontSize: 13 }}>起價 {money(c.priceFrom)}</span></div>
             <p className="ed-hint">開啟「可揪朋友」的方案，學生可以發起揪團、邀朋友各自用帳號加入，人數到了才送給你確認。</p>
@@ -118,6 +120,7 @@ export function CoachLessonsScreen() {
           </section>
         </div>
       </div>
+      </ConsoleFrame>
       <CoachTabs active="lessons" />
     </>
   );

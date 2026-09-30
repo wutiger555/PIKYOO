@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { AppBar } from "@/components/pk/Shell";
+import { TopNav } from "@/components/pk/TopNav";
 import { useDemo } from "@/lib/demo-store";
 import { GameDetailScreen } from "./GameDetailScreen";
 
@@ -13,7 +14,8 @@ export function HostedGameDetail({ id }: { id: string }) {
   return (
     <>
       <AppBar title="球局" back="/games" />
-      <div className="scroll">
+      <div className="scroll dk dk-narrow">
+        <TopNav active="games" />
         <div className="empty-s" style={{ paddingTop: 64 }}>
           <h3>找不到這一局</h3>
           <p className="text-muted">可能已經取消，或連結有誤。</p>

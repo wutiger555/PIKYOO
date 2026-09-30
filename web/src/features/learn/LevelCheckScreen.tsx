@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { LevelChip } from "@/components/pk/Badges";
+import { Crumbs } from "@/components/pk/Crumbs";
 import { AppBar } from "@/components/pk/Shell";
+import { TopNav } from "@/components/pk/TopNav";
 import { GameTicket } from "@/components/pk/Ticket";
 import { useToast } from "@/components/pk/Toast";
 import { COACHES } from "@/lib/data/coaches";
@@ -50,7 +52,9 @@ export function LevelCheckScreen() {
     return (
       <>
         <AppBar title="程度自評" back="/learn" />
-        <div className="scroll" style={{ paddingBottom: "var(--space-6)" }}>
+        <div className="scroll dk dk-narrow" style={{ paddingBottom: "var(--space-6)" }}>
+          <TopNav active="learn" />
+          <Crumbs items={[["首頁", "/"], ["第一次打", "/learn"], ["程度自評"]]} />
           <div className="home-hero carbon" style={{ marginTop: "var(--space-3)", textAlign: "center" }}>
             <span className="en">Your level</span>
             <div style={{ display: "flex", justifyContent: "center", margin: "var(--space-3) 0" }}>
@@ -85,7 +89,9 @@ export function LevelCheckScreen() {
   return (
     <>
       <AppBar title="程度自評" back="/learn" />
-      <div className="scroll">
+      <div className="scroll dk dk-narrow dk-float">
+        <TopNav active="learn" />
+        <Crumbs items={[["首頁", "/"], ["第一次打", "/learn"], ["程度自評"]]} />
         <div className="sec" style={{ paddingTop: "var(--space-4)" }}>
           <div className="quiz-progress" role="progressbar" aria-valuemin={1} aria-valuemax={QUESTIONS.length} aria-valuenow={i + 1} aria-label="作答進度">
             {QUESTIONS.map((_, k) => <i key={k} className={k <= i ? "on" : ""} />)}

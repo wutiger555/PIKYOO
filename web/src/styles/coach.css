@@ -48,6 +48,11 @@
 .cmptable td { padding: 10px 6px; vertical-align: top; border-bottom: 1px solid var(--color-line); min-width: 92px; }
 .cmptable thead td { border-bottom: 2px solid var(--color-text); }
 .cmp-h { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.fc-check { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; font-size: 15px; }
+.fc-check input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--color-text); flex: none; }
+.fc-check small { display: block; font-size: 12px; color: var(--color-muted); }
+.fc-soon { min-height: 34px; padding: 0 12px; font-size: 14px; font-weight: 500; align-self: flex-start; }
+.fc-clear { align-self: flex-start; margin-top: 8px; font-size: 14px; }
 .empty-s { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; padding: 32px 16px; } .empty-s h3, .empty-s p { margin: 0; }
 .sheet-coach h2 { margin: 0 0 6px; }
 .lv-pick.lv-pick-lg { margin-top: 12px; }

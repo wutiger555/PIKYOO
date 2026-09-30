@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/pk/Icon";
 import { ShareSheet } from "@/components/pk/ShareSheet";
+import { Crumbs } from "@/components/pk/Crumbs";
 import { AppBar } from "@/components/pk/Shell";
+import { TopNav } from "@/components/pk/TopNav";
 import { GameTicket } from "@/components/pk/Ticket";
 import { useToast } from "@/components/pk/Toast";
 import { COURTS, getCourt } from "@/lib/data/courts";
@@ -84,7 +86,8 @@ export function HostScreen() {
   if (step === "done" && created) {
     return (
       <>
-        <div className="success">
+        <div className="success dk dk-narrow">
+          <TopNav active="games" />
           <div className="hero">
             <span className="tab-fab" style={{ margin: 0, boxShadow: "none" }}><Icon name="paddlePlus" size={28} stroke={2} /></span>
             <h1>開好了！貼到群組吧</h1>
@@ -104,23 +107,29 @@ export function HostScreen() {
     );
   }
 
+  // Rendered above the phone scroller, and again inside the desktop page (the outer one is hidden there).
+  const modeSwitch = (name: string) => (
+    <div className="seg" style={{ display: "flex" }} role="radiogroup" aria-label="開團方式">
+      <label className="seg-opt">
+        <input type="radio" name={name} checked={ai} onChange={restart} />
+        <Icon name="paddlePlus" size={18} />AI 一貼成局
+      </label>
+      <label className="seg-opt">
+        <input type="radio" name={name} checked={!ai} onChange={() => { setText(""); setD(emptyDraft()); setUnsure([]); setTried(false); setStep("form"); }} />
+        <Icon name="edit" size={18} />自己填
+      </label>
+    </div>
+  );
+
   return (
     <>
       <AppBar title="開團" back="/games" historyBack />
-      <div className="host-mode">
-        <div className="seg" style={{ display: "flex" }} role="radiogroup" aria-label="開團方式">
-          <label className="seg-opt">
-            <input type="radio" name="mode" checked={ai} onChange={restart} />
-            <Icon name="paddlePlus" size={18} />AI 一貼成局
-          </label>
-          <label className="seg-opt">
-            <input type="radio" name="mode" checked={!ai} onChange={() => { setText(""); setD(emptyDraft()); setUnsure([]); setTried(false); setStep("form"); }} />
-            <Icon name="edit" size={18} />自己填
-          </label>
-        </div>
-      </div>
+      <div className="host-mode">{modeSwitch("mode")}</div>
 
-      <div className="scroll" style={{ paddingBottom: "var(--space-6)" }}>
+      <div className="scroll dk dk-narrow dk-float" style={{ paddingBottom: "var(--space-6)" }}>
+        <TopNav active="games" />
+        <Crumbs items={[["首頁", "/"], ["球局", "/games"], ["開團"]]} />
+        <div className="host-mode dk-only">{modeSwitch("mode-dk")}</div>
         {step === "paste" && (
           <div className="sec" style={{ paddingTop: "var(--space-4)" }}>
             <h2 style={{ margin: 0 }}>把平常的揪團文貼上來</h2>

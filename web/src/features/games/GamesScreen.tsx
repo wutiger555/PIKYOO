@@ -6,6 +6,7 @@ import { Icon } from "@/components/pk/Icon";
 import { LevelPicker } from "@/components/pk/LevelPicker";
 import Link from "next/link";
 import { Sheet, TabBar } from "@/components/pk/Shell";
+import { TopNav } from "@/components/pk/TopNav";
 import { GameTicket } from "@/components/pk/Ticket";
 import { shortAreas } from "@/lib/data/courts";
 import { AREAS, DAY_GROUPS } from "@/lib/data/games";
@@ -29,30 +30,41 @@ export function GamesScreen() {
     <button className="chip" aria-pressed={f.chips.includes(k)} onClick={() => setGameFilters((p) => ({ ...p, chips: toggle(p.chips, k) }))}>{label}</button>
   );
 
+  // The phone keeps the head above the scroller; desktop renders it inside the page (the outer one is hidden there).
+  const head = (
+    <>
+      <div className="t">
+        <h1>找球友打球</h1>
+        <span className="text-muted" style={{ fontSize: 14 }}>{shortAreas(profile.areas)}</span>
+      </div>
+      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <div className="chips" style={{ flex: 1 }}>
+          {dayChip("today", "今天")}
+          {dayChip("tomorrow", "明天")}
+          {dayChip("weekend", "週末")}
+          {chip("eve", "晚上")}
+          {chip("beg", "新手友善")}
+          {chip("open", "有空位")}
+        </div>
+        <button className="btn btn-icon btn-secondary filter-btn" onClick={() => setSheet(true)} aria-label="更多篩選">
+          <Icon name="sliders" size={20} />
+          {fc > 0 && <span className="dot">{fc}</span>}
+        </button>
+      </div>
+    </>
+  );
+
   return (
     <>
-      <div className="list-head">
-        <div className="t">
-          <h1>找球友打球</h1>
-          <span className="text-muted" style={{ fontSize: 14 }}>{shortAreas(profile.areas)}</span>
-        </div>
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <div className="chips" style={{ flex: 1 }}>
-            {dayChip("today", "今天")}
-            {dayChip("tomorrow", "明天")}
-            {dayChip("weekend", "週末")}
-            {chip("eve", "晚上")}
-            {chip("beg", "新手友善")}
-            {chip("open", "有空位")}
-          </div>
-          <button className="btn btn-icon btn-secondary filter-btn" onClick={() => setSheet(true)} aria-label="更多篩選">
-            <Icon name="sliders" size={20} />
-            {fc > 0 && <span className="dot">{fc}</span>}
-          </button>
-        </div>
-      </div>
+      <div className="list-head">{head}</div>
 
-      <div className="scroll" style={{ paddingBottom: "var(--space-6)" }}>
+      <div className="scroll dk games" style={{ paddingBottom: "var(--space-6)" }}>
+        <TopNav active="games" />
+        <div className="games-in">
+        <div className="list-head dk-only dk-head">
+          {head}
+          <Link className="btn btn-primary games-new" href="/games/new"><Icon name="plus" size={18} />開一團</Link>
+        </div>
         {list.length ? (
           (Object.keys(DAY_GROUPS) as DayGroup[]).map((k) => {
             const gs = list.filter((g) => g.group === k);
@@ -60,7 +72,7 @@ export function GamesScreen() {
             return (
               <div key={k}>
                 <div className="date-h"><b>{DAY_GROUPS[k]}</b><span>{gs.length} 局</span></div>
-                <div className="stack pad">{gs.map((g) => <GameTicket key={g.id} game={g} />)}</div>
+                <div className="stack pad games-grid">{gs.map((g) => <GameTicket key={g.id} game={g} />)}</div>
               </div>
             );
           })
@@ -75,6 +87,7 @@ export function GamesScreen() {
             </div>
           </div>
         )}
+        </div>
       </div>
       <TabBar />
 

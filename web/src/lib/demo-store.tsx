@@ -33,6 +33,8 @@ export const newBooking = (coachId = "mia", planId = "trial"): Booking => ({
 });
 
 interface DemoState {
+  /** false = visitor: coach pages show only the basics and ask to sign in (LINE login in the real app) */
+  signedIn: boolean;
   profile: Profile;
   mine: Record<string, MyGameStatus>;
   /** games I opened via 開團, newest first */
@@ -52,6 +54,7 @@ interface DemoState {
 }
 
 const init = (): DemoState => ({
+  signedIn: true,
   profile: { name: ME.name, level: ME.level, areas: ["大安區", "信義區", "中山區"] },
   mine: {},
   hosted: [],
@@ -119,6 +122,7 @@ function useDemoValue() {
 
   return useMemo(() => ({
     ...s,
+    setSignedIn: (v: boolean) => set("signedIn", v),
     setProfile: (u: Updater<Profile>) => set("profile", u),
     addHosted: (g: Game) => set("hosted", (hs) => [g, ...hs]),
     setMine,

@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Icon } from "@/components/pk/Icon";
 import { ShareSheet } from "@/components/pk/ShareSheet";
+import { Crumbs } from "@/components/pk/Crumbs";
 import { AppBar, Sheet, SoonButton } from "@/components/pk/Shell";
+import { TopNav } from "@/components/pk/TopNav";
 import { GameTicket, Seats } from "@/components/pk/Ticket";
 import { useToast } from "@/components/pk/Toast";
 import { useDemo, useGameView } from "@/lib/demo-store";
@@ -91,7 +93,10 @@ export function GameDetailScreen({ game: g }: { game: Game }) {
           </button>
         }
       />
-      <div className="scroll">
+      <div className="scroll dk dk-narrow dk-float">
+        <TopNav active="games" />
+        <Crumbs items={[["首頁", "/"], ["球局", "/games"], [g.venue]]} />
+        <div className="dk-actions dk-only"><button className="btn btn-secondary" onClick={() => setShare(true)}><Icon name="share" size={18} />分享</button></div>
         <div className="detail-ticket"><GameTicket game={g} lg /></div>
 
         <div className="dblock">
