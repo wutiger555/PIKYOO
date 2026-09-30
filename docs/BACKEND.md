@@ -1,0 +1,262 @@
+# PIKYOO｜匹友 — 後端與真實資料規劃（BACKEND）
+
+> 版本 v0.1（2026-09-30）。從 mock demo 走到真的有資料、能登入、能報名的版本。
+> 相關文件：[PRD.md](PRD.md)（功能規格）、[SETUP.md](SETUP.md)（帳號與金鑰怎麼開）、[BUSINESS_MODEL.md](BUSINESS_MODEL.md)（收費）。
+> 資料庫的實際定義在 `supabase/migrations/`，本文件說明「為什麼這樣設計」。兩者不一致時以 migration 為準，並回頭修正本文件。
+
+---
+
+## 0. 結論
+
+1. **Demo 版保留，而且會跟著正式版一起改。** 做法是「同一份程式碼、兩個網址」：畫面只有一套，資料來源用一個開關切換（`demo` 用現在的假資料，`live` 接 Supabase）。正式版改畫面時，Demo 版自動一起更新，不會有兩份程式碼越差越多的問題（§1）。
+2. **資料庫已經設計好並寫成 migration**（`supabase/migrations/`）：17 張表、權限規則（RLS）、報名與候補等交易邏輯（RPC 函式）。在本機 Postgres 上用 seed 資料跑過 50 多項自動檢查，全部通過（§4、§9）。
+3. **規則寫在資料庫裡，不寫在畫面裡。** 例如「最後一個名額兩個人同時按」「候補自動遞補」「揪團滿人數才能送出」「問與答不能留 LINE」都由資料庫函式保證。之後做原生 App 也能直接共用（PRD §9）。
+4. **接下來分 8 個階段做（B1–B8）**，每個階段都能上線、都不會弄壞 Demo。第一步 B1 需要你先開 Supabase 專案（SETUP §2），我拿到 project ref 後就能開始（§10、§11）。
+
+---
+
+## 1. Demo 版怎麼保留
+
+### 1.1 做法：一份程式碼、一個開關、兩個網址
+
+| | Demo 版 | 正式版 |
+|---|---|---|
+| 網址（建議） | `pikyoo-demo.vercel.app`（新開的 Vercel 專案，同一個 repo） | `pikyoo.vercel.app` |
+| 開關 `NEXT_PUBLIC_DATA_SOURCE` | `demo` | `live`（接好之前維持 `demo`） |
+| 資料 | 現在的假資料（`web/src/lib/data/`），存在瀏覽器記憶體，重新整理就還原 | Supabase 資料庫 |
+| 登入 | 假登入（「我的」裡的登出／登入切換） | LINE 登入（LIFF） |
+| 用途 | 簡報、招商、教練說明會、給投資人看 | 真的使用者 |
+
+- 開關**沒設定時一律當成 `demo`**，避免不小心讓 Demo 網址連到真的資料庫。
+- `main` 合併後兩個網址都會自動重新部署，所以**畫面永遠一致**。
+- 今天的 Demo 狀態就是 `main` 上的 commit `e50ad97`。如果想固定一個「2026-09-30 版」快照，可以另外打 git tag。
+
+### 1.2 為什麼不另外開一個 demo 分支
+
+分支凍結後，正式版每改一次畫面，Demo 版就要手動再改一次，幾週後兩邊就對不起來了。這正是你擔心的「正式版改了，Demo 版也要跟著改」。用開關的話，**畫面元件只有一份，只有「資料從哪裡來」有兩份**。
+
+### 1.3 維護規則（寫進 `CLAUDE.md`，之後每次改動都照做）
+
+1. 新功能先定好資料的 TypeScript 型別，**Demo（mock）和正式（Supabase）兩個實作都要補**。型別不齊時 `npm run build` 會失敗，不會漏掉。
+2. Mock 資料要能展示新功能（例如新增「收藏」，mock 就要有幾筆收藏）。
+3. `supabase/seed.sql` 由 mock 資料自動產生（`npm run db:seed`），所以開發用的資料庫和 Demo 看起來一樣。
+4. 每個 PR 都要檢查兩種模式的畫面（§9）。
+
+---
+
+## 2. 整體架構
+
+```text
+手機瀏覽器 ／ LINE 內（LIFF）／ 電腦
+        │
+Next.js（Vercel，東京 hnd1）
+  ├─ 頁面：Server Components 讀資料 → 資料來源（demo：mock ／ live：Supabase，用登入者的身分，受 RLS 限制）
+  ├─ 動作：Server Actions → 呼叫資料庫函式（報名、預約、確認、回覆…）
+  ├─ /api/auth/line      LIFF ID token → 驗證 → 換成 Supabase 登入（SETUP §4.2）
+  ├─ /api/notify         讀通知佇列 → LINE 推播／Email（排程呼叫）
+  └─ /api/parse-game     AI 一貼成局（LLM 結構化輸出）
+        │
+Supabase（東京 ap-northeast-1）
+  ├─ Postgres：資料表 + RLS（誰能看、誰能改）+ RPC 函式（有規則的動作）
+  ├─ Auth：登入 session（LINE 身分由我們自己的 route 換發）
+  ├─ Storage：教練照片、球場照片（公開）、證書掃描（私密）
+  └─ pg_cron：每幾分鐘處理過期預約、揪團逾時、上課提醒
+```
+
+**原則：**
+- **讀**：頁面在伺服器端直接讀資料庫，教練頁、球場頁、球局頁都是 SSR，對 SEO 和 LINE／IG 分享預覽友善（PRD F10）。
+- **寫**：一般欄位（改自己的檔案、教練改自己的頁面）直接寫表，由 RLS 把關；**牽涉名額、狀態、別人的資料**的動作一律走資料庫函式。
+- **秘密金鑰只在伺服器**：瀏覽器只拿 publishable key，權限完全靠 RLS。`SUPABASE_SECRET_KEY` 只在 `/api/auth/line`、通知佇列、管理工具用。
+
+---
+
+## 3. 前端資料層：怎麼從 mock 換成真的
+
+現在畫面直接 import `lib/data/*` 的假資料，並透過 `lib/demo-store.tsx`（`useDemo()`）改狀態。改法：
+
+```text
+web/src/lib/source/
+  index.ts        依 NEXT_PUBLIC_DATA_SOURCE 選 demo 或 live
+  types.ts        DataSource 介面：listCourts / getCourt / listGames / getGame / listCoaches / getCoach / questionsFor …
+  demo.ts         包住現在的 lib/data/*（行為和今天完全一樣）
+  live.ts         Supabase 查詢 + mapper：資料庫欄位 → 現在畫面用的型別（Game、Coach、Court…）
+  actions.ts      寫入動作介面：joinGame / leaveGame / requestBooking / answerQuestion …
+                  demo：呼叫現在的 demo-store；live：Server Action → RPC → router.refresh()
+  db.types.ts     `supabase gen types typescript` 產生的資料庫型別
+```
+
+- **畫面用的型別（`lib/types.ts`）先不改。** mapper 把 `starts_at`（UTC）轉成畫面要的「今天／週六」「10/3」「19:00」，教練的 `students`、`priceFrom` 從資料庫算出來。這樣第一輪幾乎不用動畫面元件。
+- `signedIn`：demo 看切換開關；live 看伺服器端讀到的 Supabase session。
+- 篩選、比較、畫面暫存（`gameFilters`、`compare`、`booking` 草稿）仍然是前端狀態，兩種模式共用。
+
+---
+
+## 4. 資料庫設計
+
+定義：`supabase/migrations/20261001000000_init.sql`（表、RLS、函式）與 `…_storage.sql`（照片與證書）。
+
+### 4.1 資料表
+
+| 表 | 內容 | 誰能看 | 誰能改 |
+|---|---|---|---|
+| `profiles` | 暱稱、頭像、程度（0 新手 … 6 4.5+） | 所有人（只有公開欄位） | 本人（暱稱、頭像、程度） |
+| `profile_private` | LINE user ID、常打區域、通知設定、是否管理員 | 本人 | 本人（區域、通知）；LINE ID 與管理員只有伺服器能寫 |
+| `courts` | 球場：區域、室內／室外／風雨、場地數、收費、設施、預約方式、照片、已確認日期 | 所有人 | 營運團隊（管理員） |
+| `games` | 球局：時間、場地、程度、名額、費用、取消期限、新手友善、團主聯絡方式、AI 原文 | 所有人 | 團主（自己的局；名額相關走函式） |
+| `game_participants` | 報名紀錄：已報名／候補／取消／晚取消／出席／未到；也可以是團主代報名的非會員 | 所有人（名單） | 只能透過函式 |
+| `coaches` | 教練頁：網址、名稱、狀態（草稿→審核中→已上架）、自介、匹克球檔案、每週時段、上課地點、付款方式、照片、經歷 | 已上架的所有人都看得到；本人看得到自己的草稿 | 本人（狀態只有管理員能改） |
+| `coach_pay_details` | 收款資訊（LINE Pay 連結、銀行帳號） | 本人；學生只有在教練確認、要付款時才看得到自己那筆的 | 本人 |
+| `credentials` | 認證與成績：發證單位、等級、證書檔案、審核狀態 | 已審核通過或自填（DUPR）的公開 | 本人上傳；**審核只有管理員** |
+| `coach_plans` | 方案：體驗課／一對一／小班／團體、時長、人數、可揪朋友的人數範圍、價格、單位 | 所有人 | 本人 |
+| `lesson_bookings` | 預約申請：待確認→已確認／婉拒／逾時→取消／出席／未到 | 學生本人、該教練、揪團成員 | 只能透過函式 |
+| `lesson_groups` + `lesson_group_members` | 揪朋友一起上：發起人、邀請碼、截止時間、成員 | 成員與該教練（邀請頁用邀請碼查） | 只能透過函式 |
+| `payments` | 每人一筆應付款：待付→已回報（含轉帳末五碼）→已收款 | 付款人與該教練 | 只能透過函式 |
+| `questions` | 問與答 | 已回覆的公開；未回覆的只有發問者與教練 | 發問者新增；教練透過函式回覆、隱藏 |
+| `favorites`、`reports` | 收藏、資料錯誤／檢舉回報 | 本人（回報也給管理員） | 本人 |
+| `notifications` | 通知佇列（LINE／Email／站內） | 本人 | 只有資料庫函式會新增 |
+
+**跟 PRD §7 初稿不同的地方**（本文件取代 §7 的細節）：
+- `classes` + `class_sessions` 改成 `coach_plans` + 教練的「每週時段」（`coaches.availability`）。這跟現在畫面的設計一致：教練設定方案和每週開放時間，學生挑日期時段。某個時段第一個被預約的方案就是那堂課的方案，其他方案就不能再約那個時段（教練同一時間只能教一堂）。
+- 新增 `lesson_groups`（揪朋友一起上，F3-10）、`payments`（收款，F5）、`questions`（問與答，F3-11）、`coach_pay_details`。
+- LINE user ID 從 `profiles` 移到 `profile_private`：名單會公開顯示暱稱，但 LINE ID 不能被別人讀到（PRD §8 隱私）。
+- 教練的 `contact_line` 欄位**拿掉**：學生與教練不私下用 LINE 聯絡（CLAUDE.md 產品決定）。球局團主可以留聯絡方式（`games.host_contact`）。
+- 球局狀態不存成欄位：「招募中／額滿／進行中／已結束」由人數和時間算出來，只有「已取消」會記下來。這樣不需要排程去改狀態，也不會有狀態跟實際人數對不上的問題。
+
+### 4.2 有規則的動作（資料庫函式）
+
+| 函式 | 做什麼 | 規則 |
+|---|---|---|
+| `join_game` | 報名球局 | 有空位就報名，額滿就候補；已開始或已取消不能報；團主設「嚴格程度」時擋程度不符的人 |
+| `leave_game` | 取消報名 | 取消期限前是一般取消，之後記「晚取消」；空出來的位子自動給候補第一位並通知 |
+| `host_add_guest`、`host_remove_participant`、`cancel_game` | 團主代報名、移除、取消整團 | 只有團主；取消會通知所有報名者 |
+| 改名額（直接改 `games`） | 團主加名額 | 名額變多時自動遞補候補；不能少於已報名人數 |
+| `request_booking` | 送出預約申請 | 只能約教練有開的時段；名額要夠；付款方式要是教練收的；48 小時或開課前沒回覆就逾時 |
+| `decide_booking` | 教練確認／婉拒 | 確認後每個人各開一筆應付款（揪團時每人付自己那份）並通知 |
+| `create_lesson_group` → `join_lesson_group` → `submit_lesson_group` | 揪朋友一起上 | 先佔時段、拿邀請碼；朋友用連結加入；滿最少人數才能送給教練；開課前 24 小時還沒送出就逾時取消 |
+| `report_payment`、`mark_payment_paid`、`payment_instructions` | 付款 | 學生回報（可附末五碼）；教練標記已收；學生只看得到自己那筆的收款資訊 |
+| `answer_question`、`hide_question` | 教練回覆、隱藏提問 | 問題和回覆都不能有電話、Email、LINE／IG 帳號、「私訊我」（跟 `web/src/lib/contact.ts` 同一套規則，兩邊要一起改） |
+| `expire_stale` | 排程：過期預約、逾時揪團 | 每幾分鐘跑一次（pg_cron，B5 設定） |
+| `delete_my_account` | 刪除帳號（F1-5） | 個資清掉、名稱改成「已刪除使用者」，歷史紀錄保留；未來的報名自動取消 |
+
+同一個時段的預約會先排隊鎖住，兩個人同時搶最後一個名額，只會有一個人成功。
+
+### 4.3 防呆
+
+- 教練不能自己把狀態改成「已上架」，也不能自己把證書改成「已審核」（資料庫 trigger 擋掉）。
+- 所有表預設**沒有權限**，只開放明確列出的欄位與動作。少寫一條規則的結果是「看不到」，不是「被看光」。
+- 時間一律存 UTC，顯示用台北時間；「週六 14:00」這種每週時段用台北時間判斷。
+
+### 4.4 照片與檔案（Supabase Storage）
+
+| Bucket | 公開 | 內容 | 規則 |
+|---|---|---|---|
+| `coach-photos` | ✅ | 教練頁照片（≤ 5 MB，jpg／png／webp） | 只能上傳到自己的資料夾 `<user id>/…` |
+| `court-photos` | ✅ | 球場照片 | 管理員 |
+| `credentials` | ❌ | 證書掃描（≤ 10 MB，含 pdf） | 本人上傳、本人與管理員可看 |
+
+Demo 的示意照仍放在 `web/public/photos/`（PHOTOS.md），真的教練上傳自己的照片後就不再用示意照。
+
+---
+
+## 5. 登入
+
+照 SETUP §4.2 的「LIFF ID token 換 Supabase session」：
+
+1. LINE 內打開：`liff.init()` 自動登入；外部瀏覽器按「用 LINE 登入」→ `liff.login()`。
+2. 前端拿 `liff.getIDToken()` POST 到 `/api/auth/line`。
+3. 伺服器向 LINE 驗證 token → 用 LINE user ID 找或建 Supabase 使用者（新使用者自動建 `profiles`，帶入 LINE 暱稱和頭像）→ 寫入登入 cookie。
+4. 第一次登入進 Onboarding（暱稱 → 程度 → 常打區域），寫進 `profiles` / `profile_private`。
+5. 現在畫面上所有「登入後才能用」的地方（`LoginSheet`）改成真的 LINE 登入，登入後回到原本那頁。
+
+Email magic link（F1-2，P1）之後加，給不用 LINE 的人。
+
+---
+
+## 6. 通知
+
+- 資料庫函式只負責**把通知放進佇列**（`notifications`），不直接打 LINE API。這樣報名不會因為 LINE 慢或掛掉而失敗，也能重試（PRD §8 可靠性）。
+- 排程每分鐘處理佇列：pg_cron + pg_net 呼叫 `/api/notify`（或 Supabase Edge Function），依 PRD F6 的表決定走 LINE、Email 或站內。Vercel Hobby 的 cron 只能每天跑一次（以 Vercel 官方說明為準），所以排程放在 Supabase。
+- LINE 推播按收件人數計費：只有 PRD F6 標 **LINE** 的事件推 LINE，其他走站內與 Email（Resend）。
+- 上課／打球前提醒（前一天 20:00 或 3 小時前）也由 pg_cron 產生佇列。
+
+---
+
+## 7. AI 一貼成局
+
+- 新增 `/api/parse-game`：把貼上的文字送給 LLM，要求回傳固定格式的 JSON（PRD F2-8 的欄位 + 每個欄位的信心分數），伺服器端再比對球場資料庫。
+- 現在的規則式解析器（`web/src/features/host/parse.ts`）保留：Demo 模式用它，正式版在 LLM 失敗或逾時的時候也退回它。兩者輸出格式一樣，畫面不用改。
+- 原文存在 `games.source_text`，用來累積測試集（PRD：50 則真實揪團文、欄位正確率 ≥ 80% 才上線）。
+
+---
+
+## 8. 金流（MVP 不經手錢）
+
+- 跟現在 Demo 一樣：教練確認後，學生看到教練的 LINE Pay 連結或帳號（`payment_instructions`），付完按「我已付款」（轉帳附末五碼），教練在後台按「已收款」。
+- 取消費（例如 24 小時內取消收 50%）MVP 先由教練手動處理，系統只記錄取消時間。
+- Phase 3 接藍新平台金流（不過水、代扣平台費，BUSINESS_MODEL.md）時，`payments` 表加上交易編號與平台費欄位即可，不用改預約流程。
+
+---
+
+## 9. 環境與檢查
+
+### 9.1 環境
+
+| | 本機 | 分支預覽（Preview） | 正式（`pikyoo`） | Demo（`pikyoo-demo`） |
+|---|---|---|---|---|
+| `NEXT_PUBLIC_DATA_SOURCE` | `demo` 或 `live` | `live` | 接好之前 `demo`，封測時改 `live` | 永遠 `demo` |
+| Supabase | `supabase start`（需要 Docker）或 `pikyoo-dev` | `pikyoo-dev` | `pikyoo-prod`（Pro 方案） | 不需要 |
+| LINE | Developing LIFF ID | Developing LIFF ID | Published LIFF ID | 不需要 |
+
+### 9.2 資料庫改動流程
+
+1. `supabase migration new <名稱>` 產生新的 SQL 檔，**只改 migration 檔，不在 Supabase 網頁後台直接改表**。
+2. `cd web && npm run db:check`：在一個暫時的本機 Postgres 資料庫套用所有 migration + seed，跑 `supabase/dev/checks.sql` 的權限與流程檢查（不需要 Docker；需要本機有 Postgres 15 以上）。
+3. mock 資料改了就 `npm run db:seed` 重新產生 `supabase/seed.sql`。
+4. GitHub Actions（`.github/workflows/db.yml`）在每個動到 `supabase/` 或 mock 資料的 PR 自動跑第 2、3 步。
+5. 合併後 `supabase db push` 套用到 `pikyoo-dev`；上正式時再推到 `pikyoo-prod`。
+
+### 9.3 每個 PR 的畫面檢查
+
+維持 CLAUDE.md 的做法（Playwright 1280 / 390 寬），而且 **demo 和 live 兩種模式都要看**。live 模式接好後，加上端到端流程測試：登入 → 報名 → 候補遞補 → 預約 → 教練確認。
+
+---
+
+## 10. 分階段實作
+
+每個階段一個 PR，合併後正式網址仍維持 Demo，直到 B8 才切換。
+
+| 階段 | 內容 | 需要你先做的事 | 完成標準 |
+|---|---|---|---|
+| **B0（本次）** | 本文件、資料庫 schema、RLS、函式、Storage、seed 產生器、自動檢查、CI | — | `npm run db:check` 全部通過 |
+| **B1 資料層與連線** | §3 的資料來源開關；安裝 `@supabase/ssr`、`proxy.ts`；球場、教練、球局的**讀取**改走資料來源；開 Demo 專用網址 | 開 Supabase `pikyoo-dev`（SETUP §2），把 3 個變數填到 Vercel；告訴我 project ref；在 Vercel 新增 `pikyoo-demo` 專案（我可以一步一步帶） | live 模式讀得到 seed 資料；demo 模式畫面跟今天完全一樣 |
+| **B2 登入** | LINE 登入、Onboarding、我的、登出、刪除帳號、隱私權政策頁 | LINE MINI App channel（SETUP §3），給我 LIFF ID 與 Channel ID | 手機 LINE 內自動登入；外部瀏覽器 2 步內登入 |
+| **B3 球局** | 列表與篩選（伺服器端查詢）、報名／候補／取消、開團、團主管理、分享卡片與動態 OG 圖、AI 一貼成局 | LLM API 金鑰（放 Vercel 環境變數） | 兩支手機同時搶最後一個名額，只有一人成功 |
+| **B4 教練頁與後台** | 申請成為教練、編輯頁存檔、照片上傳、證書上傳、管理員審核 | 決定第一批合作教練名單 | 教練自己建好頁面、審核後上架 |
+| **B5 預約、揪團、問與答、收款** | 預約申請與確認、揪朋友一起上、問與答、收款回報；pg_cron 處理逾時 | — | 教練後台的「今天」「收款」都是真的資料 |
+| **B6 通知** | LINE 官方帳號推播（Flex 卡片）、Email、上課／打球前提醒 | LINE 官方帳號 + Messaging API（SETUP §3.4）；Resend 帳號 | 候補遞補、預約確認在 1 分鐘內收到 LINE |
+| **B7 營運後台與 SEO** | 管理員頁（審核、球場資料、下架、回報佇列）、sitemap、結構化資料、Sentry、PostHog | — | 營運不用進 Supabase 後台就能做日常工作 |
+| **B8 封測** | 雙北約 100 處球場的真實資料、`pikyoo-prod`（Pro）、正式網址切到 live、Demo 網址保留 | 升級 Supabase Pro、Vercel Pro（開始收費前） | 10 位團主 + 10 位教練開始使用 |
+
+B1–B3 是最短的「真的能用」路徑：讀得到資料 → 能登入 → 能報名球局。
+
+---
+
+## 11. 需要你決定的事
+
+1. **Demo 網址名稱**：建議 `pikyoo-demo.vercel.app`。之後有自己的網域可以用 `demo.pikyoo.tw`。
+2. **正式網址什麼時候切到真的資料**：建議 B8 封測開始時。在那之前 `pikyoo.vercel.app` 維持 Demo，真的資料只在分支預覽網址測試。
+3. **先開 Supabase `pikyoo-dev`**：照 SETUP §2 做完後，把 project ref 告訴我（不要貼 secret key）。
+4. **LINE MINI App channel**：B2 之前完成即可（SETUP §3）。
+
+---
+
+## 12. 風險與對策
+
+| 風險 | 對策 |
+|---|---|
+| 權限規則寫錯，資料被不該看的人看到 | 預設全部關閉、只開明列的；`checks.sql` 用不同身分實際測試「看得到／看不到」；每個 PR 自動跑 |
+| Supabase Free 一週沒用會暫停 | 開發用專案暫停了按 Restore 就好；正式專案用 Pro |
+| Demo 與正式版慢慢不一致 | 畫面只有一份；資料層兩個實作共用同一個型別介面，缺了 build 會失敗；seed 從 mock 產生 |
+| LINE 規格或政策變動 | 核心功能不依賴 LINE 專屬 API；登入流程集中在 `/api/auth/line` 一個地方 |
+| 球場資料建置很花人力 | 先做有球局、有教練的場地；B7 的管理員頁讓營運直接編輯 |
+| 問與答的聯絡方式規則被繞過 | 前端擋一次、資料庫再擋一次；教練可隱藏提問；之後加檢舉 |

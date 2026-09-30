@@ -373,6 +373,8 @@ confirmed ──學生依規則取消──▶ cancelled
 
 ## 7. 資料模型（初稿）
 
+> 2026-09-30 更新：實作用的資料模型已經寫成 `supabase/migrations/`，設計說明與跟本節不同的地方見 [BACKEND.md](BACKEND.md) §4。本節保留作為初稿紀錄。
+
 | 資料表 | 主要欄位 |
 |---|---|
 | `profiles` | id, display_name, avatar_url, line_user_id, email, level (numeric), is_beginner, home_districts[], created_at, deleted_at |

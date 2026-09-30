@@ -26,6 +26,7 @@ A pickleball platform for Taiwan to find courts, coaches, classes, and games.
 
 | 日期 | PR | 內容 |
 |---|---|---|
+| 2026-09-30 | [#8](https://github.com/wutiger555/PIKYOO/pull/8) | 開始接真的資料（B0）：[後端與真實資料規劃](docs/BACKEND.md)，Demo 版用同一份程式碼保留在獨立網址；Supabase 資料庫（17 張表、權限規則、報名／候補／預約／揪團／收款／問與答函式、照片儲存）、由 mock 產生的 seed、自動檢查與 CI。網站畫面沒有改變 |
 | 2026-09-30 | [#7](https://github.com/wutiger555/PIKYOO/pull/7) | 文件：[商業模式與收費設計（草案）](docs/BUSINESS_MODEL.md)，含教練平台費（首堂 12%／回頭 3%）、Pro 訂閱、學生不收服務費、匹克球場地溢價與場館時段機會、收入估算與待決定事項 |
 | 2026-09-30 | [#6](https://github.com/wutiger555/PIKYOO/pull/6) | 文件：README 寫上正式網址與更新紀錄、新增給 AI 助理的專案說明 `CLAUDE.md`、`web/README` 與設計系統文件補上電腦版與訪客限制 |
 | 2026-09-30 | [#5](https://github.com/wutiger555/PIKYOO/pull/5) | **電腦版全部完成**（[DESKTOP.md](docs/DESKTOP.md)）：頂部導覽、教練頁右側預約卡、找教練篩選欄與比較表、首頁兩欄、預約與球場兩欄、教練後台左側選單＋表格、其他頁面置中單欄。**訪客限制**：未登入只看教練的照片、認證、價格、自介，其餘登入解鎖；訪客首頁引導「用 LINE 免費註冊」 |
@@ -44,10 +45,13 @@ A pickleball platform for Taiwan to find courts, coaches, classes, and games.
 - [電腦版設計規劃與實作狀態](docs/DESKTOP.md)：斷點、元件對應、每頁版型、已確認的決定
 - [Demo 照片清單](docs/PHOTOS.md)：每張照片的來源、攝影師與授權
 - [帳號與雲端服務設定指南](docs/SETUP.md)：Vercel、Supabase、LINE（MINI App／官方帳號）照順序設定
+- [後端與真實資料規劃](docs/BACKEND.md)：Demo 版怎麼保留、架構、資料庫與權限設計、登入、通知、分階段實作（B1–B8）
 
 ## 程式
 
 `web/` 是 MVP 的 Next.js 專案（目前用 mock data），怎麼跑、路由與結構見 [web/README.md](web/README.md)。
+
+`supabase/` 是資料庫：`migrations/`（資料表、權限規則、報名等函式）、`seed.sql`（由 mock 資料產生的開發用資料）、`dev/`（不需要 Docker 的本機檢查）。說明見 [docs/BACKEND.md](docs/BACKEND.md)。
 
 ## 開發流程
 
