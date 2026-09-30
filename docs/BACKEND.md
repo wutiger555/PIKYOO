@@ -3,6 +3,7 @@
 > 版本 v0.1（2026-09-30）。從 mock demo 走到真的有資料、能登入、能報名的版本。
 > 相關文件：[PRD.md](PRD.md)（功能規格）、[SETUP.md](SETUP.md)（帳號與金鑰怎麼開）、[BUSINESS_MODEL.md](BUSINESS_MODEL.md)（收費）。
 > 資料庫的實際定義在 `supabase/migrations/`，本文件說明「為什麼這樣設計」。兩者不一致時以 migration 為準，並回頭修正本文件。
+> **已確認的決定與目前進度見 §13**（換新的 Claude session 時先看這裡）。
 
 ---
 
@@ -203,8 +204,8 @@ Email magic link（F1-2，P1）之後加，給不用 LINE 的人。
 
 | | 本機 | 分支預覽（Preview） | 正式（`pikyoo`） | Demo（`pikyoo-demo`） |
 |---|---|---|---|---|
-| `NEXT_PUBLIC_DATA_SOURCE` | `demo` 或 `live` | `live` | 接好之前 `demo`，封測時改 `live` | 永遠 `demo` |
-| Supabase | `supabase start`（需要 Docker）或 `pikyoo-dev` | `pikyoo-dev` | `pikyoo-prod`（Pro 方案） | 不需要 |
+| `NEXT_PUBLIC_DATA_SOURCE` | `demo` 或 `live` | `live` | `live`（B1 完成後切換） | 不設定（＝ `demo`） |
+| Supabase | `pikyoo-dev` | `pikyoo-dev` | `pikyoo-dev`（封測前升級 Pro；有真人使用前再另開測試用專案） | 不需要 |
 | LINE | Developing LIFF ID | Developing LIFF ID | Published LIFF ID | 不需要 |
 
 ### 9.2 資料庫改動流程
@@ -213,29 +214,49 @@ Email magic link（F1-2，P1）之後加，給不用 LINE 的人。
 2. `cd web && npm run db:check`：在一個暫時的本機 Postgres 資料庫套用所有 migration + seed，跑 `supabase/dev/checks.sql` 的權限與流程檢查（不需要 Docker；需要本機有 Postgres 15 以上）。
 3. mock 資料改了就 `npm run db:seed` 重新產生 `supabase/seed.sql`。
 4. GitHub Actions（`.github/workflows/db.yml`）在每個動到 `supabase/` 或 mock 資料的 PR 自動跑第 2、3 步。
-5. 合併後 `supabase db push` 套用到 `pikyoo-dev`；上正式時再推到 `pikyoo-prod`。
+5. 合併後套用到 `pikyoo-dev`：由 Claude 透過 Supabase MCP 執行（§9.4），或用 `supabase db push`。
 
 ### 9.3 每個 PR 的畫面檢查
 
 維持 CLAUDE.md 的做法（Playwright 1280 / 390 寬），而且 **demo 和 live 兩種模式都要看**。live 模式接好後，加上端到端流程測試：登入 → 報名 → 候補遞補 → 預約 → 教練確認。
 
+### 9.4 Supabase MCP（讓 Claude 直接操作資料庫）
+
+Supabase 官方的 MCP server：`https://mcp.supabase.com/mcp`，用 Supabase 帳號登入授權（OAuth），不需要貼任何金鑰。
+
+1. 在 <https://claude.ai/customize/connectors> 新增自訂 connector：名稱 `Supabase`，URL 填 `https://mcp.supabase.com/mcp?project_ref=<project ref>`（加上 `project_ref` 就只能碰這一個專案）。
+2. 按 Connect → 用 Supabase 帳號登入 → 授權 `PIKYOO` organization。
+3. **開一個新的 Claude session**：connector 只在 session 開始時載入。
+
+接上後 Claude 可以：套用 migration、跑 seed、查表、跑 Supabase 的安全檢查（advisors）、產生 TypeScript 型別、取得 Project URL 與 publishable key。
+Claude 做不到、要你自己來的：把 **secret key** 貼到 Vercel 環境變數（secret key 不能經過聊天室）、Auth 的網址設定（SETUP §2.4）。
+開始有真的使用者之後，正式專案的 MCP 改成唯讀（URL 加 `&read_only=true`），資料庫改動改走 migration + GitHub Actions。
+
+### 9.5 Vercel 免費版（Hobby）的限制
+
+- 沒有綁卡、不會自動收費。用量超過時是**暫停專案**，不是寄帳單（[Hobby 說明](https://vercel.com/docs/plans/hobby)）。
+- 每天最多 100 次部署、同時只能 1 個 build。我們平常一天 5–20 次，夠用。
+- Vercel 的 cron 在 Hobby 只能每天跑一次，所以排程放在 Supabase（§6）。
+- **只能非商業使用**：開始收平台費、接金流或放廣告前要升級 Pro（每人每月 US$20）。
+- Demo 專案設定 **Ignored Build Step** = `[ "$VERCEL_ENV" != "production" ]`，只在 `main` 合併時部署，避免每次推分支都部署兩次。
+
 ---
 
 ## 10. 分階段實作
 
-每個階段一個 PR，合併後正式網址仍維持 Demo，直到 B8 才切換。
+每個階段一個 PR。Demo 有自己的網址（`pikyoo-demo`），所以正式網址在 B1 完成後就切到真的資料，之後每個階段直接在正式網址上看得到。
 
 | 階段 | 內容 | 需要你先做的事 | 完成標準 |
 |---|---|---|---|
 | **B0（本次）** | 本文件、資料庫 schema、RLS、函式、Storage、seed 產生器、自動檢查、CI | — | `npm run db:check` 全部通過 |
-| **B1 資料層與連線** | §3 的資料來源開關；安裝 `@supabase/ssr`、`proxy.ts`；球場、教練、球局的**讀取**改走資料來源；開 Demo 專用網址 | 開 Supabase `pikyoo-dev`（SETUP §2），把 3 個變數填到 Vercel；告訴我 project ref；在 Vercel 新增 `pikyoo-demo` 專案（我可以一步一步帶） | live 模式讀得到 seed 資料；demo 模式畫面跟今天完全一樣 |
+| **B1 資料層與連線** | §3 的資料來源開關；安裝 `@supabase/ssr`、`proxy.ts`；球場、教練、球局的**讀取**改走資料來源；開 Demo 專用網址 | 開 Supabase `pikyoo-dev`（✅）；接上 Supabase MCP（§9.4）；把 3 個變數填到 Vercel `pikyoo`；在 Vercel 新增 `pikyoo-demo` 專案 | live 模式讀得到 seed 資料；demo 模式畫面跟今天完全一樣 |
 | **B2 登入** | LINE 登入、Onboarding、我的、登出、刪除帳號、隱私權政策頁 | LINE MINI App channel（SETUP §3），給我 LIFF ID 與 Channel ID | 手機 LINE 內自動登入；外部瀏覽器 2 步內登入 |
 | **B3 球局** | 列表與篩選（伺服器端查詢）、報名／候補／取消、開團、團主管理、分享卡片與動態 OG 圖、AI 一貼成局 | LLM API 金鑰（放 Vercel 環境變數） | 兩支手機同時搶最後一個名額，只有一人成功 |
 | **B4 教練頁與後台** | 申請成為教練、編輯頁存檔、照片上傳、證書上傳、管理員審核 | 決定第一批合作教練名單 | 教練自己建好頁面、審核後上架 |
 | **B5 預約、揪團、問與答、收款** | 預約申請與確認、揪朋友一起上、問與答、收款回報；pg_cron 處理逾時 | — | 教練後台的「今天」「收款」都是真的資料 |
 | **B6 通知** | LINE 官方帳號推播（Flex 卡片）、Email、上課／打球前提醒 | LINE 官方帳號 + Messaging API（SETUP §3.4）；Resend 帳號 | 候補遞補、預約確認在 1 分鐘內收到 LINE |
 | **B7 營運後台與 SEO** | 管理員頁（審核、球場資料、下架、回報佇列）、sitemap、結構化資料、Sentry、PostHog | — | 營運不用進 Supabase 後台就能做日常工作 |
-| **B8 封測** | 雙北約 100 處球場的真實資料、`pikyoo-prod`（Pro）、正式網址切到 live、Demo 網址保留 | 升級 Supabase Pro、Vercel Pro（開始收費前） | 10 位團主 + 10 位教練開始使用 |
+| **B8 封測** | **清掉 seed 的示範資料**、雙北約 100 處球場的真實資料、另開測試用 Supabase 專案、MCP 改唯讀 | 升級 Supabase Pro、Vercel Pro（開始收費前） | 10 位團主 + 10 位教練開始使用 |
 
 B1–B3 是最短的「真的能用」路徑：讀得到資料 → 能登入 → 能報名球局。
 
@@ -243,10 +264,8 @@ B1–B3 是最短的「真的能用」路徑：讀得到資料 → 能登入 →
 
 ## 11. 需要你決定的事
 
-1. **Demo 網址名稱**：建議 `pikyoo-demo.vercel.app`。之後有自己的網域可以用 `demo.pikyoo.tw`。
-2. **正式網址什麼時候切到真的資料**：建議 B8 封測開始時。在那之前 `pikyoo.vercel.app` 維持 Demo，真的資料只在分支預覽網址測試。
-3. **先開 Supabase `pikyoo-dev`**：照 SETUP §2 做完後，把 project ref 告訴我（不要貼 secret key）。
-4. **LINE MINI App channel**：B2 之前完成即可（SETUP §3）。
+1. ~~Demo 網址名稱~~、~~正式網址什麼時候切換~~、~~Supabase 專案~~：已決定，見 §13。
+2. **LINE MINI App channel**：B2 之前完成即可（SETUP §3）。
 
 ---
 
@@ -260,3 +279,24 @@ B1–B3 是最短的「真的能用」路徑：讀得到資料 → 能登入 →
 | LINE 規格或政策變動 | 核心功能不依賴 LINE 專屬 API；登入流程集中在 `/api/auth/line` 一個地方 |
 | 球場資料建置很花人力 | 先做有球局、有教練的場地；B7 的管理員頁讓營運直接編輯 |
 | 問與答的聯絡方式規則被繞過 | 前端擋一次、資料庫再擋一次；教練可隱藏提問；之後加檢舉 |
+
+---
+
+## 13. 已確認的決定與目前進度
+
+| 日期 | 決定 |
+|---|---|
+| 2026-09-30 | **正式版** = Vercel 原本的 `pikyoo` 專案（`pikyoo.vercel.app`）+ Supabase `pikyoo-dev`。B1 完成後正式網址就切到 `live`。 |
+| 2026-09-30 | **Demo 版** = 另開的 Vercel 專案 `pikyoo-demo`，接同一個 repo、Root Directory `web`、不設環境變數（＝ demo 模式），只在 `main` 合併時部署（§9.5）。 |
+| 2026-09-30 | 先只用**一個** Supabase 專案（`pikyoo-dev`），正式與分支預覽共用。有真的使用者之前再另開測試用專案（免費版最多 2 個）；封測前升級 Pro。 |
+| 2026-09-30 | seed 的示範教練與球局會先放在正式資料庫，讓頁面不是空的；**公開上線前清掉**（示意照不能當成真教練）。 |
+| 2026-09-30 | 資料庫操作由 Claude 透過 Supabase MCP 統一處理（§9.4）。 |
+
+**目前進度**
+
+- [x] B0：規劃、schema、RLS、函式、seed、檢查（[#8](https://github.com/wutiger555/PIKYOO/pull/8)）
+- [x] Supabase 專案 `pikyoo-dev` 已建立（尚未套用 migration）
+- [ ] Owner：接上 Supabase MCP（§9.4）→ 開新 session
+- [ ] Owner：Vercel `pikyoo` 填 `NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`、`SUPABASE_SECRET_KEY`（SETUP §2.3）；Auth 網址設定（SETUP §2.4）
+- [ ] Owner：Vercel 新增 `pikyoo-demo`
+- [ ] Claude：透過 MCP 套用 `supabase/migrations/` 與 `seed.sql`、跑 advisors → 開始 B1
