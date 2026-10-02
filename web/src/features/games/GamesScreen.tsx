@@ -9,8 +9,8 @@ import { Sheet, TabBar } from "@/components/pk/Shell";
 import { TopNav } from "@/components/pk/TopNav";
 import { GameTicket } from "@/components/pk/Ticket";
 import { shortAreas } from "@/lib/data/courts";
-import { AREAS, DAY_GROUPS } from "@/lib/data/games";
-import { emptyGameFilters, useAllGames, useDemo, type GameFilters } from "@/lib/demo-store";
+import { AREAS } from "@/lib/data/games";
+import { emptyGameFilters, useAllGames, useCatalog, useDemo, type GameFilters } from "@/lib/demo-store";
 import type { DayGroup } from "@/lib/types";
 import { filterGames, sheetFilterCount } from "./filters";
 
@@ -21,6 +21,7 @@ export function GamesScreen() {
   const { gameFilters: f, setGameFilters, mine, profile } = useDemo();
   const [sheet, setSheet] = useState(false);
   const list = filterGames(useAllGames(), f, mine);
+  const { dayGroups } = useCatalog();
   const fc = sheetFilterCount(f);
 
   const dayChip = (k: NonNullable<GameFilters["day"]>, label: string) => (
@@ -66,12 +67,12 @@ export function GamesScreen() {
           <Link className="btn btn-primary games-new" href="/games/new"><Icon name="plus" size={18} />開一團</Link>
         </div>
         {list.length ? (
-          (Object.keys(DAY_GROUPS) as DayGroup[]).map((k) => {
+          (Object.keys(dayGroups) as DayGroup[]).map((k) => {
             const gs = list.filter((g) => g.group === k);
             if (!gs.length) return null;
             return (
               <div key={k}>
-                <div className="date-h"><b>{DAY_GROUPS[k]}</b><span>{gs.length} 局</span></div>
+                <div className="date-h"><b>{dayGroups[k]}</b><span>{gs.length} 局</span></div>
                 <div className="stack pad games-grid">{gs.map((g) => <GameTicket key={g.id} game={g} />)}</div>
               </div>
             );

@@ -8,7 +8,7 @@ import { Crumbs } from "@/components/pk/Crumbs";
 import { AppBar } from "@/components/pk/Shell";
 import { TopNav } from "@/components/pk/TopNav";
 import { Img } from "@/features/coaches/CoachCard";
-import { COURTS } from "@/lib/data/courts";
+import { useCatalog } from "@/lib/demo-store";
 import type { Court } from "@/lib/types";
 
 type Chip = "室內" | "室外" | "風雨" | "free" | "aircon" | "lights";
@@ -29,7 +29,7 @@ export function CourtsScreen() {
   const [view, setView] = useState<"list" | "map">("list");
   const [on, setOn] = useState<Chip[]>([]);
   const [picked, setPicked] = useState<string | null>(null);
-  const list = COURTS.filter((c) => match(c, on));
+  const list = useCatalog().courts.filter((c) => match(c, on));
   const pick = list.find((c) => c.id === picked) ?? null;
 
   return (

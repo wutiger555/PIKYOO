@@ -9,9 +9,7 @@ import { AppBar } from "@/components/pk/Shell";
 import { TopNav } from "@/components/pk/TopNav";
 import { GameTicket } from "@/components/pk/Ticket";
 import { useToast } from "@/components/pk/Toast";
-import { COURTS, getCourt } from "@/lib/data/courts";
-import { DAY_GROUPS } from "@/lib/data/games";
-import { useDemo } from "@/lib/demo-store";
+import { useCatalog, useDemo } from "@/lib/demo-store";
 import { LEVELS } from "@/lib/format";
 import type { DayGroup, Game, Level } from "@/lib/types";
 import { emptyDraft, parseGameText, SAMPLE_TEXT, type Draft, type DraftField, type PayKind } from "./parse";
@@ -24,6 +22,8 @@ const PAY_NOTE: Record<PayKind, string> = { 現場付現: "現場付現給團主
 export function HostScreen() {
   const toast = useToast();
   const { profile, addHosted } = useDemo();
+  const catalog = useCatalog();
+  const { courts, dayGroups } = catalog;
   const [step, setStep] = useState<Step>("paste");
   const [text, setText] = useState("");
   const [d, setD] = useState<Draft>(emptyDraft);
@@ -44,7 +44,7 @@ export function HostScreen() {
   const parse = () => {
     setStep("parsing");
     timer.current = setTimeout(() => {
-      const r = parseGameText(text);
+      const r = parseGameText(text, catalog);
       setD(r.draft);
       setUnsure(r.unsure);
       setTried(false);
@@ -62,8 +62,8 @@ export function HostScreen() {
 
   const publish = () => {
     if (blocked) { setTried(true); toast("還有欄位沒填好"); return; }
-    const court = getCourt(d.courtId);
-    const [dayLabel, rest] = DAY_GROUPS[d.group!].split(" ");
+    const court = courts.find((c) => c.id === d.courtId);
+    const [dayLabel, rest] = dayGroups[d.group!].split(" ");
     const [lo, hi] = d.levelMin <= d.levelMax ? [d.levelMin, d.levelMax] : [d.levelMax, d.levelMin];
     const initial = profile.name.slice(0, 1);
     const g: Game = {
@@ -171,8 +171,8 @@ export function HostScreen() {
 
             <Group label="日期" unsure={flag("group")} error={tried && missing.group ? "選一天" : undefined}>
               <div className="wrapchips">
-                {(Object.keys(DAY_GROUPS) as DayGroup[]).map((k) => (
-                  <button key={k} type="button" className="chip" aria-pressed={d.group === k} onClick={() => edit("group", k)}>{DAY_GROUPS[k]}</button>
+                {(Object.keys(dayGroups) as DayGroup[]).map((k) => (
+                  <button key={k} type="button" className="chip" aria-pressed={d.group === k} onClick={() => edit("group", k)}>{dayGroups[k]}</button>
                 ))}
               </div>
             </Group>
@@ -188,7 +188,7 @@ export function HostScreen() {
             <Group label="場地" htmlFor="court" unsure={flag("courtId")} error={tried && missing.venue ? "選一個場地，或自己填地點" : undefined}>
               <select id="court" className="input" value={d.courtId} onChange={(e) => edit("courtId", e.target.value)}>
                 <option value="">選擇場地</option>
-                {COURTS.map((c) => <option key={c.id} value={c.id}>{c.name}（{c.district}）</option>)}
+                {courts.map((c) => <option key={c.id} value={c.id}>{c.name}（{c.district}）</option>)}
                 <option value="other">其他地點（自己填）</option>
               </select>
               {d.courtId === "other" && (

@@ -77,14 +77,16 @@ Supabase（東京 ap-northeast-1）
 
 ```text
 web/src/lib/source/
-  index.ts        依 NEXT_PUBLIC_DATA_SOURCE 選 demo 或 live
-  types.ts        DataSource 介面：listCourts / getCourt / listGames / getGame / listCoaches / getCoach / questionsFor …
-  demo.ts         包住現在的 lib/data/*（行為和今天完全一樣）
+  index.ts        依 NEXT_PUBLIC_DATA_SOURCE 選 demo 或 live；getCatalog / getCourt / getCoach / getGame
+  types.ts        Catalog（球場、教練、球局、日期標題）與 DataSource 介面
+  demo.ts         直接回傳現在的 lib/data/*（行為和今天完全一樣）
   live.ts         Supabase 查詢 + mapper：資料庫欄位 → 現在畫面用的型別（Game、Coach、Court…）
-  actions.ts      寫入動作介面：joinGame / leaveGame / requestBooking / answerQuestion …
-                  demo：呼叫現在的 demo-store；live：Server Action → RPC → router.refresh()
   db.types.ts     `supabase gen types typescript` 產生的資料庫型別
 ```
+
+- **B1 的做法（已完成）**：root layout 在伺服器端讀一次 `getCatalog()`，交給 `DemoProvider`；畫面用 `useCatalog()`、`useCoaches()`、`useAllGames()` 拿資料，不再直接 import mock。詳細頁（`/coaches/[id]` 等）在伺服器端用 `getCoach()` 這類函式。live 模式每次請求都重新讀（`connection()`），所以詳細頁拿掉了 `generateStaticParams`；demo 模式的詳細頁因此也改成每次請求產生，畫面不變。
+- **B1 還沒做的**：寫入動作（`actions.ts`：報名、預約、回覆…）在 B2 之後跟登入一起做，現在兩種模式都還是寫在瀏覽器記憶體；`proxy.ts`（刷新登入 session）也移到 B2，因為 B1 還沒有登入。預約的日期（`BOOKING_DAYS`）和問與答仍用 mock，B5 換掉。
+- **B1 live 模式的限制**：球局列表只顯示「今天、明天、這個週末」（跟 demo 一樣的四組），其他平日的球局 B3 做伺服器端篩選時再加；教練的評價、球場距離與地圖座標還沒有資料，先不顯示。
 
 - **畫面用的型別（`lib/types.ts`）先不改。** mapper 把 `starts_at`（UTC）轉成畫面要的「今天／週六」「10/3」「19:00」，教練的 `students`、`priceFrom` 從資料庫算出來。這樣第一輪幾乎不用動畫面元件。
 - `signedIn`：demo 看切換開關；live 看伺服器端讀到的 Supabase session。
@@ -249,8 +251,8 @@ Claude 做不到、要你自己來的：把 **secret key** 貼到 Vercel 環境�
 | 階段 | 內容 | 需要你先做的事 | 完成標準 |
 |---|---|---|---|
 | **B0（本次）** | 本文件、資料庫 schema、RLS、函式、Storage、seed 產生器、自動檢查、CI | — | `npm run db:check` 全部通過 |
-| **B1 資料層與連線** | §3 的資料來源開關；安裝 `@supabase/ssr`、`proxy.ts`；球場、教練、球局的**讀取**改走資料來源；開 Demo 專用網址 | 開 Supabase `pikyoo-dev`（✅）；接上 Supabase MCP（§9.4）；把 3 個變數填到 Vercel `pikyoo`；在 Vercel 新增 `pikyoo-demo` 專案 | live 模式讀得到 seed 資料；demo 模式畫面跟今天完全一樣 |
-| **B2 登入** | LINE 登入、Onboarding、我的、登出、刪除帳號、隱私權政策頁 | LINE MINI App channel（SETUP §3），給我 LIFF ID 與 Channel ID | 手機 LINE 內自動登入；外部瀏覽器 2 步內登入 |
+| **B1 資料層與連線**（✅ 程式完成） | §3 的資料來源開關；球場、教練、球局的**讀取**改走資料來源；開 Demo 專用網址（`@supabase/ssr` 與 `proxy.ts` 移到 B2） | 開 Supabase `pikyoo-dev`（✅）；接上 Supabase MCP（§9.4）；把 3 個變數填到 Vercel `pikyoo`；在 Vercel 新增 `pikyoo-demo` 專案 | live 模式讀得到 seed 資料；demo 模式畫面跟今天完全一樣 |
+| **B2 登入** | `@supabase/ssr`、`proxy.ts`；LINE 登入、Onboarding、我的、登出、刪除帳號、隱私權政策頁 | LINE MINI App channel（SETUP §3），給我 LIFF ID 與 Channel ID | 手機 LINE 內自動登入；外部瀏覽器 2 步內登入 |
 | **B3 球局** | 列表與篩選（伺服器端查詢）、報名／候補／取消、開團、團主管理、分享卡片與動態 OG 圖、AI 一貼成局 | LLM API 金鑰（放 Vercel 環境變數） | 兩支手機同時搶最後一個名額，只有一人成功 |
 | **B4 教練頁與後台** | 申請成為教練、編輯頁存檔、照片上傳、證書上傳、管理員審核 | 決定第一批合作教練名單 | 教練自己建好頁面、審核後上架 |
 | **B5 預約、揪團、問與答、收款** | 預約申請與確認、揪朋友一起上、問與答、收款回報；pg_cron 處理逾時 | — | 教練後台的「今天」「收款」都是真的資料 |
@@ -302,6 +304,8 @@ B1–B3 是最短的「真的能用」路徑：讀得到資料 → 能登入 →
 - [x] Owner：Vercel 新增 `pikyoo-demo`（`https://pikyoo-demo.vercel.app`）
 - [x] Claude：`pikyoo-dev` 已套用 `init`、`storage` 兩個 migration 與 `seed.sql`（2026-09-30）；`dev/checks.sql` 在 `pikyoo-dev` 上以 transaction 跑過並 rollback，全部通過
 - [ ] Owner：Vercel `pikyoo` 填 `NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`、`SUPABASE_SECRET_KEY`（SETUP §2.3）；Auth 網址設定（SETUP §2.4：Site URL `https://pikyoo.vercel.app`；Redirect URLs `http://localhost:3000/**`、`https://pikyoo.vercel.app/**`、`https://pikyoo-*-max-x1.vercel.app/**`）
-- [ ] Claude：`group_holds_minimum` migration 合併後套用到 `pikyoo-dev`
-- [ ] Claude：開始 B1
-- [ ] 待處理的 advisor 警告：5 個函式沒設 `search_path`（`touch_updated_at`、`contact_kind`、`assert_no_contact`、`tpe_weekday`、`tpe_hhmi`）；security definer 的 RPC 本來就是給前端呼叫的（預期中），但 `is_admin`、`my_coach_id`、`is_group_member` 這類內部 helper 可以考慮移出 `public`
+- [x] Claude：`group_holds_minimum` migration 已套用到 `pikyoo-dev`
+- [x] Claude：B1 資料層（2026-10-02）。本機用 `pikyoo-dev` 的 live 模式檢查過球局、教練、球場的列表與詳細頁
+- [ ] Owner：Vercel `pikyoo` 填好上面 3 個變數後，再加 `NEXT_PUBLIC_DATA_SOURCE=live`（Production 與 Preview），Redeploy，正式網址就會換成資料庫的資料
+- [ ] Claude：seed 的球局日期是套用當天（9/30）往後算的，現在大多已經過期；切到 live 前重新整理示範球局的日期
+- [x] advisor 警告：5 個函式沒設 `search_path`，已修（`20261002083200_pin_search_path`）。其餘 security definer 的警告是預期中的：RPC 本來就是給前端呼叫的；`is_admin`、`my_coach_id`、`is_group_member` 被 RLS 規則使用，訪客也需要能執行，所以保留
