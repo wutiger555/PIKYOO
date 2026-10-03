@@ -1,5 +1,4 @@
-import { COURTS } from "@pikyoo/core/data/courts";
-import { DAY_GROUPS } from "@pikyoo/core/data/games";
+import type { Catalog } from "@pikyoo/core/source/types";
 import type { DayGroup, Level } from "@pikyoo/core/types";
 
 // AI 一貼成局 (docs/PRD.md F2-8). This rule-based parser stands in for the LLM call so the
@@ -41,7 +40,7 @@ const lv = (x: string): Level | undefined => LEVEL_OF[Number(x).toFixed(1)];
 const SHORT_NAME: Record<string, string> = { daan: "大安", xinyi: "信義", dajia: "大佳", zhongshan: "中山", neihu: "內湖", banqiao: "板橋" };
 const hhmm = (h: string, m = "00") => `${h.padStart(2, "0")}:${m}`;
 
-export function parseGameText(text: string): { draft: Draft; unsure: DraftField[] } {
+export function parseGameText(text: string, { courts, dayGroups }: Pick<Catalog, "courts" | "dayGroups">): { draft: Draft; unsure: DraftField[] } {
   const d = emptyDraft();
   const sure = new Set<DraftField>();
   const t = text.replace(/[：]/g, ":").replace(/[～〜~－—]/g, "-");
@@ -54,7 +53,7 @@ export function parseGameText(text: string): { draft: Draft; unsure: DraftField[
   }
   const md = t.match(/(\d{1,2})\/(\d{1,2})/)?.[0];
   if (md) {
-    const hit = (Object.keys(DAY_GROUPS) as DayGroup[]).find((k) => DAY_GROUPS[k].includes(md));
+    const hit = (Object.keys(dayGroups) as DayGroup[]).find((k) => dayGroups[k].includes(md));
     if (hit && (!d.group || d.group === hit)) { d.group = hit; sure.add("group"); }
     else if (hit) d.group = hit; // weekday and date disagree → keep unsure
   }
@@ -72,8 +71,8 @@ export function parseGameText(text: string): { draft: Draft; unsure: DraftField[
   }
 
   // venue: court database first (full name sure, short name unsure), then free text
-  const full = COURTS.find((c) => t.includes(c.name));
-  const short = full ?? COURTS.find((c) => t.includes(SHORT_NAME[c.id] ?? c.name));
+  const full = courts.find((c) => t.includes(c.name));
+  const short = full ?? courts.find((c) => t.includes(SHORT_NAME[c.id] ?? c.name));
   if (full) { d.courtId = full.id; sure.add("courtId"); }
   else if (short) d.courtId = short.id;
 

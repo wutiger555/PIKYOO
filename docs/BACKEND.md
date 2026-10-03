@@ -76,15 +76,18 @@ Supabase（東京 ap-northeast-1）
 現在畫面直接 import `@pikyoo/core/data/*` 的假資料，並透過 `lib/demo-store.tsx`（`useDemo()`）改狀態。改法：
 
 ```text
-web/src/lib/source/
-  index.ts        依 NEXT_PUBLIC_DATA_SOURCE 選 demo 或 live
-  types.ts        DataSource 介面：listCourts / getCourt / listGames / getGame / listCoaches / getCoach / questionsFor …
-  demo.ts         包住現在的 @pikyoo/core/data/*（行為和今天完全一樣）
-  live.ts         Supabase 查詢 + mapper：資料庫欄位 → 現在畫面用的型別（Game、Coach、Court…）
-  actions.ts      寫入動作介面：joinGame / leaveGame / requestBooking / answerQuestion …
-                  demo：呼叫現在的 demo-store；live：Server Action → RPC → router.refresh()
+packages/core/src/source/      （網站與未來 App 共用，不含 Next.js 程式）
+  types.ts        Catalog（球場、教練、球局、日期標題）與 DataSource 介面
+  demo.ts         直接回傳 @pikyoo/core/data/*（行為和今天完全一樣）
+  live.ts         createLive({ url, publishableKey })：Supabase 查詢 + mapper，資料庫欄位 → 畫面用的型別
   db.types.ts     `supabase gen types typescript` 產生的資料庫型別
+web/src/lib/source.ts          依 NEXT_PUBLIC_DATA_SOURCE 選 demo 或 live；getCatalog / getCourt / getCoach / getGame；live 每次請求重新讀（connection()）
+web/next.config.ts             live 模式缺 Supabase 變數或網址格式不對時，**建置直接失敗**（Vercel 會繼續用上一版）
 ```
+
+- **B1 的做法**：root layout 在伺服器端讀一次 `getCatalog()`，交給 `DemoProvider`；畫面用 `useCatalog()`、`useCoaches()`、`useAllGames()` 拿資料，不再直接 import mock。詳細頁（`/coaches/[id]` 等）在伺服器端用 `getCoach()` 這類函式。live 模式每次請求都重新讀，所以詳細頁拿掉了 `generateStaticParams`；demo 模式的詳細頁因此也改成每次請求產生，畫面不變。
+- **B1 還沒做的**：寫入動作（`actions.ts`：報名、預約、回覆…）在 B2 之後跟登入一起做，現在兩種模式都還是寫在瀏覽器記憶體；`proxy.ts`（刷新登入 session）也移到 B2。預約的日期（`BOOKING_DAYS`）和問與答仍用 mock，B5 換掉。
+- **B1 live 模式的限制**：球局列表只顯示「今天、明天、這個週末」（跟 demo 一樣的四組），其他平日的球局 B3 做伺服器端篩選時再加；教練的評價、球場距離與地圖座標還沒有資料，先不顯示。
 
 - **畫面用的型別（`@pikyoo/core/types`）先不改。** mapper 把 `starts_at`（UTC）轉成畫面要的「今天／週六」「10/3」「19:00」，教練的 `students`、`priceFrom` 從資料庫算出來。這樣第一輪幾乎不用動畫面元件。
 - `signedIn`：demo 看切換開關；live 看伺服器端讀到的 Supabase session。
@@ -307,7 +310,7 @@ B1–B3 是最短的「真的能用」路徑：讀得到資料 → 能登入 →
 - [x] Owner：Vercel `pikyoo` 已填 `NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`、`SUPABASE_SECRET_KEY`、`NEXT_PUBLIC_DATA_SOURCE=live`（現在的 `main` 不讀它們，留著沒影響）
 - [ ] **B1 重新上線**（目前卡在這）：
   1. Owner：確認 Vercel 變數名稱正確、Environments 有勾 Production（和 Preview）、URL 是 `https://mwbqzixberulpuivvzbh.supabase.co`（沒有結尾 `/`）；或從 Vercel Logs 抓 500 的錯誤訊息
-  2. Claude：從 `claude/b1-data-source` 重開 PR（revert #12），看 PR 的 Vercel Preview 網址在 live 模式能正常開，再合併
+  2. Claude：✅ B1 已移植到 `packages/core` 結構（分支 `claude/b1-relaunch`），本機用 `pikyoo-dev` 的 live 模式檢查過列表、詳細頁、桌機與手機；並加上「live 設定有誤就讓建置失敗」的保險。看 PR 的 Vercel Preview 網址在 live 模式能正常開，再合併
   3. 合併後確認 `pikyoo.vercel.app` 的 `/`、`/games`、`/coaches/mia`、`/courts/daan` 都正常
 - [ ] Owner：Auth 網址設定（SETUP §2.4：Site URL `https://pikyoo.vercel.app`；Redirect URLs `http://localhost:3000/**`、`https://pikyoo.vercel.app/**`、`https://pikyoo-*-max-x1.vercel.app/**`），B2 前完成
 - [ ] B2 登入：需要 LINE MINI App channel（SETUP §3）的 LIFF ID 與 Channel ID
