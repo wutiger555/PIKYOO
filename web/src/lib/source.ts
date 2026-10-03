@@ -10,7 +10,7 @@ import type { Catalog } from "@pikyoo/core/source/types";
 
 export const isLive = process.env.NEXT_PUBLIC_DATA_SOURCE === "live";
 const source = isLive
-  ? createLive({ url: process.env.NEXT_PUBLIC_SUPABASE_URL!, publishableKey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY! })
+  ? createLive({ url: process.env.NEXT_PUBLIC_SUPABASE_URL!.trim().replace(/\/+$/, ""), publishableKey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY! })
   : demo;
 
 /** One load per request, shared by the layout, the page and its metadata. Live never prerenders database rows into the build. */
