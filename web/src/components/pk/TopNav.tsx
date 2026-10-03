@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useDemo } from "@/lib/demo-store";
+import { useAccount } from "@/lib/use-account";
 import { PkMark } from "./Logo";
 import { LoginSheet } from "./LoginSheet";
 
@@ -19,7 +20,8 @@ const LINKS: [NavKey, string, string][] = [
 /** Desktop top navigation (docs/DESKTOP.md §4) — replaces the bottom TabBar at ≥1024px; hidden on phones.
  *  `coach` is the console variant: 教練模式 badge instead of the student links, and a switch back to the student side. */
 export function TopNav({ active, coach }: { active?: NavKey; coach?: boolean }) {
-  const { signedIn, setSignedIn, profile, myCoach } = useDemo();
+  const { signedIn, profile, myCoach } = useDemo();
+  const account = useAccount();
   const [login, setLogin] = useState(false);
   if (coach) {
     return (
@@ -53,7 +55,7 @@ export function TopNav({ active, coach }: { active?: NavKey; coach?: boolean }) 
                 <div className="topnav-menu">
                   <Link href="/me">我的</Link>
                   <Link href="/coach">切換到教練模式</Link>
-                  <button onClick={(e) => { setSignedIn(false); (e.currentTarget.closest("details") as HTMLDetailsElement).open = false; }}>登出（Demo：看訪客畫面）</button>
+                  <button onClick={(e) => { (e.currentTarget.closest("details") as HTMLDetailsElement).open = false; account.logout(); }}>{account.real ? "登出" : "登出（Demo：看訪客畫面）"}</button>
                 </div>
               </details>
             </>

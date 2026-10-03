@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Barlow, Barlow_Condensed, Noto_Sans_TC } from "next/font/google";
 import { DemoProvider } from "@/lib/demo-store";
 import { getCatalog } from "@/lib/source";
+import { getMe } from "@/lib/supabase";
 import "./globals.css";
 
 // Latin + numerals in Barlow, CJK falls through to Noto Sans TC; times/prices in Barlow Condensed.
@@ -22,11 +23,11 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const catalog = await getCatalog();
+  const [catalog, me] = await Promise.all([getCatalog(), getMe()]);
   return (
     <html lang="zh-Hant" className={`${barlow.variable} ${barlowCondensed.variable} ${notoTC.variable}`}>
       <body>
-        <DemoProvider catalog={catalog}>{children}</DemoProvider>
+        <DemoProvider key={me?.id ?? "guest"} catalog={catalog} me={me}>{children}</DemoProvider>
       </body>
     </html>
   );

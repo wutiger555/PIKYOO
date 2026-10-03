@@ -5,6 +5,7 @@ import { BOOKING_DAYS, getCoach, initialGroups, initialPayments, initialRequests
 import { ME } from "@pikyoo/core/data/games";
 import { initialQuestions } from "@pikyoo/core/data/questions";
 import { LEVELS } from "@pikyoo/core/format";
+import type { Me } from "@pikyoo/core/source/me";
 import type { Catalog } from "@pikyoo/core/source/types";
 import type { Booking, BookingRequest, Coach, Game, Group, Level, LessonType, MyGameStatus, PaymentRow, Profile, Question } from "@pikyoo/core/types";
 
@@ -55,9 +56,10 @@ interface DemoState {
   questions: Question[];
 }
 
-const init = (catalog: Catalog): DemoState => ({
-  signedIn: true,
-  profile: { name: ME.name, level: ME.level, areas: ["大安區", "信義區", "中山區"] },
+/** me: the real signed-in person (null = visitor); undefined = demo sign-in, which starts signed in as 小安. */
+const init = (catalog: Catalog, me: Me | null | undefined): DemoState => ({
+  signedIn: me === undefined || !!me,
+  profile: me?.profile ?? { name: ME.name, level: ME.level, areas: ["大安區", "信義區", "中山區"] },
   mine: {},
   hosted: [],
   popSeat: null,
@@ -75,8 +77,8 @@ const init = (catalog: Catalog): DemoState => ({
 type Updater<T> = T | ((prev: T) => T);
 const apply = <T,>(u: Updater<T>, prev: T): T => (typeof u === "function" ? (u as (p: T) => T)(prev) : u);
 
-function useDemoValue(catalog: Catalog) {
-  const [s, setS] = useState(() => init(catalog));
+function useDemoValue(catalog: Catalog, me: Me | null | undefined) {
+  const [s, setS] = useState(() => init(catalog, me));
   const set = useCallback(<K extends keyof DemoState>(key: K, u: Updater<DemoState[K]>) => setS((p) => ({ ...p, [key]: apply(u, p[key]) })), []);
 
   const setMine = useCallback((id: string, status: MyGameStatus | null) =>
@@ -149,8 +151,9 @@ function useDemoValue(catalog: Catalog) {
 type Demo = ReturnType<typeof useDemoValue>;
 const Ctx = createContext<Demo | null>(null);
 
-export function DemoProvider({ catalog, children }: { catalog: Catalog; children: React.ReactNode }) {
-  return <Ctx.Provider value={useDemoValue(catalog)}>{children}</Ctx.Provider>;
+/** Keyed by the signed-in user in app/layout.tsx, so signing in or out starts fresh state. */
+export function DemoProvider({ catalog, me, children }: { catalog: Catalog; me?: Me | null; children: React.ReactNode }) {
+  return <Ctx.Provider value={useDemoValue(catalog, me)}>{children}</Ctx.Provider>;
 }
 
 export function useDemo() {

@@ -17,6 +17,7 @@ create table auth.users (
   email text,
   confirmation_token text, recovery_token text, email_change_token_new text, email_change text,
   raw_user_meta_data jsonb not null default '{}',
+  raw_app_meta_data jsonb not null default '{}',
   created_at timestamptz not null default now()
 );
 -- same definition as Supabase's: the JWT's sub claim

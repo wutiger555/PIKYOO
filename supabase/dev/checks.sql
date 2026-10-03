@@ -208,3 +208,31 @@ set role authenticated;
 do $$ begin perform public.delete_my_account(); end $$;
 reset role;
 do $$ begin assert (select display_name from public.profiles where id = test.uid('Wendy')) = '已刪除使用者', 'deleted accounts are anonymised'; end $$;
+
+-- ── sign-up: the LINE id is taken from server-written app metadata only ──
+insert into auth.users (id, raw_user_meta_data, raw_app_meta_data) values
+  ('00000000-0000-0000-0000-00000000a001', '{"name": "冒充者", "line_user_id": "Uvictim"}', '{}'),
+  ('00000000-0000-0000-0000-00000000a002', '{"name": "LINE 使用者"}', '{"line_user_id": "Ureal"}');
+do $$ begin
+  assert (select line_user_id from public.profile_private where id = '00000000-0000-0000-0000-00000000a001') is null,
+    'a LINE id in user-editable metadata is ignored';
+  assert (select line_user_id from public.profile_private where id = '00000000-0000-0000-0000-00000000a002') = 'Ureal',
+    'the LINE id set by the server is stored';
+end $$;
+
+-- ── 首次登入設定: people save their own profile and private settings, nobody else's ──
+do $$ begin perform test.login('小安'); end $$;
+set role authenticated;
+do $$
+declare n int;
+begin
+  update public.profiles set display_name = '小安安', level = 2 where id = test.uid('小安');
+  get diagnostics n = row_count; assert n = 1, 'own profile is editable';
+  update public.profile_private set home_districts = '{大安區}', onboarded_at = now() where id = test.uid('小安');
+  get diagnostics n = row_count; assert n = 1, 'own private settings are editable';
+  update public.profile_private set home_districts = '{}' where id = test.uid('葉子');
+  get diagnostics n = row_count; assert n = 0, 'someone else''s private settings are not';
+  assert test.fails($q$update public.profile_private set line_user_id = 'Uhijack' where id = test.uid('小安')$q$) is not null,
+    'the LINE id is server-only';
+end $$;
+reset role;
