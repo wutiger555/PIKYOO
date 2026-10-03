@@ -26,6 +26,7 @@ A pickleball platform for Taiwan to find courts, coaches, classes, and games.
 
 | 日期 | PR | 內容 |
 |---|---|---|
+| 2026-10-04 | [#17](https://github.com/wutiger555/PIKYOO/pull/17) | **正式網址改讀資料庫（B1 重新上線）**：球場、教練、球局來自 Supabase。讀資料的程式放在 `packages/core`，之後 App 共用。10/3 掛掉的原因是 Vercel 的 Supabase 網址少一個字；現在設定有誤時**建置會直接失敗**，正式站維持上一版，不會再整站 500 |
 | 2026-10-04 | [#16](https://github.com/wutiger555/PIKYOO/pull/16) | 文件：[APP.md](docs/APP.md) §8 改成原生 App 的進度表（五個階段、23 步，標示目前位置與負責人） |
 | 2026-10-04 | [#15](https://github.com/wutiger555/PIKYOO/pull/15) | 程式整理：建立 `packages/core`（npm workspaces），把型別、假資料、程度與價格格式、聯絡方式過濾從 `web/` 搬過去，之後原生 App 可直接共用（[APP.md](docs/APP.md) §3）。網站畫面沒有改變 |
 | 2026-10-04 | [#14](https://github.com/wutiger555/PIKYOO/pull/14) | 文件：決定原生 App 路線為 **React Native + Expo**（不用 Capacitor／Flutter），新增 [APP.md](docs/APP.md)：架構、上架流程、網頁與 App 並存的維護規則；更新 PLAN §11.5、PRD Phase 4 |
