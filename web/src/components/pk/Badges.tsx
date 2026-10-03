@@ -1,5 +1,5 @@
-import { LEVELS, levelText } from "@/lib/format";
-import type { Credential, Level } from "@/lib/types";
+import { LEVELS, levelText } from "@pikyoo/core/format";
+import type { Credential, Level } from "@pikyoo/core/types";
 import { Icon } from "./Icon";
 
 /** 程度徽章: 7-step ladder (height + olive depth) plus the number, always written out. */

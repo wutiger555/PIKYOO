@@ -5,8 +5,8 @@ import { Icon } from "@/components/pk/Icon";
 import { AppBar } from "@/components/pk/Shell";
 import { useToast } from "@/components/pk/Toast";
 import { useDemo } from "@/lib/demo-store";
-import { money } from "@/lib/format";
-import type { Coach, Plan, Weekday } from "@/lib/types";
+import { money } from "@pikyoo/core/format";
+import type { Coach, Plan, Weekday } from "@pikyoo/core/types";
 import { CoachTabs, ConsoleFrame } from "./ConsoleScreens";
 
 const WEEK: Weekday[] = ["一", "二", "三", "四", "五", "六", "日"];

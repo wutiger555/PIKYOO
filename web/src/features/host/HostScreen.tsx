@@ -9,11 +9,11 @@ import { AppBar } from "@/components/pk/Shell";
 import { TopNav } from "@/components/pk/TopNav";
 import { GameTicket } from "@/components/pk/Ticket";
 import { useToast } from "@/components/pk/Toast";
-import { COURTS, getCourt } from "@/lib/data/courts";
-import { DAY_GROUPS } from "@/lib/data/games";
+import { COURTS, getCourt } from "@pikyoo/core/data/courts";
+import { DAY_GROUPS } from "@pikyoo/core/data/games";
 import { useDemo } from "@/lib/demo-store";
-import { LEVELS } from "@/lib/format";
-import type { DayGroup, Game, Level } from "@/lib/types";
+import { LEVELS } from "@pikyoo/core/format";
+import type { DayGroup, Game, Level } from "@pikyoo/core/types";
 import { emptyDraft, parseGameText, SAMPLE_TEXT, type Draft, type DraftField, type PayKind } from "./parse";
 
 type Step = "paste" | "parsing" | "form" | "done";

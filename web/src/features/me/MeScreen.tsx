@@ -10,7 +10,7 @@ import { TopNav } from "@/components/pk/TopNav";
 import { LoginSheet } from "@/components/pk/LoginSheet";
 import { GameTicket } from "@/components/pk/Ticket";
 import { useToast } from "@/components/pk/Toast";
-import { shortAreas } from "@/lib/data/courts";
+import { shortAreas } from "@pikyoo/core/data/courts";
 import { useAllGames, useDemo } from "@/lib/demo-store";
 
 type Tab = "joined" | "hosted" | "history";

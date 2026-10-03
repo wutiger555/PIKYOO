@@ -6,9 +6,9 @@ import { useState } from "react";
 import { Icon } from "@/components/pk/Icon";
 import { LevelPicker } from "@/components/pk/LevelPicker";
 import { PkMark } from "@/components/pk/Logo";
-import { DISTRICTS } from "@/lib/data/courts";
+import { DISTRICTS } from "@pikyoo/core/data/courts";
 import { useDemo } from "@/lib/demo-store";
-import type { Level } from "@/lib/types";
+import type { Level } from "@pikyoo/core/types";
 
 const STEPS = ["暱稱", "程度", "常打區域"];
 

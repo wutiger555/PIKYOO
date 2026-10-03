@@ -9,10 +9,10 @@ import { AppBar } from "@/components/pk/Shell";
 import { TopNav } from "@/components/pk/TopNav";
 import { GameTicket } from "@/components/pk/Ticket";
 import { useToast } from "@/components/pk/Toast";
-import { COACHES } from "@/lib/data/coaches";
+import { COACHES } from "@pikyoo/core/data/coaches";
 import { useAllGames, useDemo } from "@/lib/demo-store";
-import { LEVELS } from "@/lib/format";
-import type { Level } from "@/lib/types";
+import { LEVELS } from "@pikyoo/core/format";
+import type { Level } from "@pikyoo/core/types";
 import { CoachCard } from "../coaches/CoachCard";
 
 // F3-2 程度自評. Each answer scores 0–3; the total maps onto the 7-step ladder (新手 … 3.5).

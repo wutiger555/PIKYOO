@@ -11,8 +11,8 @@ import { TopNav } from "@/components/pk/TopNav";
 import { GameTicket, Seats } from "@/components/pk/Ticket";
 import { useToast } from "@/components/pk/Toast";
 import { useDemo, useGameView } from "@/lib/demo-store";
-import { LEVELS, levelText } from "@/lib/format";
-import type { Game } from "@/lib/types";
+import { LEVELS, levelText } from "@pikyoo/core/format";
+import type { Game } from "@pikyoo/core/types";
 
 /** F2 球局詳情: big ticket, seats, fee/cancel/level, map, host, roster, sticky CTA (join / waitlist / cancel). */
 export function GameDetailScreen({ game: g }: { game: Game }) {

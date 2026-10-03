@@ -2,10 +2,10 @@
 name: db
 on:
   pull_request:
-    paths: ["supabase/**", "web/src/lib/data/**", "web/src/lib/types.ts", "web/scripts/gen-seed.mts", ".github/workflows/db.yml"]
+    paths: ["supabase/**", "packages/core/src/data/**", "packages/core/src/types.ts", "web/scripts/gen-seed.mts", ".github/workflows/db.yml"]
   push:
     branches: [main]
-    paths: ["supabase/**", "web/src/lib/data/**", "web/scripts/gen-seed.mts"]
+    paths: ["supabase/**", "packages/core/src/data/**", "web/scripts/gen-seed.mts"]
 jobs:
   check:
     runs-on: ubuntu-latest

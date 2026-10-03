@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { PkMark } from "@/components/pk/Logo";
-import { FLOWS } from "@/lib/data/flows";
+import { FLOWS } from "@pikyoo/core/data/flows";
 import { DESIGN_PAGES } from "./pages";
 
 const PAGE_NOTES: Record<string, string> = {

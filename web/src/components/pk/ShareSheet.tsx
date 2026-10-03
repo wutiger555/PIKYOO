@@ -1,7 +1,7 @@
 "use client";
 
 import { useGameView } from "@/lib/demo-store";
-import type { Game } from "@/lib/types";
+import type { Game } from "@pikyoo/core/types";
 import { LevelChip, Sprout } from "./Badges";
 import { Icon } from "./Icon";
 import { PkMark } from "./Logo";

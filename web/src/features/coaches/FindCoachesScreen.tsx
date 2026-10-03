@@ -6,10 +6,10 @@ import { Icon } from "@/components/pk/Icon";
 import { LevelPicker } from "@/components/pk/LevelPicker";
 import { Sheet, SoonButton, TabBar } from "@/components/pk/Shell";
 import { TopNav } from "@/components/pk/TopNav";
-import { isCertified } from "@/lib/data/coaches";
+import { isCertified } from "@pikyoo/core/data/coaches";
 import { emptyCoachFilters, useCoaches, useDemo, type CoachFilters } from "@/lib/demo-store";
-import { LEVELS, levelText, money } from "@/lib/format";
-import type { Coach, LessonType } from "@/lib/types";
+import { LEVELS, levelText, money } from "@pikyoo/core/format";
+import type { Coach, LessonType } from "@pikyoo/core/types";
 import { CoachCard, Photo } from "./CoachCard";
 
 export function filterCoaches(list: Coach[], f: CoachFilters) {

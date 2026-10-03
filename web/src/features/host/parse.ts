@@ -1,6 +1,6 @@
-import { COURTS } from "@/lib/data/courts";
-import { DAY_GROUPS } from "@/lib/data/games";
-import type { DayGroup, Level } from "@/lib/types";
+import { COURTS } from "@pikyoo/core/data/courts";
+import { DAY_GROUPS } from "@pikyoo/core/data/games";
+import type { DayGroup, Level } from "@pikyoo/core/types";
 
 // AI 一貼成局 (docs/PRD.md F2-8). This rule-based parser stands in for the LLM call so the
 // flow works offline; it returns the same shape — a pre-filled draft plus the fields that

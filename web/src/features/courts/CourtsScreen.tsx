@@ -8,8 +8,8 @@ import { Crumbs } from "@/components/pk/Crumbs";
 import { AppBar } from "@/components/pk/Shell";
 import { TopNav } from "@/components/pk/TopNav";
 import { Img } from "@/features/coaches/CoachCard";
-import { COURTS } from "@/lib/data/courts";
-import type { Court } from "@/lib/types";
+import { COURTS } from "@pikyoo/core/data/courts";
+import type { Court } from "@pikyoo/core/types";
 
 type Chip = "室內" | "室外" | "風雨" | "free" | "aircon" | "lights";
 const CHIPS: [Chip, string][] = [["室內", "室內"], ["室外", "室外"], ["風雨", "風雨球場"], ["free", "免費"], ["aircon", "有冷氣"], ["lights", "夜間照明"]];

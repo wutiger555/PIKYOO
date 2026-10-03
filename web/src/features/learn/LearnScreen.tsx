@@ -8,9 +8,9 @@ import { Crumbs } from "@/components/pk/Crumbs";
 import { AppBar } from "@/components/pk/Shell";
 import { TopNav } from "@/components/pk/TopNav";
 import { GameTicket } from "@/components/pk/Ticket";
-import { COACHES } from "@/lib/data/coaches";
+import { COACHES } from "@pikyoo/core/data/coaches";
 import { useAllGames, useDemo } from "@/lib/demo-store";
-import { money } from "@/lib/format";
+import { money } from "@pikyoo/core/format";
 import { CoachCard } from "../coaches/CoachCard";
 
 const RULES = [

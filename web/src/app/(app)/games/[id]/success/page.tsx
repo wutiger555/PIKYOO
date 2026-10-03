@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { JoinSuccessScreen } from "@/features/games/JoinSuccessScreen";
-import { GAMES, getGame } from "@/lib/data/games";
+import { GAMES, getGame } from "@pikyoo/core/data/games";
 
 export const generateStaticParams = () => GAMES.map((g) => ({ id: g.id }));
 

@@ -8,12 +8,12 @@ import { PkMark } from "@/components/pk/Logo";
 import { LoginSheet } from "@/components/pk/LoginSheet";
 import { TabBar } from "@/components/pk/Shell";
 import { TopNav } from "@/components/pk/TopNav";
-import { BOOKING_DAYS, slotsFor } from "@/lib/data/coaches";
-import { COURTS, shortAreas } from "@/lib/data/courts";
-import { GAMES } from "@/lib/data/games";
+import { BOOKING_DAYS, slotsFor } from "@pikyoo/core/data/coaches";
+import { COURTS, shortAreas } from "@pikyoo/core/data/courts";
+import { GAMES } from "@pikyoo/core/data/games";
 import { useCoaches, useDemo } from "@/lib/demo-store";
-import { LEVELS, money } from "@/lib/format";
-import type { LessonType } from "@/lib/types";
+import { LEVELS, money } from "@pikyoo/core/format";
+import type { LessonType } from "@pikyoo/core/types";
 import { CoachMini, Img } from "../coaches/CoachCard";
 
 const TYPES: LessonType[] = ["體驗課", "一對一", "小班", "團體"];

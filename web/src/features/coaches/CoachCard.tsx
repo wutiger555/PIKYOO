@@ -7,8 +7,8 @@ import { Cred, LevelChip } from "@/components/pk/Badges";
 import { Icon } from "@/components/pk/Icon";
 import { useToast } from "@/components/pk/Toast";
 import { useDemo } from "@/lib/demo-store";
-import { money } from "@/lib/format";
-import type { Coach, CoachProfile } from "@/lib/types";
+import { money } from "@pikyoo/core/format";
+import type { Coach, CoachProfile } from "@pikyoo/core/types";
 
 /** A photo filling its (position: relative) parent. The demo's bundled photos are free stock photos (docs/PHOTOS.md), not
  *  the coaches themselves, so they carry the「示意照」tag; blob: URLs are the coach's own uploads (console preview) and don't.

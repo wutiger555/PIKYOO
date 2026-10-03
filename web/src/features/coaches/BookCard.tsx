@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Icon } from "@/components/pk/Icon";
-import { BOOKING_DAYS, slotsFor } from "@/lib/data/coaches";
-import { money } from "@/lib/format";
-import type { Coach } from "@/lib/types";
+import { BOOKING_DAYS, slotsFor } from "@pikyoo/core/data/coaches";
+import { money } from "@pikyoo/core/format";
+import type { Coach } from "@pikyoo/core/types";
 
 /** Desktop coach page: the sticky booking card in the right column (docs/DESKTOP.md §5.1). Picks plan, day and time
  *  here so the booking page opens pre-filled; a visitor sees the price and a sign-in prompt instead. */

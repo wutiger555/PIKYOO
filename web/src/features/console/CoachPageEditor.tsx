@@ -8,10 +8,10 @@ import { AppBar, SoonButton } from "@/components/pk/Shell";
 import { useToast } from "@/components/pk/Toast";
 import { CoachPublicPage } from "@/features/coaches/CoachPageScreen";
 import { Img } from "@/features/coaches/CoachCard";
-import { COURTS } from "@/lib/data/courts";
+import { COURTS } from "@pikyoo/core/data/courts";
 import { useDemo } from "@/lib/demo-store";
-import { LEVELS } from "@/lib/format";
-import type { Coach, CoachProfile, Level, PayMethod, PlayProfile, TimelineItem } from "@/lib/types";
+import { LEVELS } from "@pikyoo/core/format";
+import type { Coach, CoachProfile, Level, PayMethod, PlayProfile, TimelineItem } from "@pikyoo/core/types";
 import { CoachTabs, ConsoleFrame } from "./ConsoleScreens";
 
 const STRENGTHS = ["零基礎入門", "發球與接發球", "網前小球（dink）", "第三拍 drop", "重置球（reset）", "截擊", "快速對抽（hands battle）", "雙打站位與換位", "單打戰術", "比賽策略", "網球轉匹克球的揮拍修正", "親子課"];

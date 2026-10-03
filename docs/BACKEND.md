@@ -24,7 +24,7 @@
 |---|---|---|
 | 網址（建議） | `pikyoo-demo.vercel.app`（新開的 Vercel 專案，同一個 repo） | `pikyoo.vercel.app` |
 | 開關 `NEXT_PUBLIC_DATA_SOURCE` | `demo` | `live`（接好之前維持 `demo`） |
-| 資料 | 現在的假資料（`web/src/lib/data/`），存在瀏覽器記憶體，重新整理就還原 | Supabase 資料庫 |
+| 資料 | 現在的假資料（`packages/core/src/data/`），存在瀏覽器記憶體，重新整理就還原 | Supabase 資料庫 |
 | 登入 | 假登入（「我的」裡的登出／登入切換） | LINE 登入（LIFF） |
 | 用途 | 簡報、招商、教練說明會、給投資人看 | 真的使用者 |
 
@@ -73,20 +73,20 @@ Supabase（東京 ap-northeast-1）
 
 ## 3. 前端資料層：怎麼從 mock 換成真的
 
-現在畫面直接 import `lib/data/*` 的假資料，並透過 `lib/demo-store.tsx`（`useDemo()`）改狀態。改法：
+現在畫面直接 import `@pikyoo/core/data/*` 的假資料，並透過 `lib/demo-store.tsx`（`useDemo()`）改狀態。改法：
 
 ```text
 web/src/lib/source/
   index.ts        依 NEXT_PUBLIC_DATA_SOURCE 選 demo 或 live
   types.ts        DataSource 介面：listCourts / getCourt / listGames / getGame / listCoaches / getCoach / questionsFor …
-  demo.ts         包住現在的 lib/data/*（行為和今天完全一樣）
+  demo.ts         包住現在的 @pikyoo/core/data/*（行為和今天完全一樣）
   live.ts         Supabase 查詢 + mapper：資料庫欄位 → 現在畫面用的型別（Game、Coach、Court…）
   actions.ts      寫入動作介面：joinGame / leaveGame / requestBooking / answerQuestion …
                   demo：呼叫現在的 demo-store；live：Server Action → RPC → router.refresh()
   db.types.ts     `supabase gen types typescript` 產生的資料庫型別
 ```
 
-- **畫面用的型別（`lib/types.ts`）先不改。** mapper 把 `starts_at`（UTC）轉成畫面要的「今天／週六」「10/3」「19:00」，教練的 `students`、`priceFrom` 從資料庫算出來。這樣第一輪幾乎不用動畫面元件。
+- **畫面用的型別（`@pikyoo/core/types`）先不改。** mapper 把 `starts_at`（UTC）轉成畫面要的「今天／週六」「10/3」「19:00」，教練的 `students`、`priceFrom` 從資料庫算出來。這樣第一輪幾乎不用動畫面元件。
 - `signedIn`：demo 看切換開關；live 看伺服器端讀到的 Supabase session。
 - 篩選、比較、畫面暫存（`gameFilters`、`compare`、`booking` 草稿）仍然是前端狀態，兩種模式共用。
 
@@ -135,7 +135,7 @@ web/src/lib/source/
 | `decide_booking` | 教練確認／婉拒 | 確認後每個人各開一筆應付款（揪團時每人付自己那份）並通知 |
 | `create_lesson_group` → `join_lesson_group` → `submit_lesson_group` | 揪朋友一起上 | 先佔時段、拿邀請碼：揪團期間保留「成員數」與「方案最少人數」取大者的名額，超過的名額仍可單獨預約；朋友用連結加入；滿最少人數才能送給教練；開課前 24 小時還沒送出就逾時取消 |
 | `report_payment`、`mark_payment_paid`、`payment_instructions` | 付款 | 學生回報（可附末五碼）；教練標記已收；學生只看得到自己那筆的收款資訊 |
-| `answer_question`、`hide_question` | 教練回覆、隱藏提問 | 問題和回覆都不能有電話、Email、LINE／IG 帳號、「私訊我」（跟 `web/src/lib/contact.ts` 同一套規則，兩邊要一起改） |
+| `answer_question`、`hide_question` | 教練回覆、隱藏提問 | 問題和回覆都不能有電話、Email、LINE／IG 帳號、「私訊我」（跟 `packages/core/src/contact.ts` 同一套規則，兩邊要一起改） |
 | `expire_stale` | 排程：過期預約、逾時揪團 | 每幾分鐘跑一次（pg_cron，B5 設定） |
 | `delete_my_account` | 刪除帳號（F1-5） | 個資清掉、名稱改成「已刪除使用者」，歷史紀錄保留；未來的報名自動取消 |
 

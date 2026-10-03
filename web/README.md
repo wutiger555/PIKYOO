@@ -56,8 +56,10 @@ Every route has a phone layout and a desktop layout (≥1024px, see `../docs/DES
   - `coaches/QuestionBoard.tsx`: 問與答. `AskSheet` for students, `AnswerCard` for the coach console.
   - `console/ConsoleScreens.tsx`: `ConsoleFrame`, the console page frame (phone scroller, or desktop coach TopNav + left menu), plus 今天 and 收款.
   - `host/parse.ts`: rule-based stand-in for the AI 一貼成局 LLM call. It follows the same draft + unsure-fields contract, so the LLM can replace `parseGameText()` without UI changes.
-- `src/lib/data/`: mock data (`coaches`, `courts`, `games`, `questions`, `flows` for `/design`). `src/lib/types.ts` follows the PRD §7 data model.
-- `src/lib/contact.ts`: blocks phone numbers, emails, LINE/IG handles and 「私訊我」 in questions and replies, so conversations stay on PIKYOO.
+- `@pikyoo/core` (`../packages/core/src/`, shared with the future app):
+  - `data/`: mock data (`coaches`, `courts`, `games`, `questions`, `flows` for `/design`). `types.ts` follows the PRD §7 data model.
+  - `format.ts`: `LEVELS`, `levelText`, `money`.
+  - `contact.ts`: blocks phone numbers, emails, LINE/IG handles and 「私訊我」 in questions and replies, so conversations stay on PIKYOO.
 - `src/lib/demo-store.tsx`: in-memory client state. It holds:
   - `signedIn`, `profile`
   - the signed-in coach's editable page `myCoach`
