@@ -26,7 +26,6 @@ A pickleball platform for Taiwan to find courts, coaches, classes, and games.
 
 | 日期 | PR | 內容 |
 |---|---|---|
-| 2026-10-02 | [#11](https://github.com/wutiger555/PIKYOO/pull/11) | 接真的資料 B1：球場、教練、球局改從「資料來源」讀取，設定 `NEXT_PUBLIC_DATA_SOURCE=live` 就讀 Supabase，沒設定維持 Demo 假資料；修掉 Supabase 安全檢查的 5 個警告（[BACKEND.md](docs/BACKEND.md) §3、§13）。目前網站畫面沒有改變 |
 | 2026-09-30 | [#10](https://github.com/wutiger555/PIKYOO/pull/10) | 揪朋友一起上：湊人期間保留「成員數與最少人數取大者」的名額，避免陌生人先訂走、揪團湊不齊；Supabase `pikyoo-dev` 已套用資料庫與 seed 並通過自動檢查（[BACKEND.md](docs/BACKEND.md) §4.2、§13）。網站畫面沒有改變 |
 | 2026-09-30 | [#9](https://github.com/wutiger555/PIKYOO/pull/9) | 文件：確定正式版＝原本的 Vercel `pikyoo` + Supabase `pikyoo-dev`，Demo 另開 `pikyoo-demo`；Supabase MCP 設定方式、Vercel 免費版限制、目前進度（[BACKEND.md](docs/BACKEND.md) §9.4、§9.5、§13） |
 | 2026-09-30 | [#8](https://github.com/wutiger555/PIKYOO/pull/8) | 開始接真的資料（B0）：[後端與真實資料規劃](docs/BACKEND.md)，Demo 版用同一份程式碼保留在獨立網址；Supabase 資料庫（17 張表、權限規則、報名／候補／預約／揪團／收款／問與答函式、照片儲存）、由 mock 產生的 seed、自動檢查與 CI。網站畫面沒有改變 |
