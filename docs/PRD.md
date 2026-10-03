@@ -31,7 +31,7 @@
 ### 1.4 非目標（MVP 不做）
 - 線上付款（Phase 3 接藍新平台金流，見 PLAN.md §12）
 - 球館完整場地租借行事曆
-- 原生 App（Phase 4，承接團隊既有的 App 上架經驗）
+- 原生 App（Phase 4，React Native + Expo，承接團隊既有的 App 上架經驗；見 [APP.md](APP.md)）
 - 一對一聊天室：學生問教練改用教練頁的「問與答」（F3-11），預約後的訊息串排在 Phase 2；LINE 官方帳號只做通知，不公開教練的私人 LINE
 - 雙北以外地區的資料營運（系統支援，但不主動建置資料）
 
@@ -425,7 +425,7 @@ Email      Resend
 Monitor    Sentry + PostHog
 ```
 
-**未來原生 App 整合：** 所有商業邏輯放在 Supabase（RLS + Edge Functions / RPC），前端只做呈現。Phase 4 以 Expo 開發原生 App 時可直接共用 API、型別定義與資料表，不需改後端。
+**未來原生 App 整合：** 所有商業邏輯放在 Supabase（RLS + Edge Functions / RPC），前端只做呈現。Phase 4 以 Expo 開發原生 App 時可直接共用 API、型別定義與資料表，不需改後端。網站與 App 共用的查詢、規則與假資料放在 `packages/core`（npm workspaces）；App 只做學員常用流程，教練後台留在網頁；上架初期用 Xcode／Android Studio 手動打包。詳見 [APP.md](APP.md)。
 
 ---
 
@@ -470,7 +470,7 @@ Monitor    Sentry + PostHog
 |---|---|---|
 | Phase 2 團主/教練工具 | 第 4–6 月 | 週期開團、出席統計、團主程度回饋、教練學生管理、Pro 訂閱、**賽事行事曆** |
 | Phase 3 交易與信任 | 第 5–8 月 | 藍新平台金流（不過水）、課程線上付款、合作場館上架 Open Play／時段、評價、**DUPR 合作夥伴驗證、協會／總會認證合作** |
-| Phase 4 生態 | 第 9 月後 | **原生 App（Expo，承接團隊既有 App 經驗）**、認證 MINI App、擴展台中/高雄、**職業隊體驗營與聯名**、品牌合作 |
+| Phase 4 生態 | 第 9 月後 | **原生 App（React Native + Expo，承接團隊既有 App 經驗；iOS／Android 同時上架，見 [APP.md](APP.md)）**、認證 MINI App、擴展台中/高雄、**職業隊體驗營與聯名**、品牌合作 |
 
 ---
 
