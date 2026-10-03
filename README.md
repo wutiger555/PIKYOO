@@ -26,7 +26,7 @@ A pickleball platform for Taiwan to find courts, coaches, classes, and games.
 
 | 日期 | PR | 內容 |
 |---|---|---|
-| 2026-10-04 | #PR | **B2 登入（第一部分）**：LINE 登入、首次登入設定存檔、登出、刪除帳號都接上資料庫，等 LINE channel 建好、Vercel 設定 LIFF ID 後才啟用，**現在網站行為不變**。修掉一個資安漏洞：別人可以用 Email 註冊冒用你的 LINE 身分（[BACKEND.md](docs/BACKEND.md) §5） |
+| 2026-10-04 | [#18](https://github.com/wutiger555/PIKYOO/pull/18) | **B2 登入（第一部分）**：LINE 登入、首次登入設定存檔、登出、刪除帳號都接上資料庫，等 LINE channel 建好、Vercel 設定 LIFF ID 後才啟用，**現在網站行為不變**。修掉一個資安漏洞：別人可以用 Email 註冊冒用你的 LINE 身分（[BACKEND.md](docs/BACKEND.md) §5） |
 | 2026-10-04 | [#17](https://github.com/wutiger555/PIKYOO/pull/17) | **正式網址改讀資料庫（B1 重新上線）**：球場、教練、球局來自 Supabase。讀資料的程式放在 `packages/core`，之後 App 共用。10/3 掛掉的原因是 Vercel 的 Supabase 網址少一個字；現在設定有誤時**建置會直接失敗**，正式站維持上一版，不會再整站 500 |
 | 2026-10-04 | [#16](https://github.com/wutiger555/PIKYOO/pull/16) | 文件：[APP.md](docs/APP.md) §8 改成原生 App 的進度表（五個階段、23 步，標示目前位置與負責人） |
 | 2026-10-04 | [#15](https://github.com/wutiger555/PIKYOO/pull/15) | 程式整理：建立 `packages/core`（npm workspaces），把型別、假資料、程度與價格格式、聯絡方式過濾從 `web/` 搬過去，之後原生 App 可直接共用（[APP.md](docs/APP.md) §3）。網站畫面沒有改變 |
