@@ -8,8 +8,7 @@ import { AppBar, SoonButton } from "@/components/pk/Shell";
 import { useToast } from "@/components/pk/Toast";
 import { CoachPublicPage } from "@/features/coaches/CoachPageScreen";
 import { Img } from "@/features/coaches/CoachCard";
-import { COURTS } from "@/lib/data/courts";
-import { useDemo } from "@/lib/demo-store";
+import { useCatalog, useDemo } from "@/lib/demo-store";
 import { LEVELS } from "@/lib/format";
 import type { Coach, CoachProfile, Level, PayMethod, PlayProfile, TimelineItem } from "@/lib/types";
 import { CoachTabs, ConsoleFrame } from "./ConsoleScreens";
@@ -41,6 +40,7 @@ export function completeness(c: Coach): [string, boolean][] {
 export function CoachPageEditor() {
   const toast = useToast();
   const { myCoach: c, setMyCoach } = useDemo();
+  const { courts } = useCatalog();
   const [preview, setPreview] = useState(false);
   const p = c.profile;
   const setC = (patch: Partial<Coach>) => setMyCoach((x) => ({ ...x, ...patch }));
@@ -222,7 +222,7 @@ export function CoachPageEditor() {
 
           <section className="ed-card">
             <h2><span className="en">Where</span>授課地點</h2>
-            {COURTS.map((ct) => {
+            {courts.map((ct) => {
               const on = p.venues.some((v) => v.courtId === ct.id);
               return (
                 <label key={ct.id} className="ed-check">

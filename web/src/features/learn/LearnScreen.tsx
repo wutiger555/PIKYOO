@@ -8,8 +8,7 @@ import { Crumbs } from "@/components/pk/Crumbs";
 import { AppBar } from "@/components/pk/Shell";
 import { TopNav } from "@/components/pk/TopNav";
 import { GameTicket } from "@/components/pk/Ticket";
-import { COACHES } from "@/lib/data/coaches";
-import { useAllGames, useDemo } from "@/lib/demo-store";
+import { useAllGames, useCoaches, useDemo } from "@/lib/demo-store";
 import { money } from "@/lib/format";
 import { CoachCard } from "../coaches/CoachCard";
 
@@ -25,7 +24,7 @@ export function LearnScreen() {
   const { profile } = useDemo();
   const [open, setOpen] = useState<number | null>(0);
   const beginnerGames = useAllGames().filter((g) => g.beginnerFriendly);
-  const trialCoaches = COACHES.filter((c) => c.beginnerFriendly);
+  const trialCoaches = useCoaches().filter((c) => c.beginnerFriendly);
 
   return (
     <>
