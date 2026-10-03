@@ -8,6 +8,8 @@ import { LevelPicker } from "@/components/pk/LevelPicker";
 import { PkMark } from "@/components/pk/Logo";
 import { DISTRICTS } from "@pikyoo/core/data/courts";
 import { useDemo } from "@/lib/demo-store";
+import { useAccount } from "@/lib/use-account";
+import { useToast } from "@/components/pk/Toast";
 import type { Level } from "@pikyoo/core/types";
 
 const STEPS = ["暱稱", "程度", "常打區域"];
@@ -15,16 +17,16 @@ const STEPS = ["暱稱", "程度", "常打區域"];
 /** F1-3 首次登入設定: 暱稱（帶入 LINE 暱稱）→ 程度（自評或「我是新手」）→ 常打區域. Every step can be skipped. */
 export function OnboardingScreen() {
   const router = useRouter();
-  const { profile, setProfile } = useDemo();
+  const { profile } = useDemo();
+  const account = useAccount();
+  const toast = useToast();
   const [step, setStep] = useState(0);
   const [name, setName] = useState(profile.name);
   const [level, setLevel] = useState<Level>(profile.level);
   const [areas, setAreas] = useState<string[]>(profile.areas);
 
-  const finish = () => {
-    setProfile({ name: name.trim() || profile.name, level, areas });
-    router.push("/");
-  };
+  const finish = () =>
+    account.saveProfile({ name: name.trim() || profile.name, level, areas }).then(() => router.push("/"), (e: Error) => toast(e.message));
   const next = () => (step < STEPS.length - 1 ? setStep(step + 1) : finish());
 
   return (

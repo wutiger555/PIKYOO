@@ -37,6 +37,7 @@ A pickleball platform for 雙北 (Taipei / New Taipei): find coaches and book le
   - Helpers: `.dk-only` / `.mb-only` show or hide elements per layout; `.dk-narrow` is a centred 760px column; `.dk-float` makes the bottom CTA float.
   - Console pages use `ConsoleFrame`.
 - **Demo state** lives in `lib/demo-store.tsx` (in memory, resets on reload). `signedIn` defaults to true; 登出 in 我的 or in the desktop avatar menu shows the visitor view.
+- **Real sign-in** (LINE → Supabase) turns on only in live mode with `NEXT_PUBLIC_LIFF_ID` set (`realAuth` in `lib/env.ts`); otherwise sign-in stays the demo toggle. Screens sign in, out, save the profile and delete the account through `useAccount()` (`lib/use-account.ts`), never by flipping `signedIn` directly. Details: `docs/BACKEND.md` §5.
 
 ## Verify before pushing
 

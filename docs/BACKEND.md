@@ -174,6 +174,14 @@ Demo 的示意照仍放在 `web/public/photos/`（PHOTOS.md），真的教練上
 
 Email magic link（F1-2，P1）之後加，給不用 LINE 的人。
 
+**實作（B2 第一部分，2026-10-04）**
+- **開關**：live 模式**且**設了 `NEXT_PUBLIC_LIFF_ID` 才啟用真登入（`web/src/lib/env.ts` 的 `realAuth`）；沒設就維持 demo 的登入切換。所以在 LINE channel 建好之前，正式站的行為不變。`next.config.ts` 會檢查：設了 LIFF ID 就必須有 `LINE_CHANNEL_ID`、`SUPABASE_SECRET_KEY`。
+- **程式**：`lib/supabase.ts`（伺服器端 client、`getMe()`）、`src/proxy.ts`（刷新 session cookie）、`app/api/auth/line/route.ts`、`lib/account.ts`（登出、存設定、刪除帳號的 Server Actions）、`lib/line.ts`（LIFF，按下登入才載入）、`lib/use-account.ts`（畫面統一呼叫，demo／真登入自動切換）、`components/pk/LineAutoLogin.tsx`（LINE 內自動登入）。讀寫自己的資料在 `@pikyoo/core/source/me`，App 共用。
+- **換發 session**：LINE 帳號沒有 Email，伺服器幫它建一個 `<LINE id>-<時間>@line.pikyoo.invalid`（`.invalid` 保證收不到信），用 Admin API `generateLink` 拿一次性 token，再在伺服器端 `verifyOtp` 寫入 cookie。**不經過 Supabase 的重新導向網址**，所以 LINE 登入不需要 Auth URL 設定（Email 登入才需要）。
+- **資安**：`handle_new_user` 改從 `raw_app_meta_data`（只有伺服器能寫）讀 LINE ID（`20261003181440_line_id_from_app_metadata`）。原本讀 `raw_user_meta_data`，使用者自己可以填，有人能用 Email 註冊時填別人的 LINE ID，讓對方登入時進到他的帳號。
+- **刪除帳號**：`delete_my_account()` 匿名化 → 全裝置登出 → Admin API 封鎖這個 auth 使用者。同一個 LINE 之後再登入會是新帳號。
+- **還沒驗證的**：真的 LINE 登入（要 LIFF ID）。若 Supabase 拒絕 `.invalid` 結尾的 Email，改 `route.ts` 的 `lineEmail` 一行即可。
+
 ---
 
 ## 6. 通知
@@ -312,5 +320,10 @@ B1–B3 是最短的「真的能用」路徑：讀得到資料 → 能登入 →
   - **10/3 事故的真正原因**：Vercel 的 `NEXT_PUBLIC_SUPABASE_URL` 少了最後一個字（`…supabase.c`），連不到主機，所以每頁 500、Supabase 也收不到請求。新的保險在建置時就擋下，並在 log 說明哪裡不對（Vercel 會把機密值遮成 `[REDACTED]`，所以訊息只描述格式）。
   - 四個變數現在都勾了 Production 與 Preview；Preview 網址也是 live 模式。
   - Claude 本機已登入 Vercel CLI（owner 的帳號）：可以 `vercel redeploy`、`vercel curl`（讀有保護的 Preview）、`vercel inspect --logs`。`vercel curl` 第一次使用時自動在專案建立了一組 Deployment Protection bypass token。
-- [ ] Owner：Auth 網址設定（SETUP §2.4：Site URL `https://pikyoo.vercel.app`；Redirect URLs `http://localhost:3000/**`、`https://pikyoo.vercel.app/**`、`https://pikyoo-*-max-x1.vercel.app/**`），B2 前完成
-- [ ] B2 登入：需要 LINE MINI App channel（SETUP §3）的 LIFF ID 與 Channel ID
+- [ ] Owner：Auth 網址設定（SETUP §2.4）：LINE 登入用不到（§5），做 Email 登入（F1-2）前完成即可
+- [ ] **B2 登入**（目前卡在這）：
+  - [x] Claude：程式完成（§5「實作」）；資料庫層用一個會 rollback 的交易在 `pikyoo-dev` 驗證過（建帳號 → 存設定 → 讀回 → 刪除），本機驗證訪客畫面、LIFF 錯誤提示、`/api/auth/line` 拒絕假 token
+  - [ ] Owner：建 LINE MINI App channel（SETUP §3.2，Scopes 勾 `openid`、`profile`），把 **LIFF ID**、**Channel ID** 給 Claude
+  - [ ] Owner：Vercel `pikyoo` 加 `NEXT_PUBLIC_LIFF_ID`、`LINE_CHANNEL_ID`（Production + Preview）；確認 `SUPABASE_SECRET_KEY` 也勾了 Preview
+  - [ ] Claude：在 Preview 用真的 LINE 登入走一遍，再合併
+  - [ ] 隱私權政策頁：需要 owner 提供營運者名稱與聯絡 Email

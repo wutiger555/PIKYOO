@@ -1,16 +1,29 @@
 "use client";
 
-import { useDemo } from "@/lib/demo-store";
+import { useState } from "react";
+import { useAccount } from "@/lib/use-account";
 import { Icon } from "./Icon";
 import { Sheet, SoonButton } from "./Shell";
 import { useToast } from "./Toast";
 
 const UNLOCKS = ["教練的可約時段，直接預約", "學生評價與問與答", "經歷、證照與授課地點", "揪朋友一起上課"];
 
-/** Sign-in prompt for visitors (F1-1). LINE login signs up on first use; the demo just flips `signedIn`. */
+/** Sign-in prompt for visitors (F1-1). LINE login signs up on first use; the demo just flips `signedIn` (lib/use-account.ts). */
 export function LoginSheet({ onClose, reason = "登入後可以看完整的教練頁" }: { onClose: () => void; reason?: string }) {
-  const { setSignedIn } = useDemo();
+  const account = useAccount();
   const toast = useToast();
+  const [busy, setBusy] = useState(false);
+  const login = async () => {
+    setBusy(true);
+    try {
+      if (!(await account.login())) return; // off to LINE's login page; it comes back here
+      if (!account.real) toast("已用 LINE 登入（Demo）");
+      onClose();
+    } catch (e) {
+      toast((e as Error).message);
+      setBusy(false);
+    }
+  };
   return (
     <Sheet onClose={onClose} className="login-sheet">
       <h2>登入 PIKYOO</h2>
@@ -18,7 +31,7 @@ export function LoginSheet({ onClose, reason = "登入後可以看完整的教�
       <ul className="fit">
         {UNLOCKS.map((u) => <li key={u}><Icon name="check" size={16} stroke={2.2} />{u}</li>)}
       </ul>
-      <button className="btn btn-primary btn-lg btn-block" style={{ marginTop: 16 }} onClick={() => { setSignedIn(true); toast("已用 LINE 登入（Demo）"); onClose(); }}>
+      <button className="btn btn-primary btn-lg btn-block" style={{ marginTop: 16 }} disabled={busy} onClick={login}>
         <Icon name="msg" size={18} />用 LINE 登入／註冊
       </button>
       <SoonButton className="btn btn-ghost btn-block" style={{ marginTop: 8 }} msg="Email 登入（P1，下一輪）">用 Email 登入</SoonButton>

@@ -12,6 +12,7 @@ import { GameTicket } from "@/components/pk/Ticket";
 import { useToast } from "@/components/pk/Toast";
 import { shortAreas } from "@pikyoo/core/data/courts";
 import { useAllGames, useDemo } from "@/lib/demo-store";
+import { useAccount } from "@/lib/use-account";
 
 type Tab = "joined" | "hosted" | "history";
 
@@ -21,7 +22,8 @@ const RECORD = { played: 12, attended: 11, late: 1, noShow: 0 };
 /** 我的: profile, my games (joined / waitlist / hosted), bookings, attendance record, settings. */
 export function MeScreen() {
   const toast = useToast();
-  const { profile, mine, hosted, signedIn, setSignedIn } = useDemo();
+  const { profile, mine, hosted, signedIn } = useDemo();
+  const account = useAccount();
   const [login, setLogin] = useState(false);
   const games = useAllGames();
   const [tab, setTab] = useState<Tab>(hosted.length ? "hosted" : "joined");
@@ -100,11 +102,15 @@ export function MeScreen() {
               <span style={{ flex: 1 }}>我是教練：教練後台</span>
               <Icon name="right" size={18} />
             </Link>
-            <button className="row-item" onClick={() => (signedIn ? (setSignedIn(false), toast("已登出，現在看到的是訪客畫面")) : setLogin(true))}>
+            <button className="row-item" onClick={() => (signedIn ? account.logout().then(() => toast(account.real ? "已登出" : "已登出，現在看到的是訪客畫面")) : setLogin(true))}>
               <Icon name="user" size={22} />
-              <span style={{ flex: 1 }}>{signedIn ? "登出（Demo：看訪客畫面）" : "登入／註冊"}</span>
+              <span style={{ flex: 1 }}>{signedIn ? (account.real ? "登出" : "登出（Demo：看訪客畫面）") : "登入／註冊"}</span>
             </button>
-            <button className="row-item" onClick={() => toast("刪除帳號會匿名化你的資料（接上後端後開放）")}>
+            <button className="row-item" onClick={() => {
+              if (!account.real) return toast("刪除帳號會匿名化你的資料（接上後端後開放）");
+              if (!signedIn || !confirm("確定刪除帳號？你的名字和資料會被清除，報名中的球局會取消，無法復原。")) return;
+              account.deleteAccount().then(() => toast("帳號已刪除"), (e: Error) => toast(e.message));
+            }}>
               <Icon name="x" size={22} />
               <span style={{ flex: 1, color: "var(--color-danger)" }}>刪除帳號</span>
             </button>

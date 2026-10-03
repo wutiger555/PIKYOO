@@ -150,7 +150,7 @@ android/ 用 Android Studio 產生 .aab → 上傳 Google Play Console
 
 對應 PRD §12 的 Phase 4。是順序與進入條件，不是固定日期。**每完成一步就在這裡打勾**（狀態：✅ 完成、👉 進行中、⬜ 未開始）。
 
-> **目前位置（2026-10-04）：第二階段第 5 步，B2 登入。** 需要 owner 建立 LINE MINI App channel 與 Supabase Auth 網址設定（`BACKEND.md` §13）。
+> **目前位置（2026-10-04）：第二階段第 5 步，B2 登入。** 程式已完成並合併（未啟用）；等 owner 建 LINE MINI App channel、給 LIFF ID 與 Channel ID（`BACKEND.md` §13）。
 
 ### 第一階段：決定方向
 
