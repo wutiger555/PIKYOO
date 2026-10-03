@@ -306,6 +306,6 @@ B1–B3 是最短的「真的能用」路徑：讀得到資料 → 能登入 →
 - [ ] Owner：Vercel `pikyoo` 填 `NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`、`SUPABASE_SECRET_KEY`（SETUP §2.3）；Auth 網址設定（SETUP §2.4：Site URL `https://pikyoo.vercel.app`；Redirect URLs `http://localhost:3000/**`、`https://pikyoo.vercel.app/**`、`https://pikyoo-*-max-x1.vercel.app/**`）
 - [x] Claude：`group_holds_minimum` migration 已套用到 `pikyoo-dev`
 - [x] Claude：B1 資料層（2026-10-02）。本機用 `pikyoo-dev` 的 live 模式檢查過球局、教練、球場的列表與詳細頁
-- [ ] Owner：Vercel `pikyoo` 填好上面 3 個變數後，再加 `NEXT_PUBLIC_DATA_SOURCE=live`（Production 與 Preview），Redeploy，正式網址就會換成資料庫的資料
-- [ ] Claude：seed 的球局日期是套用當天（9/30）往後算的，現在大多已經過期；切到 live 前重新整理示範球局的日期
+- [x] Owner：Vercel `pikyoo` 已設定 Supabase 變數與 `NEXT_PUBLIC_DATA_SOURCE=live`（2026-10-03）
+- [x] Claude：示範球局的日期已移到 2026-10-03（今天、明天）與 10/10–11（週末）。seed 的日期是套用當天往後算的，**會過期**；過期後用 SQL 把 seed 球局（`md5('pikyoo-seed-game:g1')` …）的 `starts_at`/`ends_at` 往後移即可，B3 開團接上後就有真的球局
 - [x] advisor 警告：5 個函式沒設 `search_path`，已修（`20261002083200_pin_search_path`）。其餘 security definer 的警告是預期中的：RPC 本來就是給前端呼叫的；`is_admin`、`my_coach_id`、`is_group_member` 被 RLS 規則使用，訪客也需要能執行，所以保留
