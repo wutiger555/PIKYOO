@@ -8,8 +8,8 @@ import { Crumbs } from "@/components/pk/Crumbs";
 import { AppBar, SoonButton } from "@/components/pk/Shell";
 import { useToast } from "@/components/pk/Toast";
 import { TopNav } from "@/components/pk/TopNav";
-import { BOOKING_DAYS } from "@/lib/data/coaches";
-import { newBooking, useCoach, useDemo } from "@/lib/demo-store";
+import { BOOKING_DAYS, getCoach } from "@/lib/data/coaches";
+import { newBooking, useDemo } from "@/lib/demo-store";
 import type { BookingStatus } from "@/lib/types";
 import { money } from "@/lib/format";
 import { Photo } from "./CoachCard";
@@ -27,7 +27,7 @@ export function BookingStatusScreen({ demo }: { demo?: BookingStatus }) {
   useEffect(() => {
     if (demo) setBooking({ ...newBooking(), slot: "10:00", status: demo });
   }, [demo, setBooking]);
-  const c = useCoach(b.coachId);
+  const c = getCoach(b.coachId);
   const p = c?.profile;
 
   if (!c || !p || !b.slot) {

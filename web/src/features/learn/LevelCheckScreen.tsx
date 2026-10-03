@@ -9,7 +9,8 @@ import { AppBar } from "@/components/pk/Shell";
 import { TopNav } from "@/components/pk/TopNav";
 import { GameTicket } from "@/components/pk/Ticket";
 import { useToast } from "@/components/pk/Toast";
-import { useAllGames, useCoaches, useDemo } from "@/lib/demo-store";
+import { COACHES } from "@/lib/data/coaches";
+import { useAllGames, useDemo } from "@/lib/demo-store";
 import { LEVELS } from "@/lib/format";
 import type { Level } from "@/lib/types";
 import { CoachCard } from "../coaches/CoachCard";
@@ -40,7 +41,6 @@ export function LevelCheckScreen() {
   const toast = useToast();
   const { setProfile } = useDemo();
   const games = useAllGames();
-  const allCoaches = useCoaches();
   const [answers, setAnswers] = useState<(number | null)[]>(() => QUESTIONS.map(() => null));
   const [i, setI] = useState(0);
   const done = i >= QUESTIONS.length;
@@ -48,7 +48,7 @@ export function LevelCheckScreen() {
   if (done) {
     const lv = toLevel(answers.reduce<number>((s, a) => s + (a ?? 0), 0));
     const fit = games.filter((g) => lv >= g.levelMin && lv <= g.levelMax).slice(0, 2);
-    const coaches = allCoaches.filter((c) => lv >= c.levelMin && lv <= c.levelMax).slice(0, 2);
+    const coaches = COACHES.filter((c) => lv >= c.levelMin && lv <= c.levelMax).slice(0, 2);
     return (
       <>
         <AppBar title="程度自評" back="/learn" />
