@@ -150,7 +150,7 @@ android/ 用 Android Studio 產生 .aab → 上傳 Google Play Console
 
 對應 PRD §12 的 Phase 4。是順序與進入條件，不是固定日期。**每完成一步就在這裡打勾**（狀態：✅ 完成、👉 進行中、⬜ 未開始）。
 
-> **目前位置（2026-10-04）：第二階段第 4 步，B1 重新上線。** 等 owner 確認 Vercel 環境變數（`BACKEND.md` §13）。
+> **目前位置（2026-10-04）：第二階段第 5 步，B2 登入。** 需要 owner 建立 LINE MINI App channel 與 Supabase Auth 網址設定（`BACKEND.md` §13）。
 
 ### 第一階段：決定方向
 
@@ -166,8 +166,8 @@ App 等網站資料穩定才開工，避免兩邊一起追資料結構變動。
 
 | # | 步驟 | 負責 | 狀態 |
 |---|---|---|---|
-| 4 | B1 重新上線：球場、教練、球局改讀資料庫；Supabase 查詢寫在 `packages/core` | owner＋Claude | 👉 |
-| 5 | B2 登入：LINE 登入、我的、刪除帳號 | owner＋Claude | ⬜ |
+| 4 | B1 重新上線：球場、教練、球局改讀資料庫；Supabase 查詢寫在 `packages/core` | owner＋Claude | ✅ [#17](https://github.com/wutiger555/PIKYOO/pull/17) |
+| 5 | B2 登入：LINE 登入、我的、刪除帳號 | owner＋Claude | 👉 |
 | 6 | B3 球局：報名、候補、開團 | Claude | ⬜ |
 | 7 | B4 教練頁與後台：編輯存檔、照片上傳、審核 | owner＋Claude | ⬜ |
 | 8 | B5 預約、揪團、問與答、收款 | Claude | ⬜ |

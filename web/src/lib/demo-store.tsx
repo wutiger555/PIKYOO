@@ -1,14 +1,16 @@
 "use client";
 
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
-import { BOOKING_DAYS, COACHES, getCoach, initialGroups, initialPayments, initialRequests } from "@pikyoo/core/data/coaches";
-import { GAMES, ME } from "@pikyoo/core/data/games";
+import { BOOKING_DAYS, getCoach, initialGroups, initialPayments, initialRequests } from "@pikyoo/core/data/coaches";
+import { ME } from "@pikyoo/core/data/games";
 import { initialQuestions } from "@pikyoo/core/data/questions";
 import { LEVELS } from "@pikyoo/core/format";
+import type { Catalog } from "@pikyoo/core/source/types";
 import type { Booking, BookingRequest, Coach, Game, Group, Level, LessonType, MyGameStatus, PaymentRow, Profile, Question } from "@pikyoo/core/types";
 
 // In-memory demo state shared across screens (the MVP runs on mock data; Supabase replaces this).
 // Lives in the root layout so it survives client-side navigation; a full reload resets it.
+// Courts, coaches and games come from the data source (lib/source): mock in the demo, Supabase when live.
 
 export interface GameFilters {
   day: "today" | "tomorrow" | "weekend" | null;
@@ -53,7 +55,7 @@ interface DemoState {
   questions: Question[];
 }
 
-const init = (): DemoState => ({
+const init = (catalog: Catalog): DemoState => ({
   signedIn: true,
   profile: { name: ME.name, level: ME.level, areas: ["大安區", "信義區", "中山區"] },
   mine: {},
@@ -65,7 +67,7 @@ const init = (): DemoState => ({
   booking: newBooking(),
   requests: initialRequests(),
   payments: initialPayments(),
-  myCoach: structuredClone(getCoach("mia")!),
+  myCoach: structuredClone(catalog.coaches.find((c) => c.id === "mia") ?? getCoach("mia")!),
   groups: initialGroups(),
   questions: initialQuestions(),
 });
@@ -73,8 +75,8 @@ const init = (): DemoState => ({
 type Updater<T> = T | ((prev: T) => T);
 const apply = <T,>(u: Updater<T>, prev: T): T => (typeof u === "function" ? (u as (p: T) => T)(prev) : u);
 
-function useDemoValue() {
-  const [s, setS] = useState(init);
+function useDemoValue(catalog: Catalog) {
+  const [s, setS] = useState(() => init(catalog));
   const set = useCallback(<K extends keyof DemoState>(key: K, u: Updater<DemoState[K]>) => setS((p) => ({ ...p, [key]: apply(u, p[key]) })), []);
 
   const setMine = useCallback((id: string, status: MyGameStatus | null) =>
@@ -101,7 +103,7 @@ function useDemoValue() {
   const submitGroup = useCallback((id: string) =>
     setS((p) => {
       const g = p.groups.find((x) => x.id === id);
-      const c = g && (g.coachId === p.myCoach.id ? p.myCoach : getCoach(g.coachId));
+      const c = g && (g.coachId === p.myCoach.id ? p.myCoach : catalog.coaches.find((x) => x.id === g.coachId));
       const plan = c?.profile.plans.find((x) => x.id === g?.planId);
       if (!g || !c || !plan) return p;
       const n = g.members.length;
@@ -112,7 +114,7 @@ function useDemoValue() {
         note: g.note, expiresIn: "48 小時", pay: c.profile.pay[0], status: "pending",
       };
       return { ...p, groups: p.groups.map((x) => (x.id === id ? { ...x, status: "requested" as const } : x)), requests: [req, ...p.requests.filter((r) => r.id !== req.id)] };
-    }), []);
+    }), [catalog]);
 
   const askQuestion = useCallback((coachId: string, text: string) =>
     setS((p) => ({
@@ -122,6 +124,7 @@ function useDemoValue() {
 
   return useMemo(() => ({
     ...s,
+    catalog,
     setSignedIn: (v: boolean) => set("signedIn", v),
     setProfile: (u: Updater<Profile>) => set("profile", u),
     addHosted: (g: Game) => set("hosted", (hs) => [g, ...hs]),
@@ -140,14 +143,14 @@ function useDemoValue() {
     submitGroup,
     askQuestion,
     answerQuestion: (id: string, text: string) => set("questions", (qs) => qs.map((q) => (q.id === id ? { ...q, answer: { text, at: "剛剛" } } : q))),
-  }), [s, set, setMine, confirmRequest, submitGroup, askQuestion]);
+  }), [s, catalog, set, setMine, confirmRequest, submitGroup, askQuestion]);
 }
 
 type Demo = ReturnType<typeof useDemoValue>;
 const Ctx = createContext<Demo | null>(null);
 
-export function DemoProvider({ children }: { children: React.ReactNode }) {
-  return <Ctx.Provider value={useDemoValue()}>{children}</Ctx.Provider>;
+export function DemoProvider({ catalog, children }: { catalog: Catalog; children: React.ReactNode }) {
+  return <Ctx.Provider value={useDemoValue(catalog)}>{children}</Ctx.Provider>;
 }
 
 export function useDemo() {
@@ -167,16 +170,19 @@ export function useGameView(g: Game) {
   return { my, count, spots, waitN };
 }
 
-/** Mock games plus the ones I opened this session. */
+/** Courts, coaches, games and day headings from the data source. */
+export const useCatalog = () => useDemo().catalog;
+
+/** Listed games plus the ones I opened this session. */
 export function useAllGames() {
-  const { hosted } = useDemo();
-  return useMemo(() => [...GAMES, ...hosted], [hosted]);
+  const { catalog, hosted } = useDemo();
+  return useMemo(() => [...catalog.games, ...hosted], [catalog, hosted]);
 }
 
 /** All coaches, with the signed-in coach's live edits applied (so the console preview and public page match). */
 export function useCoaches() {
-  const { myCoach } = useDemo();
-  return useMemo(() => COACHES.map((c) => (c.id === myCoach.id ? myCoach : c)), [myCoach]);
+  const { catalog, myCoach } = useDemo();
+  return useMemo(() => catalog.coaches.map((c) => (c.id === myCoach.id ? myCoach : c)), [catalog, myCoach]);
 }
 
 export function useCoach(id: string) {

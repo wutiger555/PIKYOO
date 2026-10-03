@@ -76,15 +76,18 @@ Supabase（東京 ap-northeast-1）
 現在畫面直接 import `@pikyoo/core/data/*` 的假資料，並透過 `lib/demo-store.tsx`（`useDemo()`）改狀態。改法：
 
 ```text
-web/src/lib/source/
-  index.ts        依 NEXT_PUBLIC_DATA_SOURCE 選 demo 或 live
-  types.ts        DataSource 介面：listCourts / getCourt / listGames / getGame / listCoaches / getCoach / questionsFor …
-  demo.ts         包住現在的 @pikyoo/core/data/*（行為和今天完全一樣）
-  live.ts         Supabase 查詢 + mapper：資料庫欄位 → 現在畫面用的型別（Game、Coach、Court…）
-  actions.ts      寫入動作介面：joinGame / leaveGame / requestBooking / answerQuestion …
-                  demo：呼叫現在的 demo-store；live：Server Action → RPC → router.refresh()
+packages/core/src/source/      （網站與未來 App 共用，不含 Next.js 程式）
+  types.ts        Catalog（球場、教練、球局、日期標題）與 DataSource 介面
+  demo.ts         直接回傳 @pikyoo/core/data/*（行為和今天完全一樣）
+  live.ts         createLive({ url, publishableKey })：Supabase 查詢 + mapper，資料庫欄位 → 畫面用的型別
   db.types.ts     `supabase gen types typescript` 產生的資料庫型別
+web/src/lib/source.ts          依 NEXT_PUBLIC_DATA_SOURCE 選 demo 或 live；getCatalog / getCourt / getCoach / getGame；live 每次請求重新讀（connection()）
+web/next.config.ts             live 模式缺 Supabase 變數或網址格式不對時，**建置直接失敗**（Vercel 會繼續用上一版）
 ```
+
+- **B1 的做法**：root layout 在伺服器端讀一次 `getCatalog()`，交給 `DemoProvider`；畫面用 `useCatalog()`、`useCoaches()`、`useAllGames()` 拿資料，不再直接 import mock。詳細頁（`/coaches/[id]` 等）在伺服器端用 `getCoach()` 這類函式。live 模式每次請求都重新讀，所以詳細頁拿掉了 `generateStaticParams`；demo 模式的詳細頁因此也改成每次請求產生，畫面不變。
+- **B1 還沒做的**：寫入動作（`actions.ts`：報名、預約、回覆…）在 B2 之後跟登入一起做，現在兩種模式都還是寫在瀏覽器記憶體；`proxy.ts`（刷新登入 session）也移到 B2。預約的日期（`BOOKING_DAYS`）和問與答仍用 mock，B5 換掉。
+- **B1 live 模式的限制**：球局列表只顯示「今天、明天、這個週末」（跟 demo 一樣的四組），其他平日的球局 B3 做伺服器端篩選時再加；教練的評價、球場距離與地圖座標還沒有資料，先不顯示。
 
 - **畫面用的型別（`@pikyoo/core/types`）先不改。** mapper 把 `starts_at`（UTC）轉成畫面要的「今天／週六」「10/3」「19:00」，教練的 `students`、`priceFrom` 從資料庫算出來。這樣第一輪幾乎不用動畫面元件。
 - `signedIn`：demo 看切換開關；live 看伺服器端讀到的 Supabase session。
@@ -296,7 +299,7 @@ B1–B3 是最短的「真的能用」路徑：讀得到資料 → 能登入 →
 | 2026-10-02 | **B1 的做法**：`web/src/lib/source/`（`index.ts` 開關、`demo.ts`、`live.ts`、`types.ts`、`db.types.ts`）。root layout 每個請求讀一次 catalog（球場、教練、球局、日期標題）交給 `DemoProvider`，畫面用 `useCatalog` / `useCoaches` / `useAllGames`。live 模式要每次請求重新讀（`connection()`），所以詳細頁拿掉 `generateStaticParams`。`@supabase/ssr`、`proxy.ts`、寫入動作移到 B2。程式在分支 `claude/b1-data-source`（[#11](https://github.com/wutiger555/PIKYOO/pull/11)）。 |
 | 2026-10-03 | **B1 上線後回滾**：#11 合併並在 Vercel 設 `NEXT_PUBLIC_DATA_SOURCE=live` 後，正式站每頁 500（約 6 分鐘）；Supabase 沒收到任何來自 Vercel 的請求，推測是 Vercel 環境變數沒被正式環境讀到或格式不對。已 revert（[#12](https://github.com/wutiger555/PIKYOO/pull/12)），正式站回到 demo 資料。之後**切 live 前先在 Preview 網址確認 live 模式正常**，再合併。 |
 
-**目前進度**（2026-10-03）
+**目前進度**（2026-10-04）
 
 - [x] B0：規劃、schema、RLS、函式、seed、檢查（[#8](https://github.com/wutiger555/PIKYOO/pull/8)）
 - [x] Supabase `pikyoo-dev` 已建立；Owner 已接上 Supabase MCP（§9.4）；Vercel `pikyoo-demo` 已開（`https://pikyoo-demo.vercel.app`）
@@ -305,9 +308,9 @@ B1–B3 是最短的「真的能用」路徑：讀得到資料 → 能登入 →
   - 其餘 advisor 警告是預期中的：RPC 本來就給前端呼叫；`is_admin`、`my_coach_id`、`is_group_member` 被 RLS 使用，訪客也要能執行
 - [x] seed 的示範球局日期已移到 10/3–4 與 10/10–11（2026-10-03）。seed 日期是套用當天往後算的，**會過期**；過期後用 SQL 把 `md5('pikyoo-seed-game:g1')::uuid` … `g6` 的 `starts_at`/`ends_at` 往後移（g1–g3 今天／明天，g4–g6 下個週末）
 - [x] Owner：Vercel `pikyoo` 已填 `NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`、`SUPABASE_SECRET_KEY`、`NEXT_PUBLIC_DATA_SOURCE=live`（現在的 `main` 不讀它們，留著沒影響）
-- [ ] **B1 重新上線**（目前卡在這）：
-  1. Owner：確認 Vercel 變數名稱正確、Environments 有勾 Production（和 Preview）、URL 是 `https://mwbqzixberulpuivvzbh.supabase.co`（沒有結尾 `/`）；或從 Vercel Logs 抓 500 的錯誤訊息
-  2. Claude：從 `claude/b1-data-source` 重開 PR（revert #12），看 PR 的 Vercel Preview 網址在 live 模式能正常開，再合併
-  3. 合併後確認 `pikyoo.vercel.app` 的 `/`、`/games`、`/coaches/mia`、`/courts/daan` 都正常
+- [x] **B1 重新上線**（[#17](https://github.com/wutiger555/PIKYOO/pull/17)，2026-10-04）：資料來源移到 `packages/core/src/source/`；`next.config.ts` 在 live 設定有誤時讓建置失敗。
+  - **10/3 事故的真正原因**：Vercel 的 `NEXT_PUBLIC_SUPABASE_URL` 少了最後一個字（`…supabase.c`），連不到主機，所以每頁 500、Supabase 也收不到請求。新的保險在建置時就擋下，並在 log 說明哪裡不對（Vercel 會把機密值遮成 `[REDACTED]`，所以訊息只描述格式）。
+  - 四個變數現在都勾了 Production 與 Preview；Preview 網址也是 live 模式。
+  - Claude 本機已登入 Vercel CLI（owner 的帳號）：可以 `vercel redeploy`、`vercel curl`（讀有保護的 Preview）、`vercel inspect --logs`。`vercel curl` 第一次使用時自動在專案建立了一組 Deployment Protection bypass token。
 - [ ] Owner：Auth 網址設定（SETUP §2.4：Site URL `https://pikyoo.vercel.app`；Redirect URLs `http://localhost:3000/**`、`https://pikyoo.vercel.app/**`、`https://pikyoo-*-max-x1.vercel.app/**`），B2 前完成
 - [ ] B2 登入：需要 LINE MINI App channel（SETUP §3）的 LIFF ID 與 Channel ID

@@ -9,9 +9,8 @@ import { LoginSheet } from "@/components/pk/LoginSheet";
 import { TabBar } from "@/components/pk/Shell";
 import { TopNav } from "@/components/pk/TopNav";
 import { BOOKING_DAYS, slotsFor } from "@pikyoo/core/data/coaches";
-import { COURTS, shortAreas } from "@pikyoo/core/data/courts";
-import { GAMES } from "@pikyoo/core/data/games";
-import { useCoaches, useDemo } from "@/lib/demo-store";
+import { shortAreas } from "@pikyoo/core/data/courts";
+import { useCatalog, useCoaches, useDemo } from "@/lib/demo-store";
 import { LEVELS, money } from "@pikyoo/core/format";
 import type { LessonType } from "@pikyoo/core/types";
 import { CoachMini, Img } from "../coaches/CoachCard";
@@ -158,10 +157,11 @@ const STEPS: [string, string][] = [
 /** Visitor landing: what PIKYOO is, the three things you can do, featured coaches, and sign-up calls to action. */
 function GuestHome({ onSignUp: signUp }: { onSignUp: () => void }) {
   const coaches = useCoaches();
+  const { games, courts } = useCatalog();
   const entries: [string, string, string, "whistle" | "court" | "pin"][] = [
     ["/coaches", "找教練", `${coaches.length} 位教練，價格、程度、認證一眼比較`, "whistle"],
-    ["/games", "找球局", `這週 ${GAMES.length} 場球局，照程度找人一起打`, "court"],
-    ["/courts", "找球場", `雙北 ${COURTS.length} 個球場與預約方式`, "pin"],
+    ["/games", "找球局", `這週 ${games.length} 場球局，照程度找人一起打`, "court"],
+    ["/courts", "找球場", `雙北 ${courts.length} 個球場與預約方式`, "pin"],
   ];
   return (
     <div className="guest">

@@ -60,6 +60,7 @@ Every route has a phone layout and a desktop layout (≥1024px, see `../docs/DES
   - `data/`: mock data (`coaches`, `courts`, `games`, `questions`, `flows` for `/design`). `types.ts` follows the PRD §7 data model.
   - `format.ts`: `LEVELS`, `levelText`, `money`.
   - `contact.ts`: blocks phone numbers, emails, LINE/IG handles and 「私訊我」 in questions and replies, so conversations stay on PIKYOO.
+- `src/lib/source.ts`: picks the data source from `NEXT_PUBLIC_DATA_SOURCE` (unset/`demo` = mock data, `live` = Supabase via `@pikyoo/core/source/live`). `next.config.ts` fails the build if live mode lacks a valid Supabase URL or key.
 - `src/lib/demo-store.tsx`: in-memory client state. It holds:
   - `signedIn`, `profile`
   - the signed-in coach's editable page `myCoach`
