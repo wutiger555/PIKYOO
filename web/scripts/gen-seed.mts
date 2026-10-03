@@ -3,11 +3,11 @@
 // Dates are stored relative to "today" in Taipei (the mock's today is 9/29), so the seed never goes stale.
 
 import { writeFileSync } from "node:fs";
-import { COACHES, initialGroups, initialRequests } from "@pikyoo/core/data/coaches";
-import { COURTS } from "@pikyoo/core/data/courts";
-import { GAMES } from "@pikyoo/core/data/games";
-import { initialQuestions } from "@pikyoo/core/data/questions";
-import type { LessonType, PayMethod, Plan } from "@pikyoo/core/types";
+import { COACHES, initialGroups, initialRequests } from "../../packages/core/src/data/coaches.ts";
+import { COURTS } from "../../packages/core/src/data/courts.ts";
+import { GAMES } from "../../packages/core/src/data/games.ts";
+import { initialQuestions } from "../../packages/core/src/data/questions.ts";
+import type { LessonType, PayMethod, Plan } from "../../packages/core/src/types.ts";
 
 const MOCK_TODAY = { m: 9, d: 29 };
 
