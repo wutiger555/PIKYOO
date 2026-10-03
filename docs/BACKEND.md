@@ -293,15 +293,21 @@ B1–B3 是最短的「真的能用」路徑：讀得到資料 → 能登入 →
 | 2026-09-30 | 資料庫操作由 Claude 透過 Supabase MCP 統一處理（§9.4）。 |
 | 2026-09-30 | 本機 Claude Code 也接好 Supabase MCP 與 CLI（`supabase login` + `link`），`supabase db push` 可直接套用 migration。 |
 | 2026-09-30 | **揪團湊人時保留「成員數與最少人數取大者」的名額**。只保留已加入的人時，陌生人可能先訂走剩下的位子，揪團就湊不到最少人數；整堂保留又會把教練的時段佔到開課前 24 小時。這樣揪團一定湊得起來，多出來的名額仍開放給其他人。 |
+| 2026-10-02 | **B1 的做法**：`web/src/lib/source/`（`index.ts` 開關、`demo.ts`、`live.ts`、`types.ts`、`db.types.ts`）。root layout 每個請求讀一次 catalog（球場、教練、球局、日期標題）交給 `DemoProvider`，畫面用 `useCatalog` / `useCoaches` / `useAllGames`。live 模式要每次請求重新讀（`connection()`），所以詳細頁拿掉 `generateStaticParams`。`@supabase/ssr`、`proxy.ts`、寫入動作移到 B2。程式在分支 `claude/b1-data-source`（[#11](https://github.com/wutiger555/PIKYOO/pull/11)）。 |
+| 2026-10-03 | **B1 上線後回滾**：#11 合併並在 Vercel 設 `NEXT_PUBLIC_DATA_SOURCE=live` 後，正式站每頁 500（約 6 分鐘）；Supabase 沒收到任何來自 Vercel 的請求，推測是 Vercel 環境變數沒被正式環境讀到或格式不對。已 revert（[#12](https://github.com/wutiger555/PIKYOO/pull/12)），正式站回到 demo 資料。之後**切 live 前先在 Preview 網址確認 live 模式正常**，再合併。 |
 
-**目前進度**
+**目前進度**（2026-10-03）
 
 - [x] B0：規劃、schema、RLS、函式、seed、檢查（[#8](https://github.com/wutiger555/PIKYOO/pull/8)）
-- [x] Supabase 專案 `pikyoo-dev` 已建立
-- [x] Owner：接上 Supabase MCP（§9.4）
-- [x] Owner：Vercel 新增 `pikyoo-demo`（`https://pikyoo-demo.vercel.app`）
-- [x] Claude：`pikyoo-dev` 已套用 `init`、`storage` 兩個 migration 與 `seed.sql`（2026-09-30）；`dev/checks.sql` 在 `pikyoo-dev` 上以 transaction 跑過並 rollback，全部通過
-- [ ] Owner：Vercel `pikyoo` 填 `NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`、`SUPABASE_SECRET_KEY`（SETUP §2.3）；Auth 網址設定（SETUP §2.4：Site URL `https://pikyoo.vercel.app`；Redirect URLs `http://localhost:3000/**`、`https://pikyoo.vercel.app/**`、`https://pikyoo-*-max-x1.vercel.app/**`）
-- [ ] Claude：`group_holds_minimum` migration 合併後套用到 `pikyoo-dev`
-- [ ] Claude：開始 B1
-- [ ] 待處理的 advisor 警告：5 個函式沒設 `search_path`（`touch_updated_at`、`contact_kind`、`assert_no_contact`、`tpe_weekday`、`tpe_hhmi`）；security definer 的 RPC 本來就是給前端呼叫的（預期中），但 `is_admin`、`my_coach_id`、`is_group_member` 這類內部 helper 可以考慮移出 `public`
+- [x] Supabase `pikyoo-dev` 已建立；Owner 已接上 Supabase MCP（§9.4）；Vercel `pikyoo-demo` 已開（`https://pikyoo-demo.vercel.app`）
+- [x] `pikyoo-dev` 已套用的 migration：`init`、`storage`、`group_holds_minimum`、`20261002083200_pin_search_path`（修 advisor 0011：5 個函式沒設 `search_path`）＋ `seed.sql`
+  - ⚠️ `pin_search_path` 的檔案因為 #12 revert 暫時**不在 `main`**，但已經套用在資料庫；B1 重新合併時檔案會回來。在那之前不要跑 `supabase db push`（會看到資料庫多一個本機沒有的版本）
+  - 其餘 advisor 警告是預期中的：RPC 本來就給前端呼叫；`is_admin`、`my_coach_id`、`is_group_member` 被 RLS 使用，訪客也要能執行
+- [x] seed 的示範球局日期已移到 10/3–4 與 10/10–11（2026-10-03）。seed 日期是套用當天往後算的，**會過期**；過期後用 SQL 把 `md5('pikyoo-seed-game:g1')::uuid` … `g6` 的 `starts_at`/`ends_at` 往後移（g1–g3 今天／明天，g4–g6 下個週末）
+- [x] Owner：Vercel `pikyoo` 已填 `NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`、`SUPABASE_SECRET_KEY`、`NEXT_PUBLIC_DATA_SOURCE=live`（現在的 `main` 不讀它們，留著沒影響）
+- [ ] **B1 重新上線**（目前卡在這）：
+  1. Owner：確認 Vercel 變數名稱正確、Environments 有勾 Production（和 Preview）、URL 是 `https://mwbqzixberulpuivvzbh.supabase.co`（沒有結尾 `/`）；或從 Vercel Logs 抓 500 的錯誤訊息
+  2. Claude：從 `claude/b1-data-source` 重開 PR（revert #12），看 PR 的 Vercel Preview 網址在 live 模式能正常開，再合併
+  3. 合併後確認 `pikyoo.vercel.app` 的 `/`、`/games`、`/coaches/mia`、`/courts/daan` 都正常
+- [ ] Owner：Auth 網址設定（SETUP §2.4：Site URL `https://pikyoo.vercel.app`；Redirect URLs `http://localhost:3000/**`、`https://pikyoo.vercel.app/**`、`https://pikyoo-*-max-x1.vercel.app/**`），B2 前完成
+- [ ] B2 登入：需要 LINE MINI App channel（SETUP §3）的 LIFF ID 與 Channel ID

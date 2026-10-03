@@ -44,12 +44,15 @@ A pickleball platform for 雙北 (Taipei / New Taipei): find coaches and book le
 cd web && npm run build && npx tsc --noEmit && npm run lint   # build first: it generates the PageProps/LayoutProps types
 ```
 
-Then look at the pages. Playwright is installed globally (`$(npm root -g)/playwright`, Chromium preinstalled). Run it against `npx next start -p <port>` at 1280 and 390 wide (plus 1024 and 768 for layout work), and check for console errors and horizontal scroll. Before restarting, kill any old `next-server`: a stale server keeps the port and serves chunks that no longer exist.
+Then look at the pages. In cloud sessions Playwright is installed globally (`$(npm root -g)/playwright`, Chromium preinstalled); on the owner's Mac it is not, so use the built-in browser pane instead. Run it against `npx next start -p <port>` at 1280 and 390 wide (plus 1024 and 768 for layout work), and check for console errors and horizontal scroll. Before restarting, kill any old `next-server`: a stale server keeps the port and serves chunks that no longer exist.
 
 For database changes: add a new file under `supabase/migrations/` (never edit an applied one), then `cd web && npm run db:seed && npm run db:check`. Add a check to `supabase/dev/checks.sql` for every new rule (who can see or change what). `lib/contact.ts` and `public.contact_kind()` implement the same rule: change both.
 
 ## Pitfalls already hit
 
+- **The owner's local checkout is inside Box** (`~/Library/CloudStorage/Box-Box/...`). File reads, builds and git (`commit --amend`, `push`) can hang there. Work in a clone or worktree outside Box (e.g. the session scratchpad), and fall back to the GitHub API (`gh api .../git/commits`) if local git stalls.
+- **Switching production to live data:** check the PR's Vercel Preview URL in live mode before merging, then check `pikyoo.vercel.app` right after. B1 (#11) took production down because the Vercel env didn't work in production; revert first, debug after.
+- A route with `generateStaticParams` is static/ISR and cannot call `connection()` (`DYNAMIC_SERVER_USAGE`). Live-data pages must not export it.
 - A `Sheet` rendered **inside** a phone scroller makes the page jump when its input takes focus. Render sheets after the scroller (see `AskSheet`, `LoginSheet` usage).
 - Elements that sit **above** the phone scroller (list heads, the host mode switch) would land above `TopNav` on desktop. Render a desktop copy inside the scroller and hide the outer one at ≥1024px.
 - Desktop rules written as `.dk .x` also match descendants: the console editor's phone preview sits inside a `.dk` page. Coach-page rules are therefore scoped `.dk.cp`. When `.dk` and another class are on the same element, write them together (`.dk.cd`), not as descendant selectors.
