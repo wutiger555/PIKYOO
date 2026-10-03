@@ -17,7 +17,7 @@ A pickleball platform for 雙北 (Taipei / New Taipei): find coaches and book le
   4. Point the owner at the live URL.
 
   They don't want to review a separate preview URL for every change. Keep one PR per change set.
-- **Records:** after each merged change, add a row to the 更新紀錄 table in `README.md`. When a product decision changes, update the matching doc: PRD F-rows, `DESKTOP.md` §9 onward, `PHOTOS.md`.
+- **Records:** after each merged change, add a row to the 更新紀錄 table in `README.md`. If the change finishes a step on the road to the native app, tick it in the progress table in `docs/APP.md` §8 and move the 目前位置 line. When a product decision changes, update the matching doc: PRD F-rows, `DESKTOP.md` §9 onward, `PHOTOS.md`.
 
 ## Product decisions to keep
 
