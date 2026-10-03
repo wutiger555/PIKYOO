@@ -146,21 +146,60 @@ android/ 用 Android Studio 產生 .aab → 上傳 Google Play Console
 
 ---
 
-## 8. 時程
+## 8. 進度表
 
-對應 PRD §12 的 Phase 4。下表是順序與進入條件，不是固定日期。
+對應 PRD §12 的 Phase 4。是順序與進入條件，不是固定日期。**每完成一步就在這裡打勾**（狀態：✅ 完成、👉 進行中、⬜ 未開始）。
 
-| 階段 | 做什麼 | 進入條件 |
-|---|---|---|
-| **A. 現在** | 完成 B1–B8 真資料；新的共用邏輯寫在 `packages/core` | — |
-| **B. 準備** | 申請 D-U-N-S、Apple／Google 公司開發者帳號、自有網域 | B 階段接近完成 |
-| **C. 開發** | 建 `app/`，做學員核心流程（§4），TestFlight／封閉測試內部試用 | B1–B8 真資料穩定，且 `PLAN.md` §11.4 觸發條件符合任兩項 |
-| **D. 上架** | iOS 與 Android 同時上架；接推播、Universal Links | 內部試用沒有重大問題 |
+> **目前位置（2026-10-04）：第二階段第 4 步，B1 重新上線。** 等 owner 確認 Vercel 環境變數（`BACKEND.md` §13）。
 
-### 待辦（負責人）
+### 第一階段：決定方向
 
-- [ ] 申請鄧白氏編號（D-U-N-S）：owner
-- [ ] Apple Developer Program 公司帳號：owner
-- [ ] Google Play Console 公司帳號：owner
-- [ ] 自有網域（如 pikyoo.tw）：owner
-- [x] 建立 `packages/core` 並搬移共用邏輯：開發（2026-10-04）
+| # | 步驟 | 負責 | 狀態 |
+|---|---|---|---|
+| 1 | 決定 React Native + Expo，寫 APP.md | — | ✅ [#14](https://github.com/wutiger555/PIKYOO/pull/14) |
+| 2 | 建 `packages/core`，搬移共用程式 | Claude | ✅ [#15](https://github.com/wutiger555/PIKYOO/pull/15) |
+| 3 | Owner 本機改成在 repo 根目錄 `npm install` | owner | 👉 |
+
+### 第二階段：網站接真資料（`BACKEND.md` B1–B8）
+
+App 等網站資料穩定才開工，避免兩邊一起追資料結構變動。
+
+| # | 步驟 | 負責 | 狀態 |
+|---|---|---|---|
+| 4 | B1 重新上線：球場、教練、球局改讀資料庫；Supabase 查詢寫在 `packages/core` | owner＋Claude | 👉 |
+| 5 | B2 登入：LINE 登入、我的、刪除帳號 | owner＋Claude | ⬜ |
+| 6 | B3 球局：報名、候補、開團 | Claude | ⬜ |
+| 7 | B4 教練頁與後台：編輯存檔、照片上傳、審核 | owner＋Claude | ⬜ |
+| 8 | B5 預約、揪團、問與答、收款 | Claude | ⬜ |
+| 9 | B6 通知：LINE 推播、Email、提醒 | owner＋Claude | ⬜ |
+| 10 | B7 營運後台與 SEO | Claude | ⬜ |
+| 11 | B8 封測：清掉示範資料、放入真實球場 | owner＋Claude | ⬜ |
+
+### 第三階段：上架前準備（需要等審核，**現在就可以和第二階段同時進行**）
+
+| # | 步驟 | 負責 | 狀態 |
+|---|---|---|---|
+| 12 | 申請鄧白氏編號（D-U-N-S），免費，可能要等一到幾週 | owner | ⬜ |
+| 13 | Apple Developer Program 公司帳號（US$99／年，需第 12 項） | owner | ⬜ |
+| 14 | Google Play Console 公司帳號（US$25 一次；免「12 人測 14 天」） | owner | ⬜ |
+| 15 | 自有網域（如 pikyoo.tw），Universal Links 需要 | owner | ⬜ |
+
+### 第四階段：App 開發
+
+進入條件：第二階段完成，且 `PLAN.md` §11.4 觸發條件符合任兩項。
+
+| # | 步驟 | 負責 | 狀態 |
+|---|---|---|---|
+| 16 | 建 `app/`（Expo 骨架），接 `packages/core`，先用假資料跑 | Claude | ⬜ |
+| 17 | 登入：LINE＋Apple 登入，跟網站共用帳號 | Claude | ⬜ |
+| 18 | 學員核心畫面：找教練、教練頁、預約、我的課程、揪團、問與答（§4） | Claude | ⬜ |
+| 19 | 推播通知（§5） | Claude | ⬜ |
+| 20 | 內部試用：TestFlight／Google 封閉測試 | owner＋Claude | ⬜ |
+
+### 第五階段：上架
+
+| # | 步驟 | 負責 | 狀態 |
+|---|---|---|---|
+| 21 | iOS 與 Android 同時送審上架（§6） | owner＋Claude | ⬜ |
+| 22 | Universal Links／App Links：網站連結直接開 App | Claude | ⬜ |
+| 23 | 之後小更新用 EAS Update 推送（§6.4） | Claude | ⬜ |
