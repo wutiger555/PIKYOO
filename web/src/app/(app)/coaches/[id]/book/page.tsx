@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BookScreen } from "@/features/coaches/BookScreen";
-import { getCoach } from "@/lib/data/coaches";
+import { getCoach } from "@pikyoo/core/data/coaches";
 
 export const metadata: Metadata = { title: "預約課程" };
 

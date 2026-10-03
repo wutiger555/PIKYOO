@@ -1,0 +1,5 @@
+{
+  "name": "pikyoo",
+  "private": true,
+  "workspaces": ["web", "packages/*"]
+}

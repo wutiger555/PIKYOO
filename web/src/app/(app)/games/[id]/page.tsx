@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { GameDetailScreen } from "@/features/games/GameDetailScreen";
 import { HostedGameDetail } from "@/features/games/HostedGameDetail";
-import { GAMES, getGame } from "@/lib/data/games";
+import { GAMES, getGame } from "@pikyoo/core/data/games";
 
 export const generateStaticParams = () => GAMES.map((g) => ({ id: g.id }));
 

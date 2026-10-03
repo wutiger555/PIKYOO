@@ -1,7 +1,7 @@
 "use client";
 
-import { LEVELS } from "@/lib/format";
-import type { Level } from "@/lib/types";
+import { LEVELS } from "@pikyoo/core/format";
+import type { Level } from "@pikyoo/core/types";
 
 /** 7-step level picker; bar height and olive depth grow with the level. */
 export function LevelPicker({ value, onPick, lg }: { value: Level | null; onPick: (lv: Level) => void; lg?: boolean }) {

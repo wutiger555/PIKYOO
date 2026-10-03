@@ -7,10 +7,10 @@ import { Icon } from "@/components/pk/Icon";
 import { Crumbs } from "@/components/pk/Crumbs";
 import { SoonButton, TabBar } from "@/components/pk/Shell";
 import { TopNav } from "@/components/pk/TopNav";
-import { BOOKING_DAYS } from "@/lib/data/coaches";
+import { BOOKING_DAYS } from "@pikyoo/core/data/coaches";
 import { useCoaches, useDemo } from "@/lib/demo-store";
-import { money } from "@/lib/format";
-import type { Group } from "@/lib/types";
+import { money } from "@pikyoo/core/format";
+import type { Group } from "@pikyoo/core/types";
 import { Photo } from "../coaches/CoachCard";
 
 type Tab = "next" | "group" | "done";

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Cred, LevelChip, Sprout, Status } from "@/components/pk/Badges";
 import { GameTicket } from "@/components/pk/Ticket";
-import { getGame } from "@/lib/data/games";
-import type { Level } from "@/lib/types";
+import { getGame } from "@pikyoo/core/data/games";
+import type { Level } from "@pikyoo/core/types";
 
 export const metadata: Metadata = { title: "招牌元件" };
 

@@ -8,10 +8,10 @@ import Link from "next/link";
 import { Sheet, TabBar } from "@/components/pk/Shell";
 import { TopNav } from "@/components/pk/TopNav";
 import { GameTicket } from "@/components/pk/Ticket";
-import { shortAreas } from "@/lib/data/courts";
-import { AREAS, DAY_GROUPS } from "@/lib/data/games";
+import { shortAreas } from "@pikyoo/core/data/courts";
+import { AREAS, DAY_GROUPS } from "@pikyoo/core/data/games";
 import { emptyGameFilters, useAllGames, useDemo, type GameFilters } from "@/lib/demo-store";
-import type { DayGroup } from "@/lib/types";
+import type { DayGroup } from "@pikyoo/core/types";
 import { filterGames, sheetFilterCount } from "./filters";
 
 const toggle = <T,>(arr: T[], v: T) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);

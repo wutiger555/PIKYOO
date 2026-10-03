@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CourtDetailScreen } from "@/features/courts/CourtDetailScreen";
-import { COURTS, getCourt } from "@/lib/data/courts";
+import { COURTS, getCourt } from "@pikyoo/core/data/courts";
 
 export const generateStaticParams = () => COURTS.map((c) => ({ id: c.id }));
 

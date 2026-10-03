@@ -8,10 +8,10 @@ import { Crumbs } from "@/components/pk/Crumbs";
 import { AppBar, SoonButton } from "@/components/pk/Shell";
 import { useToast } from "@/components/pk/Toast";
 import { TopNav } from "@/components/pk/TopNav";
-import { BOOKING_DAYS, getCoach } from "@/lib/data/coaches";
+import { BOOKING_DAYS, getCoach } from "@pikyoo/core/data/coaches";
 import { newBooking, useDemo } from "@/lib/demo-store";
-import type { BookingStatus } from "@/lib/types";
-import { money } from "@/lib/format";
+import type { BookingStatus } from "@pikyoo/core/types";
+import { money } from "@pikyoo/core/format";
 import { Photo } from "./CoachCard";
 import { bookingTotal } from "./BookScreen";
 

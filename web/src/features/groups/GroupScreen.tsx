@@ -8,10 +8,10 @@ import { Crumbs } from "@/components/pk/Crumbs";
 import { AppBar, SoonButton } from "@/components/pk/Shell";
 import { TopNav } from "@/components/pk/TopNav";
 import { useToast } from "@/components/pk/Toast";
-import { BOOKING_DAYS } from "@/lib/data/coaches";
+import { BOOKING_DAYS } from "@pikyoo/core/data/coaches";
 import { useCoach, useDemo } from "@/lib/demo-store";
-import { money } from "@/lib/format";
-import type { Group, GroupMember } from "@/lib/types";
+import { money } from "@pikyoo/core/format";
+import type { Group, GroupMember } from "@pikyoo/core/types";
 import { Img, Photo } from "../coaches/CoachCard";
 
 // Friends the demo can "invite"; in the real app each joins with their own LINE account.

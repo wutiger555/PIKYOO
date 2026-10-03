@@ -1,11 +1,11 @@
 "use client";
 
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
-import { BOOKING_DAYS, COACHES, getCoach, initialGroups, initialPayments, initialRequests } from "./data/coaches";
-import { GAMES, ME } from "./data/games";
-import { initialQuestions } from "./data/questions";
-import { LEVELS } from "./format";
-import type { Booking, BookingRequest, Coach, Game, Group, Level, LessonType, MyGameStatus, PaymentRow, Profile, Question } from "./types";
+import { BOOKING_DAYS, COACHES, getCoach, initialGroups, initialPayments, initialRequests } from "@pikyoo/core/data/coaches";
+import { GAMES, ME } from "@pikyoo/core/data/games";
+import { initialQuestions } from "@pikyoo/core/data/questions";
+import { LEVELS } from "@pikyoo/core/format";
+import type { Booking, BookingRequest, Coach, Game, Group, Level, LessonType, MyGameStatus, PaymentRow, Profile, Question } from "@pikyoo/core/types";
 
 // In-memory demo state shared across screens (the MVP runs on mock data; Supabase replaces this).
 // Lives in the root layout so it survives client-side navigation; a full reload resets it.

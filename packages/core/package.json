@@ -1,0 +1,10 @@
+{
+  "name": "@pikyoo/core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shared by web/ and the future app/: types, mock data and rules. Plain TypeScript, no UI.",
+  "type": "module",
+  "exports": {
+    "./*": "./src/*.ts"
+  }
+}

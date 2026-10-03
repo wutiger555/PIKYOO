@@ -7,11 +7,11 @@ import { Icon, type IconName } from "@/components/pk/Icon";
 import { AppBar, Sheet, SoonButton } from "@/components/pk/Shell";
 import { TopNav } from "@/components/pk/TopNav";
 import { useToast } from "@/components/pk/Toast";
-import { PAYOUT_METHODS, RECEIVED_BEFORE, TODAY_AGENDA } from "@/lib/data/coaches";
+import { PAYOUT_METHODS, RECEIVED_BEFORE, TODAY_AGENDA } from "@pikyoo/core/data/coaches";
 import { useDemo } from "@/lib/demo-store";
-import { money } from "@/lib/format";
+import { money } from "@pikyoo/core/format";
 import { AnswerCard } from "@/features/coaches/QuestionBoard";
-import type { BookingRequest, PaymentRow } from "@/lib/types";
+import type { BookingRequest, PaymentRow } from "@pikyoo/core/types";
 
 type ConsoleTab = "today" | "lessons" | "page" | "pay";
 

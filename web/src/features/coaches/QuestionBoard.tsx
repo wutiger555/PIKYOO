@@ -4,10 +4,10 @@ import { useState } from "react";
 import { Icon } from "@/components/pk/Icon";
 import { Sheet } from "@/components/pk/Shell";
 import { useToast } from "@/components/pk/Toast";
-import { contactHint, findContact } from "@/lib/contact";
-import { QUESTION_STARTERS } from "@/lib/data/questions";
+import { contactHint, findContact } from "@pikyoo/core/contact";
+import { QUESTION_STARTERS } from "@pikyoo/core/data/questions";
 import { useDemo, usePublicQuestions } from "@/lib/demo-store";
-import type { Coach, Question } from "@/lib/types";
+import type { Coach, Question } from "@pikyoo/core/types";
 
 const SHOWN = 3;
 

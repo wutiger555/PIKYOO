@@ -8,10 +8,10 @@ import { LoginSheet } from "@/components/pk/LoginSheet";
 import { AppBar } from "@/components/pk/Shell";
 import { useToast } from "@/components/pk/Toast";
 import { TopNav } from "@/components/pk/TopNav";
-import { BOOKING_DAYS, PAY_HINT, slotsFor } from "@/lib/data/coaches";
+import { BOOKING_DAYS, PAY_HINT, slotsFor } from "@pikyoo/core/data/coaches";
 import { newBooking, useCoach, useDemo } from "@/lib/demo-store";
-import { money } from "@/lib/format";
-import type { Booking, Coach, CoachProfile } from "@/lib/types";
+import { money } from "@pikyoo/core/format";
+import type { Booking, Coach, CoachProfile } from "@pikyoo/core/types";
 import { Photo } from "./CoachCard";
 
 /** Called from the 開始揪團 click only. */

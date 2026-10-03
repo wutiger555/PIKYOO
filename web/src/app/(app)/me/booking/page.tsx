@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { BookingStatusScreen } from "@/features/coaches/BookingStatusScreen";
-import type { BookingStatus } from "@/lib/types";
+import type { BookingStatus } from "@pikyoo/core/types";
 
 export const metadata: Metadata = { title: "我的預約" };
 

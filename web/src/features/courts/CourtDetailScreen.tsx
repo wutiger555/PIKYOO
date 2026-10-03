@@ -8,10 +8,10 @@ import { GameTicket } from "@/components/pk/Ticket";
 import { useToast } from "@/components/pk/Toast";
 import { TopNav } from "@/components/pk/TopNav";
 import { Img } from "@/features/coaches/CoachCard";
-import { LESSONS } from "@/lib/data/games";
+import { LESSONS } from "@pikyoo/core/data/games";
 import { useAllGames } from "@/lib/demo-store";
-import { money } from "@/lib/format";
-import type { Court } from "@/lib/types";
+import { money } from "@pikyoo/core/format";
+import type { Court } from "@pikyoo/core/types";
 
 const BOOK_CTA: Record<Court["booking"], string> = {
   公立預約系統: "前往預約系統",

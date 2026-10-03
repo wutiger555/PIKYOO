@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useGameView } from "@/lib/demo-store";
-import type { Game } from "@/lib/types";
+import type { Game } from "@pikyoo/core/types";
 import { LevelChip, Sprout, Status } from "./Badges";
 
 /** 座位列: taken seats are avatars (host ringed), open seats are empty ball holes, "你" is optic. Always states 缺 N. */

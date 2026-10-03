@@ -9,7 +9,7 @@ import { AppBar } from "@/components/pk/Shell";
 import { TopNav } from "@/components/pk/TopNav";
 import { useToast } from "@/components/pk/Toast";
 import { useDemo } from "@/lib/demo-store";
-import { money } from "@/lib/format";
+import { money } from "@pikyoo/core/format";
 import { Img } from "../coaches/CoachCard";
 import { useDemoJoin, useGroupView } from "./GroupScreen";
 

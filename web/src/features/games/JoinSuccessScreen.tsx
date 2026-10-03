@@ -10,7 +10,7 @@ import { TopNav } from "@/components/pk/TopNav";
 import { Seats } from "@/components/pk/Ticket";
 import { Status } from "@/components/pk/Badges";
 import { useDemo, useGameView } from "@/lib/demo-store";
-import type { Game } from "@/lib/types";
+import type { Game } from "@pikyoo/core/types";
 
 /** 報名成功 / 已加入候補: seat fills with a pop, LINE reminder, share to group, add to calendar. */
 export function JoinSuccessScreen({ game: g }: { game: Game }) {

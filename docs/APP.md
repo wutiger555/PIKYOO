@@ -42,10 +42,12 @@
 PIKYOO/（一個 repo，npm workspaces）
 ├─ web/            Next.js + Tailwind               → Vercel 自動部署（不變）
 ├─ app/            Expo + Expo Router + NativeWind  → Xcode / Android Studio 上架
-├─ packages/core/  兩邊共用（純 TypeScript，不含畫面）
-│   ├─ types/        由 Supabase 自動產生的資料表型別
-│   ├─ data/         查詢、呼叫 RPC（live）＋ 假資料（demo）
-│   └─ rules/        contact.ts、價格計算、日期格式等
+├─ packages/core/  兩邊共用（純 TypeScript，不含畫面），import 寫 `@pikyoo/core/<檔名>`
+│   └─ src/
+│       ├─ types.ts      畫面用的型別（PRD §7）；之後加 Supabase 產生的資料表型別
+│       ├─ data/         假資料（demo）；B1 重做時加入 Supabase 查詢（live）
+│       ├─ format.ts     程度、價格顯示
+│       └─ contact.ts    問與答的聯絡方式過濾
 └─ supabase/       規則、權限、RPC、Edge Functions（兩邊唯一的大腦）
 ```
 
@@ -58,7 +60,7 @@ PIKYOO/（一個 repo，npm workspaces）
 | 畫面（`web/`、`app/`） | 2 次 | 網頁版教練頁、App 版教練頁 |
 
 - `NEXT_PUBLIC_DATA_SOURCE=demo|live` 的模式延續到 App（`EXPO_PUBLIC_DATA_SOURCE`），demo 版 App 也能跑。
-- `packages/core` 可以在 App 開工前就先建立：把網站裡的共用邏輯慢慢搬進去，對網站本身也有好處。
+- `packages/core` 已於 2026-10-04 建立，搬入型別、假資料、`format`、`contact`。`demo-store.tsx`（React 狀態）仍在 `web/`，App 開工時再決定是否共用。
 
 ---
 
@@ -139,7 +141,7 @@ android/ 用 Android Studio 產生 .aab → 上傳 Google Play Console
    - 設定表記錄**最低支援 App 版本**，太舊的 App 要求更新。
 2. **不是每個功能兩邊都要有**（見 §4）。
 3. **發布節奏分開**（見 §6.4）。
-4. **每個 PR 註明影響層**：`db`／`core`／`web`／`app`。demo 假資料與 live 介接一起更新（延續 `BACKEND.md` §1.3）；改規則時 `lib/contact.ts`（日後 `packages/core/rules`）與 `public.contact_kind()` 一起改。
+4. **每個 PR 註明影響層**：`db`／`core`／`web`／`app`。demo 假資料與 live 介接一起更新（延續 `BACKEND.md` §1.3）；改規則時 `packages/core/src/contact.ts` 與 `public.contact_kind()` 一起改。
 5. **Apple 審核用帳號**：在正式環境保留一組審核專用帳號與示範資料。
 
 ---
@@ -150,7 +152,7 @@ android/ 用 Android Studio 產生 .aab → 上傳 Google Play Console
 
 | 階段 | 做什麼 | 進入條件 |
 |---|---|---|
-| **A. 現在** | 完成 B1–B8 真資料；開始把共用邏輯搬到 `packages/core` | — |
+| **A. 現在** | 完成 B1–B8 真資料；新的共用邏輯寫在 `packages/core` | — |
 | **B. 準備** | 申請 D-U-N-S、Apple／Google 公司開發者帳號、自有網域 | B 階段接近完成 |
 | **C. 開發** | 建 `app/`，做學員核心流程（§4），TestFlight／封閉測試內部試用 | B1–B8 真資料穩定，且 `PLAN.md` §11.4 觸發條件符合任兩項 |
 | **D. 上架** | iOS 與 Android 同時上架；接推播、Universal Links | 內部試用沒有重大問題 |
@@ -161,4 +163,4 @@ android/ 用 Android Studio 產生 .aab → 上傳 Google Play Console
 - [ ] Apple Developer Program 公司帳號：owner
 - [ ] Google Play Console 公司帳號：owner
 - [ ] 自有網域（如 pikyoo.tw）：owner
-- [ ] 建立 `packages/core` 並搬移共用邏輯：開發
+- [x] 建立 `packages/core` 並搬移共用邏輯：開發（2026-10-04）

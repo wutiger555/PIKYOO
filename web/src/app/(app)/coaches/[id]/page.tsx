@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CoachPageScreen } from "@/features/coaches/CoachPageScreen";
-import { COACHES, getCoach } from "@/lib/data/coaches";
+import { COACHES, getCoach } from "@pikyoo/core/data/coaches";
 
 export const generateStaticParams = () => COACHES.map((c) => ({ id: c.id }));
 

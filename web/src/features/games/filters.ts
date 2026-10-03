@@ -1,5 +1,5 @@
 import type { GameFilters } from "@/lib/demo-store";
-import type { Game, MyGameStatus } from "@/lib/types";
+import type { Game, MyGameStatus } from "@pikyoo/core/types";
 
 const startHour = (g: Game) => parseInt(g.startsAt, 10);
 
