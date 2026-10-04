@@ -26,6 +26,7 @@ A pickleball platform for Taiwan to find courts, coaches, classes, and games.
 
 | 日期 | PR | 內容 |
 |---|---|---|
+| 2026-10-05 | [#43](https://github.com/wutiger555/PIKYOO/pull/43) | **App 上課／找教練與網站對齊**：找教練（程度、類型、已認證、新手友善篩選，標準教練卡，最多比較 3 位）、完整教練頁（跟網站同樣的段落、價目、可約時段、經歷、評價、問與答、訪客登入鎖、底部預約列）、四步驟預約、我的預約進度與付款、我的課。數字改用網站同款字體 |
 | 2026-10-05 | [#42](https://github.com/wutiger555/PIKYOO/pull/42) | 修正 App 的自動型別檢查：CI 只安裝 App 的套件時，共用程式找不到 Supabase 套件（#41 合併時漏看這個失敗） |
 | 2026-10-05 | [#41](https://github.com/wutiger555/PIKYOO/pull/41) | **App 接真資料**：App 的球局、教練、教練頁改讀正式資料庫（跟網站同一份），下拉可重新整理，讀不到時可以點「再試一次」。我的課與我的頁說明登入即將推出 |
 | 2026-10-05 | [#40](https://github.com/wutiger555/PIKYOO/pull/40) | **App 開工（第 16 步）**：`app/` 建好 React Native + Expo App 骨架，iOS 原生分頁列（首頁、找教練、我的課、我的），用跟網站同一份示範資料顯示球局、教練、教練頁，在 iPhone 模擬器上確認。只改 App 或文件時，Vercel 不再重新部署網站 |
