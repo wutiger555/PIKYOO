@@ -38,6 +38,20 @@ export function describe(kind: string, p: Payload): Pick<Notice, "title" | "body
   }
 }
 
+/** Kinds also pushed over LINE (PRD F6 plus D9's payment round trip). LINE bills per message, so the rest stay in-app. */
+export const LINE_KINDS = new Set([
+  "booking_requested", "booking_confirmed", "booking_declined", "booking_cancelled", "booking_expired",
+  "payment_reported", "payment_received", "payment_not_received",
+  "game_promoted", "game_changed", "game_cancelled", "game_removed",
+  "coach_approved", "coach_returned",
+]);
+
+/** The LINE text for a queued row: the same title and body as the bell, plus a link back to the site. */
+export function lineText(kind: string, payload: unknown, origin: string): string {
+  const d = describe(kind, (payload ?? {}) as Payload);
+  return [d.title, d.body, `${origin}${d.href ?? "/me/notifications"}`].filter(Boolean).join("\n");
+}
+
 const when = (t: string) => {
   const d = new Date(Date.parse(t) + 8 * 3600e3); // Taipei
   return `${d.getUTCMonth() + 1}/${d.getUTCDate()} ${d.toISOString().slice(11, 16)}`;

@@ -187,7 +187,7 @@ Email magic link（F1-2，P1）之後加，給不用 LINE 的人。
 ## 6. 通知
 
 - 資料庫函式只負責**把通知放進佇列**（`notifications`），不直接打 LINE API。這樣報名不會因為 LINE 慢或掛掉而失敗，也能重試（PRD §8 可靠性）。
-- 排程每分鐘處理佇列：pg_cron + pg_net 呼叫 `/api/notify`（或 Supabase Edge Function），依 PRD F6 的表決定走 LINE、Email 或站內。Vercel Hobby 的 cron 只能每天跑一次（以 Vercel 官方說明為準），所以排程放在 Supabase。
+- 排程每分鐘處理佇列：pg_cron + pg_net 呼叫 `/api/notify`（B6 已上線，見 §13），依 PRD F6 的表決定走 LINE、Email 或站內。Vercel Hobby 的 cron 只能每天跑一次（以 Vercel 官方說明為準），所以排程放在 Supabase。
 - LINE 推播按收件人數計費：只有 PRD F6 標 **LINE** 的事件推 LINE，其他走站內與 Email（Resend）。
 - 上課／打球前提醒（前一天 20:00 或 3 小時前）也由 pg_cron 產生佇列。
 
@@ -348,6 +348,6 @@ B1–B3 是最短的「真的能用」路徑：讀得到資料 → 能登入 →
 
 - [ ] **B6 通知**（進行中，照 D7 先做不用外部帳號的部分）：
   - [x] 第一部分：站內通知中心（`@pikyoo/core/source/notifications`：每種事件的文字與連結、`myNotices`、`unreadCount`、`markAllRead`）。`/me/notifications`；「我的」有「通知（N 則未讀）」，桌機頂部有鈴鐺與未讀數，教練後台的鈴鐺也連到這裡；打開頁面就標為已讀。demo 有 4 則示範通知。未讀數讀不到時顯示 0，不會讓整頁出錯。**收款雙向確認**（D9）：`20261004141908_payment_confirmations` 讓「回報已付款」通知教練、「確認收到」通知學生，新增 `reject_payment_report()`（教練按「還沒收到」退回待付款並通知學生）；「我的課」已確認的課顯示 待付款／已回報付款／已付款。checks.sql 加上整個來回
-  - [ ] 第二部分：LINE 推播。**需要 owner**：建 LINE 官方帳號「PIKYOO 匹友」，在**同一個 Provider** 下開 Messaging API（LINE user ID 只在同一個 Provider 內通用），把 Channel access token 放到 Supabase／Vercel 的機密設定（不要貼在聊天室）。之後由排程每分鐘把佇列裡標 LINE 的通知推出去（PRD F6），學生要先加官方帳號好友才收得到
+  - [x] 第二部分：LINE 推播。owner 建好官方帳號「PIKYOO 匹友」（同一個 Provider 的 Messaging API），token 在 Vercel `LINE_MESSAGING_CHANNEL_ACCESS_TOKEN`。`20261004145516_line_push` 裝 pg_cron + pg_net：每分鐘 `kick_notify()` 在佇列有東西時呼叫 `/api/notify`（網址與共用密碼 `NOTIFY_SECRET` 放 Supabase Vault 的 `notify_url`／`notify_secret`，不進 git）；順便排上 init 寫好但沒排程的 `expire_stale()`（每 5 分鐘，逾 48 小時沒回覆的預約自動逾時並通知）。`/api/notify` 依 `LINE_KINDS`（PRD F6 + D9 收款來回 + 教練頁審核結果）推文字訊息，內容與鈴鐺相同並附連結；其他種類、超過 24 小時、沒有 LINE ID 或關掉 LINE 通知的標 `skipped`。`X-Line-Retry-Key` 用通知 id，重送不會重複推；LINE 5xx／429 最多重試 3 次。通知頁有「加 PIKYOO 官方帳號好友」卡片（`NEXT_PUBLIC_LINE_OA_ID`）。上線前已在佇列的舊通知標 `skipped`，不補推
   - [ ] 第三部分：上課／打球前提醒（排程產生通知）
   - Email（Resend）先不做：站內＋LINE 已經夠用（D7）
