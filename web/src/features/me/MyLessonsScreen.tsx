@@ -10,6 +10,7 @@ import { TopNav } from "@/components/pk/TopNav";
 import { BOOKING_DAYS } from "@pikyoo/core/data/coaches";
 import { useCoaches, useDemo } from "@/lib/demo-store";
 import { money } from "@pikyoo/core/format";
+import type { MyBooking } from "@pikyoo/core/source/bookings";
 import type { Group } from "@pikyoo/core/types";
 import { Photo } from "../coaches/CoachCard";
 
@@ -23,8 +24,30 @@ const GROUP_STATE: Record<Group["status"], [string, "almost" | "info" | "open" |
 // Mock history until bookings come from Supabase.
 const HISTORY = [{ coachId: "mia", plan: "新手體驗課", when: "9/20（日）10:00" }];
 
-/** 我的課: upcoming lessons, 揪團 in progress, and past lessons to review. */
-export function MyLessonsScreen() {
+const LIVE_STATE: Record<MyBooking["state"], [string, "almost" | "info" | "open" | "ended"]> = {
+  pending: ["待教練確認", "almost"], confirmed: ["教練已確認", "open"], done: ["已上課", "ended"],
+  declined: ["教練婉拒", "ended"], expired: ["已逾時", "ended"], cancelled: ["已取消", "ended"],
+};
+
+/** A real booking (real sign-in): opens its status page. */
+function LiveRow({ x }: { x: MyBooking }) {
+  const [label, tone] = LIVE_STATE[x.state];
+  return (
+    <Link href={`/me/booking?id=${x.id}`} className="lesson">
+      <div className="lesson-t"><b className="num">{x.day.date}</b><small>週{x.day.weekday}</small><span className="num">{x.booking.slot}</span></div>
+      <div className="lesson-b">
+        <b>{x.planName}</b>
+        <span className="text-muted">{x.coachName}・{money(x.amount)}</span>
+        <Status tone={tone}>{label}</Status>
+      </div>
+      <Icon name="right" size={18} />
+    </Link>
+  );
+}
+
+/** 我的課: upcoming lessons, 揪團 in progress, and past lessons to review.
+ *  `live`: the student's bookings from the database (real sign-in); 揪團 is demo-only for now (PLAN D7). */
+export function MyLessonsScreen({ live }: { live?: MyBooking[] }) {
   const { booking, groups } = useDemo();
   const coaches = useCoaches();
   const coach = (id: string) => coaches.find((c) => c.id === id)!;
@@ -51,7 +74,13 @@ export function MyLessonsScreen() {
   };
 
   let body: React.ReactNode;
-  if (tab === "next") {
+  if (live) {
+    const open = (x: MyBooking) => x.state === "pending" || x.state === "confirmed";
+    const rows = tab === "next" ? [...live].filter(open).reverse() : live.filter((x) => !open(x));
+    body = rows.length
+      ? <div className="stack">{rows.map((x) => <LiveRow key={x.id} x={x} />)}</div>
+      : <Empty text={tab === "next" ? "還沒有預約的課。找一位教練，選好時段就能送出。" : "還沒有上過的課"} />;
+  } else if (tab === "next") {
     const b = booking.slot ? booking : null;
     const c = b && coach(b.coachId);
     const plan = c?.profile.plans.find((p) => p.id === b!.planId);
@@ -104,7 +133,7 @@ export function MyLessonsScreen() {
     <>
       <div className="t"><h1>我的課</h1></div>
       <div className="seg" style={{ display: "flex" }} role="radiogroup" aria-label="課程">
-        {([["next", "即將上課"], ["group", `揪團中${gathering.length ? " " + gathering.length : ""}`], ["done", "上過的"]] as [Tab, string][]).map(([k, l]) => (
+        {([["next", "即將上課"], ["group", `揪團中${gathering.length ? " " + gathering.length : ""}`], ["done", "上過的"]] as [Tab, string][]).filter(([k]) => !(live && k === "group")).map(([k, l]) => (
           <label key={k} className="seg-opt"><input type="radio" name={name} checked={tab === k} onChange={() => setTab(k)} />{l}</label>
         ))}
       </div>

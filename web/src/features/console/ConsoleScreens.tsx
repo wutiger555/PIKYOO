@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Status } from "@/components/pk/Badges";
 import { Icon, type IconName } from "@/components/pk/Icon";
@@ -12,6 +13,8 @@ import { useDemo } from "@/lib/demo-store";
 import { money } from "@pikyoo/core/format";
 import { AnswerCard } from "@/features/coaches/QuestionBoard";
 import { CoachGate } from "./CoachAccount";
+import { decideBookingAction } from "@/lib/bookings";
+import { realAuth } from "@/lib/env";
 import type { BookingRequest, PaymentRow } from "@pikyoo/core/types";
 
 type ConsoleTab = "today" | "lessons" | "page" | "pay";
@@ -80,10 +83,21 @@ export function CoachTabs({ active }: { active: ConsoleTab }) {
 /** 確認／婉拒 a booking request, with the toast that says what the student gets. */
 function useRequestActions() {
   const toast = useToast();
+  const router = useRouter();
   const { confirmRequest } = useDemo();
+  // real sign-in: decide_booking in the database first; the card updates only if it went through
+  const decide = async (r: BookingRequest, ok: boolean, done: string) => {
+    if (realAuth) {
+      const res = await decideBookingAction(r.id, ok);
+      if (res.error) return toast(res.error);
+    }
+    confirmRequest(r.id, ok);
+    toast(done);
+    if (realAuth) router.refresh();
+  };
   return {
-    decline: (r: BookingRequest) => { confirmRequest(r.id, false); toast("已婉拒，會通知學生並推薦其他時段"); },
-    accept: (r: BookingRequest) => { confirmRequest(r.id, true); toast(`已確認，並用 LINE 傳 ${r.pay} 付款資訊給 ${r.name}`); },
+    decline: (r: BookingRequest) => decide(r, false, realAuth ? `已婉拒，${r.name} 會在 PIKYOO 看到` : "已婉拒，會通知學生並推薦其他時段"),
+    accept: (r: BookingRequest) => decide(r, true, realAuth ? `已確認，${r.name} 會在 PIKYOO 看到` : `已確認，並用 LINE 傳 ${r.pay} 付款資訊給 ${r.name}`),
   };
 }
 
@@ -173,10 +187,10 @@ export function CoachTodayScreen() {
             </span>
           </div>
           <h1 style={{ margin: "20px 0 2px", fontSize: 28 }}>早安，{myCoach.name.split(" ")[0]}</h1>
-          <p style={{ margin: 0, color: "var(--color-on-carbon-muted)" }}>今天 2 堂課，<span className="hl">{pend.length} 筆預約</span>等你確認{ask.length > 0 && `、${ask.length} 則提問待回覆`}</p>
+          <p style={{ margin: 0, color: "var(--color-on-carbon-muted)" }}>{!realAuth && "今天 2 堂課，"}<span className="hl">{pend.length} 筆預約</span>等你確認{ask.length > 0 && `、${ask.length} 則提問待回覆`}</p>
           <div className="stats" style={{ marginTop: 16 }}>
             <div><b className="num">{pend.length}</b><span>待確認</span></div>
-            <div><b className="num">6</b><span>本週課</span></div>
+            {!realAuth && <div><b className="num">6</b><span>本週課</span></div>}
             <Link href="/coach/payments"><b className="num">{money(due)}</b><span>待收款</span></Link>
           </div>
         </div>
@@ -196,7 +210,8 @@ export function CoachTodayScreen() {
           </div>
           {ask.length ? <div className="stack con-qs">{ask.map((q) => <AnswerCard key={q.id} q={q} />)}</div> : <p className="text-muted" style={{ margin: 0 }}>沒有待回覆的提問。回覆會公開在教練頁，其他學生也看得到。</p>}
         </section>
-        <section className="sec con-today">
+        {/* the sample day; with real sign-in the schedule comes with B5 part 3 */}
+        {!realAuth && <section className="sec con-today">
           <div className="sec-head">
             <h2><span className="en">Today</span>今天的課</h2>
             <SoonButton className="linklike" msg="行事曆（週檢視）">行事曆</SoonButton>
@@ -214,7 +229,7 @@ export function CoachTodayScreen() {
               </div>
             ))}
           </div>
-        </section>
+        </section>}
         </div>
       </ConsoleFrame>
       <CoachTabs active="today" />
@@ -235,7 +250,7 @@ export function CoachPaymentsScreen() {
   const [filter, setFilter] = useState<"all" | PaymentRow["status"]>("all");
   const [settings, setSettings] = useState(false);
   const list = payments.filter((p) => filter === "all" || p.status === filter);
-  const got = payments.filter((p) => p.status === "paid").reduce((a, p) => a + p.amount, 0) + RECEIVED_BEFORE;
+  const got = payments.filter((p) => p.status === "paid").reduce((a, p) => a + p.amount, 0) + (realAuth ? 0 : RECEIVED_BEFORE);
   const due = payments.filter((p) => p.status !== "paid").reduce((a, p) => a + p.amount, 0);
   const cnt = (k: PaymentRow["status"]) => payments.filter((p) => p.status === k).length;
   const opts: [typeof filter, string][] = [["all", "全部"], ["reported", `已回報 ${cnt("reported")}`], ["wait", `待付款 ${cnt("wait")}`], ["paid", "已收"]];

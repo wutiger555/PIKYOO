@@ -1,9 +1,12 @@
 import { connection } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import { cache } from "react";
+import { demoCalendar, liveCalendar, type BookingCalendar } from "@pikyoo/core/source/bookings";
 import { demo } from "@pikyoo/core/source/demo";
 import { createLive } from "@pikyoo/core/source/live";
 import { readMyCoach } from "@pikyoo/core/source/me-coach";
 import type { Catalog } from "@pikyoo/core/source/types";
+import type { Coach } from "@pikyoo/core/types";
 import { isLive, SUPABASE_KEY, SUPABASE_URL } from "./env";
 import { getMe, supabaseServer } from "./supabase";
 
@@ -26,3 +29,10 @@ export const getCatalog = cache(async (): Promise<Catalog> => {
 export const getCourt = async (id: string) => (await getCatalog()).courts.find((c) => c.id === id);
 export const getCoach = async (id: string) => (await getCatalog()).coaches.find((c) => c.id === id);
 export const getGame = async (id: string) => (await getCatalog()).games.find((g) => g.id === id);
+
+/** The booking page's week: mock seats in the demo, the coach's open sessions from the database when live. */
+export async function getBookingCalendar(coach: Coach): Promise<BookingCalendar> {
+  if (!isLive) return demoCalendar(coach);
+  await connection();
+  return liveCalendar(createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: false } }), coach.id);
+}
