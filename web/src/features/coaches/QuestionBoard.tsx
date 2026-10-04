@@ -8,6 +8,8 @@ import { contactHint, findContact } from "@pikyoo/core/contact";
 import { QUESTION_STARTERS } from "@pikyoo/core/data/questions";
 import { useDemo, usePublicQuestions } from "@/lib/demo-store";
 import type { Coach, Question } from "@pikyoo/core/types";
+import { realAuth } from "@/lib/env";
+import { answerQuestionAction, askQuestionAction } from "@/lib/questions";
 
 const SHOWN = 3;
 
@@ -47,7 +49,7 @@ function QaItem({ q, coachName }: { q: Question; coachName: string }) {
         <span className="qa-mark" aria-label="問">問</span>
         <div>
           <p>{q.text}</p>
-          <small>{q.mine ? "你" : q.name}・{q.level}・{q.askedAt}</small>
+          <small>{[q.mine ? "你" : q.name, q.level, q.askedAt].filter(Boolean).join("・")}</small>
         </div>
       </div>
       {q.answer ? (
@@ -69,9 +71,16 @@ export function AskSheet({ coach: c, onClose, onSent }: { coach: Coach; onClose:
   const { askQuestion } = useDemo();
   const toast = useToast();
   const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
   const hit = findContact(text);
-  const ok = text.trim().length >= 4 && !hit;
-  const send = () => {
+  const ok = text.trim().length >= 4 && !hit && !busy;
+  const send = async () => {
+    if (realAuth) {
+      setBusy(true);
+      const r = await askQuestionAction(c.id, text.trim());
+      setBusy(false);
+      if (r.error) return toast(r.error);
+    }
     askQuestion(c.id, text.trim());
     toast(`已送出，${c.name} 回覆後會通知你`);
     onClose();
@@ -99,15 +108,26 @@ export function AnswerCard({ q }: { q: Question }) {
   const { answerQuestion } = useDemo();
   const toast = useToast();
   const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
   const hit = findContact(text);
-  const ok = text.trim().length >= 2 && !hit;
+  const ok = text.trim().length >= 2 && !hit && !busy;
+  const reply = async () => {
+    if (realAuth) {
+      setBusy(true);
+      const r = await answerQuestionAction(q.id, text.trim());
+      setBusy(false);
+      if (r.error) return toast(r.error);
+    }
+    answerQuestion(q.id, text.trim());
+    toast(`已回覆，會公開在你的教練頁${realAuth ? "" : `並通知 ${q.name}`}`);
+  };
   return (
     <article className="req">
       <div className="req-top">
         <span className="avatar">{q.name.slice(0, 1)}</span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <b>{q.name}</b>
-          <div className="text-muted" style={{ fontSize: 13 }}>{q.level}・{q.askedAt}</div>
+          <div className="text-muted" style={{ fontSize: 13 }}>{[q.level, q.askedAt].filter(Boolean).join("・")}</div>
         </div>
       </div>
       <p className="req-note">「{q.text}」</p>
@@ -115,7 +135,7 @@ export function AnswerCard({ q }: { q: Question }) {
         placeholder="回覆會公開在你的教練頁" />
       {hit && <p className="field-err">{contactHint(hit)}</p>}
       <div className="btnrow btnrow-tight" style={{ marginTop: 10 }}>
-        <button className="btn btn-primary" disabled={!ok} onClick={() => { answerQuestion(q.id, text.trim()); toast(`已回覆，會公開在你的教練頁並通知 ${q.name}`); }}>公開回覆</button>
+        <button className="btn btn-primary" disabled={!ok} onClick={reply}>公開回覆</button>
       </div>
     </article>
   );

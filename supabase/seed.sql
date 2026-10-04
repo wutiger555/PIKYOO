@@ -212,3 +212,13 @@ insert into public.lesson_groups (id, coach_id, plan_id, starts_at, organizer_id
   md5('pikyoo-seed-group:grp1')::uuid, (select id from public.coaches where slug = 'mia'), (select id from public.coach_plans where coach_id = (select id from public.coaches where slug = 'mia') and key = 'small'), ((date_trunc('day', now() at time zone 'Asia/Taipei') + interval '4 days' + time '14:00') at time zone 'Asia/Taipei'), md5('pikyoo-seed:小安')::uuid, 'seedgrp1', '同事三四個人，都是新手。', ((date_trunc('day', now() at time zone 'Asia/Taipei') + interval '4 days' + time '14:00') at time zone 'Asia/Taipei') - interval '24 hours');
 insert into public.lesson_group_members (group_id, user_id) values (md5('pikyoo-seed-group:grp1')::uuid, md5('pikyoo-seed:小安')::uuid);
 insert into public.lesson_group_members (group_id, user_id) values (md5('pikyoo-seed-group:grp1')::uuid, md5('pikyoo-seed:葉子')::uuid);
+update public.profiles set level = 0 where id = md5('pikyoo-seed:小芸')::uuid;
+update public.profiles set level = 2 where id = md5('pikyoo-seed:Jason')::uuid;
+update public.profiles set level = 0 where id = md5('pikyoo-seed:阿凱')::uuid;
+update public.profiles set level = 1 where id = md5('pikyoo-seed:Wendy')::uuid;
+update public.profiles set level = 3 where id = md5('pikyoo-seed:Peggy')::uuid;
+update public.profiles set level = 4 where id = md5('pikyoo-seed:阿睿')::uuid;
+update public.profiles set level = 0 where id = md5('pikyoo-seed:葉子')::uuid;
+update public.profiles set level = 1 where id = md5('pikyoo-seed:Emily')::uuid;
+update public.profiles set level = 4 where id = md5('pikyoo-seed:Leo')::uuid;
+update public.profiles set level = 0 where id = md5('pikyoo-seed:小安')::uuid;

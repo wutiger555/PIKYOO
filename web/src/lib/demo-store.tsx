@@ -78,7 +78,7 @@ const init = (catalog: Catalog, me: Me | null | undefined): DemoState => ({
   // real sign-in: the viewer's own page (an empty placeholder until they apply, see CoachGate); demo: Mia
   myCoach: structuredClone(catalog.myCoach?.coach ?? catalog.coaches.find((c) => c.id === "mia") ?? getCoach("mia")!),
   groups: me === undefined ? initialGroups() : [], // 揪團 is demo-only for now (PLAN D7)
-  questions: initialQuestions(),
+  questions: catalog.questions ?? initialQuestions(),
 });
 
 type Updater<T> = T | ((prev: T) => T);

@@ -4,6 +4,7 @@ import type {
   TimelineItem, Weekday,
 } from "../types";
 import type { Database, Enums, Tables } from "./db.types";
+import { readQuestions } from "./questions";
 import type { Catalog, DataSource } from "./types";
 
 // Supabase → the types the screens already use, so the screens don't change (docs/BACKEND.md §3).
@@ -191,6 +192,8 @@ export const createLive = ({ url, publishableKey }: LiveConfig): DataSource => (
       }),
       dayGroups: cal.labels,
       mine,
+      // the visitor client sees answered questions; lib/source.ts re-reads them with the session when signed in
+      questions: await readQuestions(sb, viewer),
       hosting,
     };
   },
