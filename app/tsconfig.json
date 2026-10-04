@@ -11,6 +11,9 @@
       ],
       "@pikyoo/core/*": [
         "../packages/core/src/*"
+      ],
+      "@supabase/supabase-js": [
+        "./node_modules/@supabase/supabase-js"
       ]
     },
     "allowImportingTsExtensions": true
