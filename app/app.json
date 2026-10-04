@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "PIKYOO 匹友",
+    "slug": "pikyoo",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "pikyoo",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "bundleIdentifier": "tw.pikyoo.app",
+      "supportsTablet": false,
+      "icon": "./assets/images/icon.png"
+    },
+    "android": {
+      "package": "tw.pikyoo.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#D4EE3A",
+        "foregroundImage": "./assets/images/android-icon-foreground.png"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#D4EE3A",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 120
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}

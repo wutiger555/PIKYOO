@@ -59,6 +59,7 @@ PIKYOO/（一個 repo，npm workspaces）
 | 共用邏輯（`packages/core`） | 1 次 | 查教練列表、價格顯示、聯絡方式過濾 |
 | 畫面（`web/`、`app/`） | 2 次 | 網頁版教練頁、App 版教練頁 |
 
+- **`app/` 自己安裝套件（2026-10-05）**：不加入 npm workspaces，因為 React Native 綁定一個固定的 React 版本，跟網站的不同，放在一起會裝出兩份 React。`packages/core` 直接從原始碼引用（`app/tsconfig.json` 的 `paths`、`app/metro.config.js` 的 `watchFolders`）。
 - `NEXT_PUBLIC_DATA_SOURCE=demo|live` 的模式延續到 App（`EXPO_PUBLIC_DATA_SOURCE`），demo 版 App 也能跑。
 - `packages/core` 已於 2026-10-04 建立，搬入型別、假資料、`format`、`contact`。`demo-store.tsx`（React 狀態）仍在 `web/`，App 開工時再決定是否共用。
 
@@ -150,7 +151,7 @@ android/ 用 Android Studio 產生 .aab → 上傳 Google Play Console
 
 對應 PRD §12 的 Phase 4。是順序與進入條件，不是固定日期。**每完成一步就在這裡打勾**（狀態：✅ 完成、👉 進行中、⬜ 未開始）。
 
-> **目前位置（2026-10-05）：第四階段第 16 步，建 Expo App 骨架**（owner 決定提前，與第二階段第 11 步 B8 封測同時進行）。B1–B7 完成：網站登入、球局、教練、預約、收款、通知、管理、SEO 都是真的。B8 等 owner 提供真實球場與第一批教練、決定開放真登入的時間；第三階段上架帳號請 owner 現在就申請（`BACKEND.md` §13）。
+> **目前位置（2026-10-05）：第四階段第 17 步，App 登入。** 第 16 步完成：`app/`（Expo SDK 57、Expo Router、iOS 原生分頁列）用 `packages/core` 的示範資料跑首頁、找教練、教練頁、球局、我的課，已在 iPhone 17 Pro 模擬器確認。與第二階段第 11 步 B8 同時進行；第三階段上架帳號請 owner 現在就申請（`BACKEND.md` §13）。
 
 ### 第一階段：決定方向
 
@@ -190,8 +191,8 @@ App 等網站資料穩定才開工，避免兩邊一起追資料結構變動。B
 
 | # | 步驟 | 負責 | 狀態 |
 |---|---|---|---|
-| 16 | 建 `app/`（Expo 骨架），接 `packages/core`，先用假資料跑 | Claude | 👉 |
-| 17 | 登入：LINE＋Apple 登入，跟網站共用帳號 | Claude | ⬜ |
+| 16 | 建 `app/`（Expo 骨架），接 `packages/core`，先用假資料跑 | Claude | ✅ [#40](https://github.com/wutiger555/PIKYOO/pull/40) |
+| 17 | 登入：LINE＋Apple 登入，跟網站共用帳號 | Claude | 👉 |
 | 18 | 學員核心畫面：找教練、教練頁、預約、我的課程、揪團、問與答（§4） | Claude | ⬜ |
 | 19 | 推播通知（§5） | Claude | ⬜ |
 | 20 | 內部試用：TestFlight／Google 封閉測試 | owner＋Claude | ⬜ |
