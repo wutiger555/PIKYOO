@@ -34,6 +34,7 @@ export function describe(kind: string, p: Payload): Pick<Notice, "title" | "body
     case "credential_reviewed": return { title: p.verified ? "證照已查驗" : "證照未通過查驗", href: "/coach/profile" };
     case "group_joined": return { title: "有朋友加入你的揪團", href: "/me/lessons" };
     case "group_expired": return { title: "揪團人數不足，已取消", href: "/me/lessons" };
+    case "line_test": return { title: "LINE 通知測試", body: "收到這則就代表 PIKYOO 的 LINE 通知設定好了", href: "/me/notifications" };
     default: return { title: "PIKYOO 有新消息" };
   }
 }
@@ -44,6 +45,7 @@ export const LINE_KINDS = new Set([
   "payment_reported", "payment_received", "payment_not_received",
   "game_promoted", "game_changed", "game_cancelled", "game_removed",
   "coach_approved", "coach_returned",
+  "line_test", // queued by hand (select public.notify(<user>, 'line_test', '{}')) to check the LINE setup
 ]);
 
 /** The LINE text for a queued row: the same title and body as the bell, plus a link back to the site. */
