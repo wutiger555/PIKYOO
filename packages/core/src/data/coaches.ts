@@ -1,4 +1,5 @@
 import type { BookingDay, BookingRequest, Coach, Group, PaymentRow, Slot } from "../types";
+import { demoDate, demoDay } from "./today.ts"; // .ts: the seed generator runs this file in plain Node
 
 // Mock coaches, slots and coach-console data — content from prototype/coach-kit.js and PIKYOO-coach.html.
 
@@ -165,15 +166,17 @@ export const getCoach = (id: string) => COACHES.find((c) => c.id === id);
 /** Verified by an association (DUPR is always self-reported). */
 export const isCertified = (c: Coach) => c.creds.some((x) => x.verified && x.issuer !== "DUPR");
 
-export const BOOKING_DAYS: BookingDay[] = [
-  { key: "d1", weekday: "三", date: "9/30" },
-  { key: "d2", weekday: "四", date: "10/1" },
-  { key: "d3", weekday: "五", date: "10/2" },
-  { key: "d4", weekday: "六", date: "10/3" },
-  { key: "d5", weekday: "日", date: "10/4" },
-  { key: "d6", weekday: "一", date: "10/5" },
-  { key: "d7", weekday: "二", date: "10/6" },
-];
+/** The demo's booking week: tomorrow and the six days after (keys d1–d7 stay fixed, dates follow today). */
+export const bookingDays = (): BookingDay[] => Array.from({ length: 7 }, (_, i) => ({ key: `d${i + 1}`, ...demoDay(i + 1) }));
+
+/** 最近可約 on a demo coach card: the first open weekly time in the booking week. */
+export function nextSlotOf(c: Coach): string {
+  for (const d of bookingDays()) {
+    const t = c.profile.availability[d.weekday]?.[0];
+    if (t) return `週${d.weekday} ${d.date} ${t}`;
+  }
+  return "尚未開放時段";
+}
 
 /** Seats left per session (day key + start time); a session not listed has the plan's full size. Mock. */
 const SEATS_LEFT: Record<string, number> = {
@@ -194,12 +197,12 @@ export const PAY_HINT: Record<string, string> = {
 // — coach console (Mia's view) —
 
 export const initialRequests = (): BookingRequest[] => [
-  { id: "r1", initial: "安", name: "小安", level: "新手", firstTime: true, when: "10/4（日）10:00", plan: "新手體驗課 ×1", amount: 600, note: "第一次打，之前打過羽球。", expiresIn: "46 小時", pay: "LINE Pay", status: "pending" },
-  { id: "r2", initial: "J", name: "Jason", level: "2.5", firstTime: false, times: 4, when: "10/7（三）19:30", plan: "一對一 60 分", amount: 1500, note: "想加強反手截擊", expiresIn: "31 小時", pay: "銀行轉帳", status: "pending" },
+  { id: "r1", initial: "安", name: "小安", level: "新手", firstTime: true, when: `${demoDate(5)}10:00`, plan: "新手體驗課 ×1", amount: 600, note: "第一次打，之前打過羽球。", expiresIn: "46 小時", pay: "LINE Pay", status: "pending" },
+  { id: "r2", initial: "J", name: "Jason", level: "2.5", firstTime: false, times: 4, when: `${demoDate(8)}19:30`, plan: "一對一 60 分", amount: 1500, note: "想加強反手截擊", expiresIn: "31 小時", pay: "銀行轉帳", status: "pending" },
 ];
 
 export const initialPayments = (): PaymentRow[] => [
-  { id: "p1", initial: "葉", name: "葉子", what: "小班課・10/1（四）", amount: 800, via: "銀行轉帳", status: "reported", ref: "88120", at: "今天 09:12 回報" },
+  { id: "p1", initial: "葉", name: "葉子", what: `小班課・${demoDate(2)}`, amount: 800, via: "銀行轉帳", status: "reported", ref: "88120", at: "今天 09:12 回報" },
   { id: "p2", initial: "何", name: "阿何", what: "小班課・今天 19:30", amount: 800, via: "LINE Pay", status: "wait", at: "已傳付款連結，尚未付" },
   { id: "p3", initial: "P", name: "Peggy", what: "一對一 10 堂（第 3/10 堂）", amount: 13500, via: "LINE Pay", status: "paid", at: "9/28" },
   { id: "p4", initial: "周", name: "小周", what: "小班課・今天 19:30", amount: 800, via: "現場付現", status: "paid", at: "9/29" },

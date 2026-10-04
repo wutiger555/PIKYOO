@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { BOOKING_DAYS, slotsFor } from "../data/coaches";
+import { bookingDays, slotsFor } from "../data/coaches";
 import { LEVELS } from "../format";
 import type { Booking, BookingDay, BookingRequest, Coach, Level, PayMethod, Slot, Weekday } from "../types";
 import { PAY_DB } from "./coach-rows";
@@ -17,8 +17,8 @@ export const slotKey = (planId: string, dayKey: string) => `${planId}|${dayKey}`
 /** The demo's fixed week and mock seats (every plan shares them). */
 export function demoCalendar(c: Coach): BookingCalendar {
   const slots: BookingCalendar["slots"] = {};
-  for (const pl of c.profile.plans) for (const d of BOOKING_DAYS) slots[slotKey(pl.id, d.key)] = slotsFor(c, d);
-  return { days: BOOKING_DAYS, slots };
+  for (const pl of c.profile.plans) for (const d of bookingDays()) slots[slotKey(pl.id, d.key)] = slotsFor(c, d);
+  return { days: bookingDays(), slots };
 }
 
 const WD: Weekday[] = ["日", "一", "二", "三", "四", "五", "六"];

@@ -18,8 +18,9 @@ const source = isLive ? createLive({ url: SUPABASE_URL, publishableKey: SUPABASE
 
 /** One load per request, shared by the layout, the page and its metadata. Live never prerenders database rows into the build. */
 export const getCatalog = cache(async (): Promise<Catalog> => {
-  if (!isLive) return source.catalog();
+  // render per request in both modes: live rows must be fresh, and the demo's dates follow today (data/today.ts)
   await connection();
+  if (!isLive) return source.catalog();
   const me = await getMe();
   const catalog = await source.catalog(me?.id);
   // the coach's own page at any status needs their session (RLS), not the visitor client the catalog uses
@@ -32,7 +33,7 @@ export const getGame = async (id: string) => (await getCatalog()).games.find((g)
 
 /** The booking page's week: mock seats in the demo, the coach's open sessions from the database when live. */
 export async function getBookingCalendar(coach: Coach): Promise<BookingCalendar> {
-  if (!isLive) return demoCalendar(coach);
   await connection();
+  if (!isLive) return demoCalendar(coach);
   return liveCalendar(createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: false } }), coach.id);
 }

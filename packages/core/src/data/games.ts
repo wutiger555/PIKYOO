@@ -1,13 +1,23 @@
 import type { DayGroup, Game, Participant } from "../types";
+import { daysUntil, demoDay } from "./today.ts"; // .ts: the seed generator runs this file in plain Node
 
-// Mock games — content from prototype/PIKYOO-core-flow.html. "Today" is 9/29（二）.
+// Mock games — content from prototype/PIKYOO-core-flow.html. Dates follow today (./today.ts): today, tomorrow,
+// and the coming weekend.
 
-export const DAY_GROUPS: Record<DayGroup, string> = {
-  today: "今天 9/29（二）",
-  tomorrow: "明天 9/30（三）",
-  sat: "週六 10/3",
-  sun: "週日 10/4",
-};
+/** Days from today to each demo day group. */
+/** The weekend is the first Saturday at least two days out and the Sunday after it (never Sunday before Saturday). */
+const groupOffset = (g: DayGroup) => (g === "tomorrow" ? 1 : g === "sat" ? daysUntil("六") : g === "sun" ? daysUntil("六") + 1 : 0);
+
+/** 今天 9/29（二）… headings for the game list. */
+export function dayGroups(): Record<DayGroup, string> {
+  const d = (g: DayGroup) => demoDay(groupOffset(g));
+  return {
+    today: `今天 ${d("today").date}（${d("today").weekday}）`,
+    tomorrow: `明天 ${d("tomorrow").date}（${d("tomorrow").weekday}）`,
+    sat: `週六 ${d("sat").date}`,
+    sun: `週日 ${d("sun").date}`,
+  };
+}
 
 export const ME = { name: "小安", level: 1 as const };
 
@@ -20,7 +30,8 @@ const NAMES: Record<string, string> = {
 const people = (hostName: string, initials: string[]): Participant[] =>
   initials.map((initial, i) => ({ initial, name: i === 0 ? hostName : (NAMES[initial] ?? initial) }));
 
-export const GAMES: Game[] = [
+/** Written for 9/29（二）; demoGames() moves each game to its group's real date. */
+const GAME_ROWS: Game[] = [
   {
     id: "g1", courtId: "daan", group: "today", dayLabel: "今天", weekday: "二", date: "9/29", startsAt: "19:00", endsAt: "21:00",
     venue: "大安運動中心", district: "大安區", courtKind: "室內 4 面", address: "台北市大安區辛亥路三段 55 號",
@@ -71,10 +82,12 @@ export const GAMES: Game[] = [
   },
 ];
 
-export const getGame = (id: string) => GAMES.find((g) => g.id === id);
+export const demoGames = (): Game[] => GAME_ROWS.map((g) => ({ ...g, ...demoDay(groupOffset(g.group)) }));
 
-export const LESSONS = [
-  { id: "l1", when: "週日 10/4・10:00", title: "新手體驗課：兩小時上場", coach: "Mia 教練", coachId: "mia", courtId: "daan", initial: "M", issuer: "協會", credLevel: "認證", where: "大安運動中心・剩 3 位", price: 600 },
-  { id: "l2", when: "週三 10/7・19:30", title: "發球與第三拍小班", coach: "趙教練", coachId: "zhao", courtId: "xinyi", initial: "趙", issuer: "總會", credLevel: "丙級", where: "信義運動中心・剩 2 位", price: 800, avatarBg: "var(--color-accent-2-700)" },
+export const getGame = (id: string) => demoGames().find((g) => g.id === id);
+
+export const lessons = () => [
+  { id: "l1", when: `週日 ${demoDay(groupOffset("sun")).date}・10:00`, title: "新手體驗課：兩小時上場", coach: "Mia 教練", coachId: "mia", courtId: "daan", initial: "M", issuer: "協會", credLevel: "認證", where: "大安運動中心・剩 3 位", price: 600 },
+  { id: "l2", when: `週${demoDay(8).weekday} ${demoDay(8).date}・19:30`, title: "發球與第三拍小班", coach: "趙教練", coachId: "zhao", courtId: "xinyi", initial: "趙", issuer: "總會", credLevel: "丙級", where: "信義運動中心・剩 2 位", price: 800, avatarBg: "var(--color-accent-2-700)" },
 ];
 

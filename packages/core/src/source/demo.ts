@@ -1,9 +1,10 @@
-import { COACHES } from "../data/coaches";
+import { COACHES, nextSlotOf } from "../data/coaches";
 import { COURTS } from "../data/courts";
-import { DAY_GROUPS, GAMES } from "../data/games";
+import { dayGroups, demoGames } from "../data/games";
 import type { DataSource } from "./types";
 
-/** The mock data, unchanged: the demo site behaves exactly as before. */
+/** The mock data; its dates follow today so the demo always looks current. */
 export const demo: DataSource = {
-  catalog: async () => ({ courts: COURTS, coaches: COACHES, games: GAMES, dayGroups: DAY_GROUPS }),
+  // built on every call: dates follow today (data/today.ts)
+  catalog: async () => ({ courts: COURTS, coaches: COACHES.map((c) => ({ ...c, nextSlot: nextSlotOf(c) })), games: demoGames(), dayGroups: dayGroups() }),
 };

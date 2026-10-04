@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Icon } from "@/components/pk/Icon";
-import { BOOKING_DAYS, slotsFor } from "@pikyoo/core/data/coaches";
+import { bookingDays, slotsFor } from "@pikyoo/core/data/coaches";
 import { money } from "@pikyoo/core/format";
 import type { Coach } from "@pikyoo/core/types";
 
@@ -12,10 +12,10 @@ import type { Coach } from "@pikyoo/core/types";
 export function BookCard({ coach: c, locked, onLogin }: { coach: Coach; locked: boolean; onLogin: () => void }) {
   const p = c.profile;
   const [planId, setPlanId] = useState(p.plans[0]?.id);
-  const [dayKey, setDayKey] = useState(() => BOOKING_DAYS.find((d) => slotsFor(c, d).some((s) => s[1] > 0))?.key);
+  const [dayKey, setDayKey] = useState(() => bookingDays().find((d) => slotsFor(c, d).some((s) => s[1] > 0))?.key);
   const [slot, setSlot] = useState<string | null>(null);
   const plan = p.plans.find((x) => x.id === planId) ?? p.plans[0];
-  const day = BOOKING_DAYS.find((d) => d.key === dayKey);
+  const day = bookingDays().find((d) => d.key === dayKey);
   const slots = day ? slotsFor(c, day) : [];
   const href = plan && `/coaches/${c.id}/book?plan=${plan.id}${dayKey ? `&day=${dayKey}` : ""}${slot ? `&slot=${slot}` : ""}`;
 
@@ -49,7 +49,7 @@ export function BookCard({ coach: c, locked, onLogin }: { coach: Coach; locked: 
 
           <div className="bcard-h">日期</div>
           <div className="dstrip">
-            {BOOKING_DAYS.map((d) => {
+            {bookingDays().map((d) => {
               const open = slotsFor(c, d).some((s) => s[1] > 0);
               return (
                 <button key={d.key} className={`dcell${d.key === dayKey ? " on" : ""}`} disabled={!open} aria-pressed={d.key === dayKey} onClick={() => { setDayKey(d.key); setSlot(null); }}>
