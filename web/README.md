@@ -61,6 +61,7 @@ Every route has a phone layout and a desktop layout (≥1024px, see `../docs/DES
   - `format.ts`: `LEVELS`, `levelText`, `money`.
   - `contact.ts`: blocks phone numbers, emails, LINE/IG handles and 「私訊我」 in questions and replies, so conversations stay on PIKYOO.
 - `src/lib/source.ts`: picks the data source from `NEXT_PUBLIC_DATA_SOURCE` (unset/`demo` = mock data, `live` = Supabase via `@pikyoo/core/source/live`). `next.config.ts` fails the build if live mode lacks a valid Supabase URL or key.
+- Real sign-in (`src/lib/env.ts` `realAuth`) needs, in live mode: `NEXT_PUBLIC_LIFF_ID` + `LINE_CHANNEL_ID` + `SUPABASE_SECRET_KEY`. LINE MINI App ids: Developing `2011850000` / LIFF `2011850000-KYVRZraL` (Vercel Preview, branch `claude/line-login`, endpoint = that branch's preview URL); Published `2011850002` / LIFF `2011850002-OPHHAngO` (Production, endpoint `https://pikyoo.vercel.app`).
 - `src/lib/demo-store.tsx`: in-memory client state. It holds:
   - `signedIn`, `profile`
   - the signed-in coach's editable page `myCoach`
