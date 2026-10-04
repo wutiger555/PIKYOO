@@ -6,5 +6,6 @@ export const demoNotices = (): Notice[] => [
   { id: "n1", title: "教練確認了你的預約", body: "照付款資訊付款就完成了", href: "/me/booking?demo=confirmed", at: `${demoDay(0).date} 09:12`, read: false },
   { id: "n2", title: "候補成功！你遞補上球局了", href: "/games/g5", at: `${demoDay(0).date} 08:40`, read: false },
   { id: "n3", title: "教練回覆了你的問題", href: "/coaches/mia", at: `${demoDay(-1).date} 21:05`, read: true },
+  { id: "n5", title: "明天 10:00 有課", body: "記得帶球拍、提早 10 分鐘到", href: "/me/lessons", at: `${demoDay(-1).date} 20:00`, read: true },
   { id: "n4", title: "你報名的球局資訊有變動", body: "時間、地點或費用有更新，點進去看看", href: "/games/g1", at: `${demoDay(-2).date} 18:30`, read: true },
 ];
