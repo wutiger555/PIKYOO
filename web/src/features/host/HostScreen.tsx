@@ -8,8 +8,11 @@ import { Crumbs } from "@/components/pk/Crumbs";
 import { AppBar } from "@/components/pk/Shell";
 import { TopNav } from "@/components/pk/TopNav";
 import { GameTicket } from "@/components/pk/Ticket";
+import { LoginSheet } from "@/components/pk/LoginSheet";
 import { useToast } from "@/components/pk/Toast";
 import { useCatalog, useDemo } from "@/lib/demo-store";
+import { realAuth } from "@/lib/env";
+import { useGameActions } from "@/lib/use-games";
 import { LEVELS } from "@pikyoo/core/format";
 import type { DayGroup, Game, Level } from "@pikyoo/core/types";
 import { emptyDraft, parseGameText, SAMPLE_TEXT, type Draft, type DraftField, type PayKind } from "./parse";
@@ -21,7 +24,8 @@ const PAY_NOTE: Record<PayKind, string> = { 現場付現: "現場付現給團主
 /** F2-7 開團表單 + F2-8 AI 一貼成局: paste → parsing → pre-filled form (unsure fields highlighted) → publish → share. */
 export function HostScreen() {
   const toast = useToast();
-  const { profile, addHosted } = useDemo();
+  const { profile, signedIn } = useDemo();
+  const games = useGameActions();
   const catalog = useCatalog();
   const { courts, dayGroups } = catalog;
   const [step, setStep] = useState<Step>("paste");
@@ -31,6 +35,8 @@ export function HostScreen() {
   const [tried, setTried] = useState(false);
   const [created, setCreated] = useState<Game | null>(null);
   const [share, setShare] = useState(false);
+  const [login, setLogin] = useState(false);
+  const [busy, setBusy] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
@@ -60,8 +66,9 @@ export function HostScreen() {
   };
   const blocked = Object.values(missing).some(Boolean);
 
-  const publish = () => {
+  const publish = async () => {
     if (blocked) { setTried(true); toast("還有欄位沒填好"); return; }
+    if (realAuth && !signedIn) { setLogin(true); return; }
     const court = courts.find((c) => c.id === d.courtId);
     const [dayLabel, rest] = dayGroups[d.group!].split(" ");
     const [lo, hi] = d.levelMin <= d.levelMax ? [d.levelMin, d.levelMax] : [d.levelMax, d.levelMin];
@@ -71,14 +78,24 @@ export function HostScreen() {
       startsAt: d.start, endsAt: d.end, venue: court?.name ?? d.venueText.trim(), district: court?.district ?? "自填地點",
       courtKind: court ? `${court.kind} ${court.courtCount} 面` : "場地資訊由團主提供", address: court?.address ?? d.venueText.trim(),
       levelMin: lo, levelMax: hi, capacity: d.capacity,
-      participants: d.hostCounts ? [{ initial, name: profile.name }] : [],
+      participants: d.hostCounts ? [{ initial, name: profile.name, host: true }] : [],
       host: { name: profile.name, initial, summary: "你開的團" },
       fee: d.pay === "免費" ? 0 : Number(d.fee), payNote: PAY_NOTE[d.pay], beginnerFriendly: d.beginner, waitlist: 0,
       notes: d.notes.trim(), cancelHours: d.cancelHours,
     };
-    addHosted(g);
-    setCreated(g);
-    setStep("done");
+    setBusy(true);
+    try {
+      setCreated(await games.host(g, {
+        group: g.group, start: d.start, end: d.end, court: court?.id, venue: d.venueText, levelMin: lo, levelMax: hi,
+        capacity: d.capacity, hostCounts: d.hostCounts, fee: g.fee, feeNote: g.payNote, cancelHours: d.cancelHours,
+        beginner: d.beginner, notes: d.notes, sourceText: text,
+      }));
+      setStep("done");
+    } catch (e) {
+      toast((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
   };
 
   const restart = () => { setText(""); setD(emptyDraft()); setUnsure([]); setTried(false); setCreated(null); setStep("paste"); };
@@ -276,7 +293,7 @@ export function HostScreen() {
               </span>
               <span className="sticky-cta-sub">{unsure.length ? `還有 ${unsure.length} 個欄位待確認` : "發布後就能分享到群組"}</span>
             </div>
-            <button className="btn btn-primary btn-lg" onClick={publish}>發布球局</button>
+            <button className="btn btn-primary btn-lg" disabled={busy} onClick={publish}>{busy ? "發布中…" : "發布球局"}</button>
           </>
         ) : (
           <>
@@ -290,6 +307,7 @@ export function HostScreen() {
           </>
         )}
       </div>
+      {login && <LoginSheet reason="登入後就能開團" onClose={() => setLogin(false)} />}
     </>
   );
 }

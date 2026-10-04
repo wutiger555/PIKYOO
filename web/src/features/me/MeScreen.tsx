@@ -11,7 +11,7 @@ import { LoginSheet } from "@/components/pk/LoginSheet";
 import { GameTicket } from "@/components/pk/Ticket";
 import { useToast } from "@/components/pk/Toast";
 import { shortAreas } from "@pikyoo/core/data/courts";
-import { useAllGames, useDemo } from "@/lib/demo-store";
+import { useAllGames, useDemo, useHostedGames } from "@/lib/demo-store";
 import { useAccount } from "@/lib/use-account";
 
 type Tab = "joined" | "hosted" | "history";
@@ -22,7 +22,8 @@ const RECORD = { played: 12, attended: 11, late: 1, noShow: 0 };
 /** 我的: profile, my games (joined / waitlist / hosted), bookings, attendance record, settings. */
 export function MeScreen() {
   const toast = useToast();
-  const { profile, mine, hosted, signedIn } = useDemo();
+  const { profile, mine, signedIn } = useDemo();
+  const hosted = useHostedGames();
   const account = useAccount();
   const [login, setLogin] = useState(false);
   const games = useAllGames();

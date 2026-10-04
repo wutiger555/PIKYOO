@@ -17,6 +17,10 @@ export interface Host {
 export interface Participant {
   initial: string;
   name: string;
+  /** game_participants.id (live): the host removes people by it */
+  id?: string;
+  /** set on games I host, so the host's own row can't be removed */
+  host?: boolean;
 }
 
 export interface Game {

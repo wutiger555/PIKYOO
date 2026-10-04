@@ -10,6 +10,8 @@ export interface Catalog {
   /** The viewer's own sign-ups. Live keeps the viewer out of `participants` and `waitlist`, as the mock does,
    *  so the screens add 你 themselves (useGameView). */
   mine?: Record<string, MyGameStatus>;
+  /** Games the viewer hosts. The host stays in their own roster and out of `mine`. */
+  hosting?: string[];
 }
 
 export interface DataSource {

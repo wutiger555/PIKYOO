@@ -150,7 +150,7 @@ android/ 用 Android Studio 產生 .aab → 上傳 Google Play Console
 
 對應 PRD §12 的 Phase 4。是順序與進入條件，不是固定日期。**每完成一步就在這裡打勾**（狀態：✅ 完成、👉 進行中、⬜ 未開始）。
 
-> **目前位置（2026-10-04）：第二階段第 6 步，B3 球局。** B2 的 LINE 登入已在 Preview 實測通過；正式站等 B3 完成後一起啟用（`BACKEND.md` §13）。
+> **目前位置（2026-10-04）：第二階段第 6 步，B3 球局。** 報名／候補／取消、開團與團主管理已完成；剩編輯球局、列表篩選與分享卡片、AI 一貼成局。B2 的 LINE 登入已在 Preview 實測通過；正式站等 B3 完成後一起啟用（`BACKEND.md` §13）。
 
 ### 第一階段：決定方向
 
@@ -158,7 +158,7 @@ android/ 用 Android Studio 產生 .aab → 上傳 Google Play Console
 |---|---|---|---|
 | 1 | 決定 React Native + Expo，寫 APP.md | — | ✅ [#14](https://github.com/wutiger555/PIKYOO/pull/14) |
 | 2 | 建 `packages/core`，搬移共用程式 | Claude | ✅ [#15](https://github.com/wutiger555/PIKYOO/pull/15) |
-| 3 | Owner 本機改成在 repo 根目錄 `npm install` | owner | 👉 |
+| 3 | Owner 本機改成在 repo 根目錄 `npm install` | owner | ✅ |
 
 ### 第二階段：網站接真資料（`BACKEND.md` B1–B8）
 

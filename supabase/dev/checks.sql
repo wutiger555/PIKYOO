@@ -243,3 +243,23 @@ begin
     'the LINE id is server-only';
 end $$;
 reset role;
+
+-- ── 開團: anyone signed in hosts their own game, starting in the future; the host takes a seat ──
+do $$ begin perform test.login('葉子'); end $$;
+set role authenticated;
+do $$
+declare g uuid;
+begin
+  insert into public.games (host_id, location_text, starts_at, ends_at, level_min, level_max, capacity)
+  values (test.uid('葉子'), '社區球場', now() + interval '1 day', now() + interval '1 day 2 hours', 1, 3, 4) returning id into g;
+  assert (select joined_count from public.game_cards where id = g) = 1, 'the host is seated';
+  assert test.fails(format($q$insert into public.games (host_id, location_text, starts_at, ends_at, level_min, level_max, capacity)
+    values (%L, '社區球場', now() - interval '1 hour', now() + interval '1 hour', 1, 3, 4)$q$, test.uid('葉子'))) like '%row-level security%',
+    'a game cannot start in the past';
+  assert test.fails(format($q$insert into public.games (host_id, location_text, starts_at, ends_at, level_min, level_max, capacity)
+    values (%L, '社區球場', now() + interval '1 day', now() + interval '1 day 2 hours', 1, 3, 4)$q$, test.uid('小安'))) like '%row-level security%',
+    'nobody hosts in someone else''s name';
+  assert test.fails(format($q$select public.host_remove_participant(id) from public.game_participants where game_id = %L$q$, g)) = 'the host cannot be removed',
+    'the host cannot remove themselves';
+end $$;
+reset role;
