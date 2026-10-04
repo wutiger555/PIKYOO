@@ -323,7 +323,8 @@ B1–B3 是最短的「真的能用」路徑：讀得到資料 → 能登入 →
 - [ ] Owner：Auth 網址設定（SETUP §2.4）：LINE 登入用不到（§5），做 Email 登入（F1-2）前完成即可
 - [ ] **B2 登入**（目前卡在這）：
   - [x] Claude：程式完成（§5「實作」）；資料庫層用一個會 rollback 的交易在 `pikyoo-dev` 驗證過（建帳號 → 存設定 → 讀回 → 刪除），本機驗證訪客畫面、LIFF 錯誤提示、`/api/auth/line` 拒絕假 token
-  - [ ] Owner：建 LINE MINI App channel（SETUP §3.2，Scopes 勾 `openid`、`profile`），把 **LIFF ID**、**Channel ID** 給 Claude
-  - [ ] Owner：Vercel `pikyoo` 加 `NEXT_PUBLIC_LIFF_ID`、`LINE_CHANNEL_ID`（Production + Preview）；確認 `SUPABASE_SECRET_KEY` 也勾了 Preview
-  - [ ] Claude：在 Preview 用真的 LINE 登入走一遍，再合併
+  - [x] Owner：LINE MINI App channel 已建（Developing `2011850000` / LIFF `2011850000-KYVRZraL`，endpoint = `claude/line-login` 分支的 Preview；Published `2011850002` / LIFF `2011850002-OPHHAngO`，endpoint `https://pikyoo.vercel.app`；Scopes `openid`、`profile`）
+  - [x] Claude：Vercel `LINE_CHANNEL_ID`（Preview＝Developing、Production＝Published）；`NEXT_PUBLIC_LIFF_ID` 只設在 Preview 的 `claude/line-login` 分支
+  - [x] 2026-10-04 Owner 在 Preview 用真的 LINE 登入測過：建帳號、首次設定、登出、再登入回同一個帳號都正常。測試中修掉三個問題：Supabase Auth 先 insert 再寫 app_metadata，LINE ID 沒存到（`20261004021536_sync_line_user_id`）；首次設定只在最後一步存（改成每步存）；登入後標頭要重新整理才更新（改成整頁重新載入）
+  - **決定（2026-10-04）**：正式站**先不啟用**真登入（Production 不設 `NEXT_PUBLIC_LIFF_ID`）。登入後「我的課」、預約、問與答、教練後台仍是示範資料，真實使用者會看到別人的假資料；等 B3 報名球局完成、登入後至少有一個真的功能，再一起啟用
   - [ ] 隱私權政策頁：需要 owner 提供營運者名稱與聯絡 Email
