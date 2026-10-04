@@ -24,6 +24,7 @@ export function GameDetailScreen({ game: g }: { game: Game }) {
   const { popSeat, setPopSeat, profile, hosted, signedIn } = useDemo();
   const games = useGameActions();
   const [login, setLogin] = useState(false);
+  const [cancel, setCancel] = useState(false);
   const { my, count, spots, waitN } = useGameView(g);
   const [confirm, setConfirm] = useState(false);
   const [share, setShare] = useState(false);
@@ -57,7 +58,7 @@ export function GameDetailScreen({ game: g }: { game: Game }) {
           <span className="sticky-cta-price" style={{ fontSize: 18, fontFamily: "var(--font-body)", fontWeight: 700 }}>你已報名</span>
           <span className="sticky-cta-sub">開始前 {cancelHours} 小時可免責取消</span>
         </div>
-        <button className="btn btn-secondary btn-lg" onClick={leave}>取消報名</button>
+        <button className="btn btn-secondary btn-lg" onClick={() => setCancel(true)}>取消報名</button>
       </>
     );
   } else if (my === "wait") {
@@ -67,7 +68,7 @@ export function GameDetailScreen({ game: g }: { game: Game }) {
           <span className="sticky-cta-price" style={{ fontSize: 18, fontFamily: "var(--font-body)", fontWeight: 700 }}>候補第 {waitN} 位</span>
           <span className="sticky-cta-sub">有人取消會自動遞補</span>
         </div>
-        <button className="btn btn-secondary btn-lg" onClick={leave}>取消候補</button>
+        <button className="btn btn-secondary btn-lg" onClick={() => setCancel(true)}>取消候補</button>
       </>
     );
   } else if (spots > 0) {
@@ -180,6 +181,7 @@ export function GameDetailScreen({ game: g }: { game: Game }) {
 
       {share && <ShareSheet game={g} onClose={() => setShare(false)} />}
       {login && <LoginSheet reason="登入後就能報名球局" onClose={() => setLogin(false)} />}
+      {cancel && <CancelSheet game={g} waiting={my === "wait"} onClose={() => setCancel(false)} onConfirm={() => leave().finally(() => setCancel(false))} />}
       {confirm && (
         <ConfirmSheet
           game={g}
@@ -220,6 +222,30 @@ function ConfirmSheet({ game: g, full, onClose, onConfirm }: { game: Game; full:
       <button className="btn btn-primary btn-lg btn-block" style={{ marginTop: "var(--space-4)" }} onClick={onConfirm}>
         {full ? "確認候補" : "確認報名"}
       </button>
+    </Sheet>
+  );
+}
+
+/** Cancelling is one tap away on the CTA, so it asks first and says what it costs (PRD §6.2 晚取消). */
+function CancelSheet({ game: g, waiting, onClose, onConfirm }: { game: Game; waiting: boolean; onClose: () => void; onConfirm: () => Promise<unknown> }) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <Sheet onClose={onClose}>
+      <h2>{waiting ? "取消候補？" : "取消報名？"}</h2>
+      <div className="sum">
+        <span className="text-muted" style={{ fontSize: 13 }}>{g.dayLabel} {g.date}・{g.venue}</span>
+        <span className="big">{g.startsAt}–{g.endsAt}</span>
+      </div>
+      <p className="text-muted" style={{ fontSize: 14, margin: "var(--space-3) 0 0" }}>
+        {waiting
+          ? "取消後會失去目前的候補順位，之後再候補要重新排。"
+          : `位子會讓給候補的人。開始前 ${g.cancelHours ?? 12} 小時內取消會記一次晚取消，團主看得到。`}
+      </p>
+      <button className="btn btn-secondary btn-lg btn-block" style={{ marginTop: "var(--space-4)", color: "var(--color-danger)" }} disabled={busy}
+        onClick={() => { setBusy(true); onConfirm(); }}>
+        {busy ? "取消中…" : waiting ? "確定取消候補" : "確定取消報名"}
+      </button>
+      <button className="btn btn-ghost btn-block" style={{ marginTop: 8 }} onClick={onClose}>{waiting ? "繼續候補" : "保留報名"}</button>
     </Sheet>
   );
 }
