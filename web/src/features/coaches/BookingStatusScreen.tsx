@@ -11,6 +11,8 @@ import { useToast } from "@/components/pk/Toast";
 import { TopNav } from "@/components/pk/TopNav";
 import { bookingDays } from "@pikyoo/core/data/coaches";
 import type { MyBooking } from "@pikyoo/core/source/bookings";
+import type { MyPayment } from "@pikyoo/core/source/payments";
+import { reportPaymentAction } from "@/lib/payments";
 import { cancelBookingAction } from "@/lib/bookings";
 import { newBooking, useCoach, useDemo } from "@/lib/demo-store";
 import { realAuth } from "@/lib/env";
@@ -24,7 +26,7 @@ const STEPS = ["送出申請", "教練確認", "付款", "上課"];
 /** docs/PRD.md §6.3 — 送出申請 → 教練確認 → 付款 → 上課. Payment happens only after the coach confirms.
  *  Desktop: progress and the current step on the left, the lesson summary on the right.
  *  With real sign-in `live` is the student's booking from the database (null: none), and it can be cancelled here. */
-export function BookingStatusScreen({ demo, live }: { demo?: BookingStatus; live?: MyBooking | null }) {
+export function BookingStatusScreen({ demo, live, payment }: { demo?: BookingStatus; live?: MyBooking | null; payment?: MyPayment | null }) {
   const toast = useToast();
   const router = useRouter();
   const { booking: demoBooking, setBooking } = useDemo();
@@ -55,7 +57,8 @@ export function BookingStatusScreen({ demo, live }: { demo?: BookingStatus; live
 
   const { plan, total } = bookingTotal(b, p);
   const day = live?.day ?? bookingDays().find((d) => d.key === b.dayKey)!;
-  const st = b.status;
+  // real sign-in: after the coach confirms, the payment row says how far the student got
+  const st: BookingStatus = live && payment && b.status === "confirmed" ? (payment.status === "wait" ? "confirmed" : payment.status) : b.status;
   const ended = live && live.state !== "pending" && live.state !== "confirmed" ? live.state : null;
   const idx = ended === "done" ? 4 : { pending: 1, confirmed: 2, reported: 2, paid: 3 }[st];
   const cancel = async () => {
@@ -84,13 +87,7 @@ export function BookingStatusScreen({ demo, live }: { demo?: BookingStatus; live
       </div>
     );
   } else if (realAuth && st === "confirmed") {
-    main = (
-      <div className="state-card">
-        <Status tone="open">教練已確認</Status>
-        <h1>預約成功！</h1>
-        <p className="text-muted">付款方式：{b.pay}。付款資訊下一版會直接顯示在這裡，現在請依教練說明付款。</p>
-      </div>
-    );
+    main = <LivePayBox payment={payment ?? null} pay={b.pay} />;
   } else if (st === "pending") {
     main = (
       <div className="state-card">
@@ -150,7 +147,7 @@ export function BookingStatusScreen({ demo, live }: { demo?: BookingStatus; live
       <div className="state-card">
         <Status tone="info">等待教練對帳</Status>
         <h1>已回報付款</h1>
-        <p className="text-muted">末五碼 {last5}。教練確認收到後會通知你。</p>
+        <p className="text-muted">{realAuth ? (payment?.ref ? `末五碼 ${payment.ref}。` : "") : `末五碼 ${last5}。`}教練確認收到後會通知你。</p>
       </div>
     );
   } else {
@@ -207,6 +204,64 @@ export function BookingStatusScreen({ demo, live }: { demo?: BookingStatus; live
           : <SoonButton className="btn btn-ghost btn-block" style={{ marginTop: 8 }} msg="改期或取消（依教練取消規則）">改期或取消</SoonButton>}
         </aside>
         </div>
+      </div>
+    </>
+  );
+}
+
+/** 教練已確認 with real sign-in: the coach's own payment details for the method the student picked, then 我已付款.
+ *  Money goes straight to the coach (PLAN §12 模式 A); PIKYOO only records the report for the coach to tick off. */
+function LivePayBox({ payment, pay }: { payment: MyPayment | null; pay: string }) {
+  const toast = useToast();
+  const router = useRouter();
+  const [last5, setLast5] = useState("");
+  const [busy, setBusy] = useState(false);
+  const report = async (ref: string) => {
+    if (!payment) return;
+    setBusy(true);
+    const r = await reportPaymentAction(payment.id, ref);
+    setBusy(false);
+    if (r.error) return toast(r.error);
+    toast("已通知教練，確認收到後會通知你");
+    router.refresh();
+  };
+  const copy = (text: string) => navigator.clipboard.writeText(text).then(() => toast("已複製"), () => toast(text));
+  const d = payment?.details as { link?: string; bank?: string; account?: string; name?: string } | null | undefined;
+  return (
+    <>
+      <div className="state-card">
+        <Status tone="open">教練已確認</Status>
+        <h1>完成付款就搞定了</h1>
+        <p className="text-muted">錢直接付給教練。付好後按一下，教練就知道了。</p>
+      </div>
+      <div className="paybox">
+        <div className="paybox-h"><span>應付金額</span><b className="num">{money(payment?.amount ?? 0)}</b></div>
+        {!payment ? (
+          <p style={{ margin: 0 }}>付款資訊整理中，請稍後重新整理。</p>
+        ) : pay === "現場付現" ? (
+          <p style={{ margin: 0 }}>上課當天付 <b>{money(payment.amount)}</b> 給教練即可。</p>
+        ) : !d ? (
+          <p style={{ margin: 0 }}>教練還沒填 {pay} 的收款資訊。上課前請跟教練確認付款方式。</p>
+        ) : pay === "LINE Pay" && d.link ? (
+          <>
+            <a className="btn btn-primary btn-lg btn-block" href={d.link} target="_blank" rel="noopener noreferrer"><Icon name="wallet" size={20} />用 LINE Pay 付款</a>
+            <button className="btn btn-secondary btn-block" style={{ marginTop: 8 }} disabled={busy} onClick={() => report("")}>付好了，通知教練</button>
+          </>
+        ) : (
+          <>
+            <dl className="bank">
+              <dt>銀行</dt><dd>{d.bank}</dd>
+              <dt>帳號</dt>
+              <dd className="num">{d.account} <button className="copy" onClick={() => copy(d.account ?? "")}><Icon name="copy" size={15} />複製</button></dd>
+              <dt>戶名</dt><dd>{d.name}</dd>
+            </dl>
+            <div className="field">
+              <label htmlFor="last5">轉帳帳號末五碼</label>
+              <input id="last5" className="input num" inputMode="numeric" maxLength={5} value={last5} onChange={(e) => setLast5(e.target.value.replace(/\D/g, ""))} />
+            </div>
+            <button className="btn btn-primary btn-lg btn-block" style={{ marginTop: 12 }} disabled={last5.length !== 5 || busy} onClick={() => report(last5)}>我已轉帳</button>
+          </>
+        )}
       </div>
     </>
   );
