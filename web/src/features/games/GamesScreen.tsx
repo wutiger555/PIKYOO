@@ -11,7 +11,6 @@ import { GameTicket } from "@/components/pk/Ticket";
 import { shortAreas } from "@pikyoo/core/data/courts";
 import { AREAS } from "@pikyoo/core/data/games";
 import { emptyGameFilters, useAllGames, useCatalog, useDemo, type GameFilters } from "@/lib/demo-store";
-import type { DayGroup } from "@pikyoo/core/types";
 import { filterGames, sheetFilterCount } from "./filters";
 
 const toggle = <T,>(arr: T[], v: T) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
@@ -25,7 +24,7 @@ export function GamesScreen() {
   const fc = sheetFilterCount(f);
 
   const dayChip = (k: NonNullable<GameFilters["day"]>, label: string) => (
-    <button className="chip" aria-pressed={f.day === k} onClick={() => setGameFilters((p) => ({ ...p, day: p.day === k ? null : k }))}>{label}</button>
+    <button className="chip" aria-pressed={f.day === k} onClick={() => setGameFilters((p) => ({ ...p, day: p.day === k ? null : k, date: null }))}>{label}</button>
   );
   const chip = (k: GameFilters["chips"][number], label: string) => (
     <button className="chip" aria-pressed={f.chips.includes(k)} onClick={() => setGameFilters((p) => ({ ...p, chips: toggle(p.chips, k) }))}>{label}</button>
@@ -67,7 +66,7 @@ export function GamesScreen() {
           <Link className="btn btn-primary games-new" href="/games/new"><Icon name="plus" size={18} />開一團</Link>
         </div>
         {list.length ? (
-          (Object.keys(dayGroups) as DayGroup[]).map((k) => {
+          Object.keys(dayGroups).map((k) => {
             const gs = list.filter((g) => g.group === k);
             if (!gs.length) return null;
             return (
@@ -80,7 +79,7 @@ export function GamesScreen() {
         ) : (
           <div className="empty">
             <CourtArt />
-            <h3 style={{ margin: 0 }}>這週還沒有局，自己開一團吧？</h3>
+            <h3 style={{ margin: 0 }}>最近還沒有局，自己開一團吧？</h3>
             <p className="text-muted" style={{ margin: 0 }}>或放寬篩選條件看看。</p>
             <div className="btnrow" style={{ width: "100%" }}>
               <button className="btn btn-secondary" onClick={() => setGameFilters(emptyGameFilters())}>清除篩選</button>
@@ -99,12 +98,23 @@ export function GamesScreen() {
 
 function FilterSheet({ count, onClose }: { count: number; onClose: () => void }) {
   const { gameFilters: f, setGameFilters } = useDemo();
+  const { dayGroups } = useCatalog();
   const times: [NonNullable<GameFilters["time"]>, string][] = [["am", "早上"], ["pm", "下午"], ["eve", "晚上"]];
   return (
     <Sheet onClose={onClose}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <h2>篩選</h2>
-        <button className="btn btn-ghost" onClick={() => setGameFilters((p) => ({ ...p, areas: [], time: null, openOnly: false, level: null }))}>清除</button>
+        <button className="btn btn-ghost" onClick={() => setGameFilters((p) => ({ ...p, date: null, areas: [], time: null, openOnly: false, level: null }))}>清除</button>
+      </div>
+      <div className="opt-group">
+        <b>日期</b>
+        <div className="wrapchips">
+          {Object.entries(dayGroups).map(([k, label]) => (
+            <button key={k} className="chip" aria-pressed={f.date === k} onClick={() => setGameFilters((p) => ({ ...p, day: null, date: p.date === k ? null : k }))}>
+              {label.replace(/（.）/, "")}
+            </button>
+          ))}
+        </div>
       </div>
       <div className="opt-group">
         <b>區域</b>

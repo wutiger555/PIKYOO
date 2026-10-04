@@ -87,7 +87,7 @@ web/next.config.ts             live 模式缺 Supabase 變數或網址格式不�
 
 - **B1 的做法**：root layout 在伺服器端讀一次 `getCatalog()`，交給 `DemoProvider`；畫面用 `useCatalog()`、`useCoaches()`、`useAllGames()` 拿資料，不再直接 import mock。詳細頁（`/coaches/[id]` 等）在伺服器端用 `getCoach()` 這類函式。live 模式每次請求都重新讀，所以詳細頁拿掉了 `generateStaticParams`；demo 模式的詳細頁因此也改成每次請求產生，畫面不變。
 - **B1 還沒做的**：寫入動作（`actions.ts`：報名、預約、回覆…）在 B2 之後跟登入一起做，現在兩種模式都還是寫在瀏覽器記憶體；`proxy.ts`（刷新登入 session）也移到 B2。預約的日期（`BOOKING_DAYS`）和問與答仍用 mock，B5 換掉。
-- **B1 live 模式的限制**：球局列表只顯示「今天、明天、這個週末」（跟 demo 一樣的四組），其他平日的球局 B3 做伺服器端篩選時再加；教練的評價、球場距離與地圖座標還沒有資料，先不顯示。
+- **B1 live 模式的限制**：~~球局列表只顯示「今天、明天、這個週末」~~（B3 已改成今天起 14 天，[#24](https://github.com/wutiger555/PIKYOO/pull/24)）；教練的評價、球場距離與地圖座標還沒有資料，先不顯示。
 
 - **畫面用的型別（`@pikyoo/core/types`）先不改。** mapper 把 `starts_at`（UTC）轉成畫面要的「今天／週六」「10/3」「19:00」，教練的 `students`、`priceFrom` 從資料庫算出來。這樣第一輪幾乎不用動畫面元件。
 - `signedIn`：demo 看切換開關；live 看伺服器端讀到的 Supabase session。
@@ -328,10 +328,10 @@ B1–B3 是最短的「真的能用」路徑：讀得到資料 → 能登入 →
   - [x] 2026-10-04 Owner 在 Preview 用真的 LINE 登入測過：建帳號、首次設定、登出、再登入回同一個帳號都正常。測試中修掉三個問題：Supabase Auth 先 insert 再寫 app_metadata，LINE ID 沒存到（`20261004021536_sync_line_user_id`）；首次設定只在最後一步存（改成每步存）；登入後標頭要重新整理才更新（改成整頁重新載入）
   - **決定（2026-10-04）**：正式站**先不啟用**真登入（Production 不設 `NEXT_PUBLIC_LIFF_ID`）。登入後「我的課」、預約、問與答、教練後台仍是示範資料，真實使用者會看到別人的假資料；等 B3 報名球局完成、登入後至少有一個真的功能，再一起啟用
   - [ ] 隱私權政策頁：需要 owner 提供營運者名稱與聯絡 Email
-- [ ] **B3 球局**（進行中）：
+- [x] **B3 球局**（2026-10-04 完成）：
   - [x] 第一部分：報名／候補／取消（`@pikyoo/core/source/games` 呼叫 `join_game`／`leave_game`；live catalog 帶入看的人，把他自己的報名放在 `mine`、不算進名單；取消前先確認）。Owner 在 Preview 用真帳號報名、取消成功；畫面流程 Claude 在 demo 模式測過
   - [x] 第二部分：開團、團主管理（`hostGame`、`addGuest`、`removeParticipant`、`cancelGame`）。live catalog 帶 `hosting`：團主留在自己的名單上、不算進「我報名的」，名單帶 participant id 給團主移除。資料庫流程（開團→團主自動入座→代報名→額滿進候補→移除後遞補→取消）在 `pikyoo-dev` 用會 rollback 的交易驗證過；畫面流程在 demo 模式測過。順便修掉 server action 的錯誤訊息在正式版會被 Next.js 遮掉的問題（改成回傳錯誤）
   - [x] 團主編輯球局資訊（F2-10，[#22](https://github.com/wutiger555/PIKYOO/pull/22)）：`/games/[id]/edit` 沿用開團表單（`HostScreen editing`），`editGame` 直接 update `games`（RLS 只讓團主改）。migration `20261004071220_game_edits`：已取消的局不能改、開始時間不能改到過去；時間、地點、費用有變時通知已報名與候補的人（`game_changed`，payload 帶 `changed`）。「我也要打」開團後不能改（`host_counts` 沒開放 update）
   - [x] 第三部分 a：分享卡片與動態 OG 圖（[#23](https://github.com/wutiger555/PIKYOO/pull/23)）。`games/[id]/opengraph-image.tsx` 用 `next/og` 畫預覽圖，中文字用 Google Fonts `text=` 只抓卡片上的字；`ShareSheet` 在 LIFF 內用 `shareTargetPicker` 送 Flex 卡片（`lib/line.ts` `shareToLine`），其他地方開 `line.me/R/share`。LINE 會快取連結預覽，所以預覽圖上的「缺幾人」是第一次貼出時的數字
-  - [ ] 第三部分 b：列表看得到更多天（目前只有今天／明天／這個週末四組，`DayGroup` 要改成日期）
+  - [x] 第三部分 b：列表看得到兩週（[#24](https://github.com/wutiger555/PIKYOO/pull/24)）。live 的 `DayGroup` 是台北日期（`YYYY-MM-DD`），`calendar()` 產生今天起 `GAME_DAYS = 14` 天；`Game.weekday` 給「週末」篩選；篩選面板加「日期」。篩選仍在瀏覽器做：兩週的局數量不多，等局多到一次讀不完再改成資料庫查詢
   - **決定（2026-10-04）**：AI 一貼成局**先不接 LLM**，維持 `features/host/parse.ts` 的規則解析；等真的有團主在用、看得出解析不夠用再接

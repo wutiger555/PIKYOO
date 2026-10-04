@@ -15,12 +15,15 @@ import { useCatalog, useDemo } from "@/lib/demo-store";
 import { realAuth } from "@/lib/env";
 import { useGameActions } from "@/lib/use-games";
 import { LEVELS } from "@pikyoo/core/format";
-import type { DayGroup, Game, Level } from "@pikyoo/core/types";
+import type { Game, Level, Weekday } from "@pikyoo/core/types";
 import { emptyDraft, parseGameText, SAMPLE_TEXT, type Draft, type DraftField, type PayKind } from "./parse";
 
 type Step = "paste" | "parsing" | "form" | "done";
 
 const PAY_NOTE: Record<PayKind, string> = { 現場付現: "現場付現給團主", 轉帳: "轉帳（報名後團主提供帳號）", 免費: "免費" };
+
+/** 「今天 10/4（日）」/「週三 10/7」 → 日 / 三 */
+const weekdayOf = (label: string) => (label.match(/（(.)）/)?.[1] ?? label.match(/^週(.)/)?.[1]) as Weekday;
 
 const payOf = (g: Game): PayKind =>
   g.fee === 0 ? "免費" : (Object.keys(PAY_NOTE) as PayKind[]).find((k) => PAY_NOTE[k] === g.payNote) ?? (g.payNote.includes("轉帳") ? "轉帳" : "現場付現");
@@ -89,7 +92,7 @@ export function HostScreen({ editing }: { editing?: Game } = {}) {
     // a note the presets don't cover (e.g. 轉帳或現場付現) stays unless the host changes the payment type
     const payNote = editing && d.pay === payOf(editing) ? editing.payNote : PAY_NOTE[d.pay];
     const g: Game = {
-      id: editing?.id ?? "h" + Date.now().toString(36), courtId: court?.id, group: d.group!, dayLabel, date: rest.replace(/（.*）/, ""),
+      id: editing?.id ?? "h" + Date.now().toString(36), courtId: court?.id, group: d.group!, dayLabel, weekday: weekdayOf(dayGroups[d.group!]), date: rest.replace(/（.*）/, ""),
       startsAt: d.start, endsAt: d.end, venue: court?.name ?? d.venueText.trim(), district: court?.district ?? "自填地點",
       courtKind: court ? `${court.kind} ${court.courtCount} 面` : "場地資訊由團主提供", address: court?.address ?? d.venueText.trim(),
       levelMin: lo, levelMax: hi, capacity: d.capacity,
@@ -210,8 +213,8 @@ export function HostScreen({ editing }: { editing?: Game } = {}) {
             )}
 
             <Group label="日期" unsure={flag("group")} error={tried && missing.group ? "選一天" : undefined}>
-              <div className="wrapchips">
-                {(Object.keys(dayGroups) as DayGroup[]).map((k) => (
+              <div className="chips">
+                {Object.keys(dayGroups).map((k) => (
                   <button key={k} type="button" className="chip" aria-pressed={d.group === k} onClick={() => edit("group", k)}>{dayGroups[k]}</button>
                 ))}
               </div>

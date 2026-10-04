@@ -150,7 +150,7 @@ android/ 用 Android Studio 產生 .aab → 上傳 Google Play Console
 
 對應 PRD §12 的 Phase 4。是順序與進入條件，不是固定日期。**每完成一步就在這裡打勾**（狀態：✅ 完成、👉 進行中、⬜ 未開始）。
 
-> **目前位置（2026-10-04）：第二階段第 6 步，B3 球局。** 報名／候補／取消、開團、團主管理、編輯球局、分享卡片已完成；剩列表看得到更多天。AI 一貼成局先不接 LLM（owner 決定）。B2 的 LINE 登入已在 Preview 實測通過；正式站等 B3 完成後一起啟用（`BACKEND.md` §13）。
+> **目前位置（2026-10-04）：第二階段第 7 步，B4 教練頁與後台。** B3 球局已完成（AI 一貼成局先不接 LLM，owner 決定）。B2 的 LINE 登入已在 Preview 實測通過；B3 完成，正式站可以啟用真登入，等 owner 決定時間（`BACKEND.md` §13）。
 
 ### 第一階段：決定方向
 
@@ -168,8 +168,8 @@ App 等網站資料穩定才開工，避免兩邊一起追資料結構變動。
 |---|---|---|---|
 | 4 | B1 重新上線：球場、教練、球局改讀資料庫；Supabase 查詢寫在 `packages/core` | owner＋Claude | ✅ [#17](https://github.com/wutiger555/PIKYOO/pull/17) |
 | 5 | B2 登入：LINE 登入、我的、刪除帳號（正式站等 B3 一起啟用；隱私權政策頁待 owner 資料） | owner＋Claude | ✅ [#18](https://github.com/wutiger555/PIKYOO/pull/18)、[#19](https://github.com/wutiger555/PIKYOO/pull/19) |
-| 6 | B3 球局：報名、候補、開團 | Claude | 👉 |
-| 7 | B4 教練頁與後台：編輯存檔、照片上傳、審核 | owner＋Claude | ⬜ |
+| 6 | B3 球局：報名、候補、開團、編輯、分享、兩週列表 | Claude | ✅ [#20](https://github.com/wutiger555/PIKYOO/pull/20)–[#24](https://github.com/wutiger555/PIKYOO/pull/24) |
+| 7 | B4 教練頁與後台：編輯存檔、照片上傳、審核 | owner＋Claude | 👉 |
 | 8 | B5 預約、揪團、問與答、收款 | Claude | ⬜ |
 | 9 | B6 通知：LINE 推播、Email、提醒 | owner＋Claude | ⬜ |
 | 10 | B7 營運後台與 SEO | Claude | ⬜ |

@@ -10,9 +10,10 @@ export function spotsLeft(g: Game, my?: MyGameStatus) {
 /** Quick chips + filter sheet, as in prototype filtered(). */
 export function filterGames(games: Game[], f: GameFilters, mine: Record<string, MyGameStatus>) {
   return games.filter((g) => {
-    if (f.day === "today" && g.group !== "today") return false;
-    if (f.day === "tomorrow" && g.group !== "tomorrow") return false;
-    if (f.day === "weekend" && g.group !== "sat" && g.group !== "sun") return false;
+    if (f.day === "today" && g.dayLabel !== "今天") return false;
+    if (f.day === "tomorrow" && g.dayLabel !== "明天") return false;
+    if (f.day === "weekend" && g.weekday !== "六" && g.weekday !== "日") return false;
+    if (f.date && g.group !== f.date) return false;
     if (f.chips.includes("eve") && startHour(g) < 17) return false;
     if (f.chips.includes("beg") && !g.beginnerFriendly) return false;
     if ((f.chips.includes("open") || f.openOnly) && spotsLeft(g, mine[g.id]) <= 0) return false;
@@ -29,4 +30,4 @@ export function filterGames(games: Game[], f: GameFilters, mine: Record<string, 
 }
 
 /** Badge count on the filter button: sheet-only filters. */
-export const sheetFilterCount = (f: GameFilters) => f.areas.length + (f.time ? 1 : 0) + (f.openOnly ? 1 : 0) + (f.level != null ? 1 : 0);
+export const sheetFilterCount = (f: GameFilters) => f.areas.length + (f.date ? 1 : 0) + (f.time ? 1 : 0) + (f.openOnly ? 1 : 0) + (f.level != null ? 1 : 0);

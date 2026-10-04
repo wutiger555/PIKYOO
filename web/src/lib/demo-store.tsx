@@ -15,6 +15,8 @@ import type { Booking, BookingRequest, Coach, Game, Group, Level, LessonType, My
 
 export interface GameFilters {
   day: "today" | "tomorrow" | "weekend" | null;
+  /** 自選日期: a dayGroups key (replaces `day`) */
+  date: string | null;
   chips: ("eve" | "beg" | "open")[];
   areas: string[];
   time: "am" | "pm" | "eve" | null;
@@ -29,7 +31,7 @@ export interface CoachFilters {
   beg: boolean;
 }
 
-export const emptyGameFilters = (): GameFilters => ({ day: null, chips: [], areas: [], time: null, openOnly: false, level: null });
+export const emptyGameFilters = (): GameFilters => ({ day: null, date: null, chips: [], areas: [], time: null, openOnly: false, level: null });
 export const emptyCoachFilters = (): CoachFilters => ({ level: null, type: null, cert: false, beg: false });
 export const newBooking = (coachId = "mia", planId = "trial"): Booking => ({
   coachId, planId, dayKey: "d5", slot: null, headcount: 1, note: "第一次打，之前打過羽球。", pay: "LINE Pay", status: "pending",
