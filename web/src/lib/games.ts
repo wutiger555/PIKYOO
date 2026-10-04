@@ -1,6 +1,6 @@
 "use server";
 
-import { addGuest, cancelGame, hostGame, joinGame, leaveGame, removeParticipant, type NewGame } from "@pikyoo/core/source/games";
+import { addGuest, cancelGame, editGame, hostGame, joinGame, leaveGame, removeParticipant, type GameEdit, type NewGame } from "@pikyoo/core/source/games";
 import { getMe, supabaseServer } from "./supabase";
 
 // 報名／取消 and 團主 actions for real sign-in (lib/use-games.ts calls them; the demo only changes local state).
@@ -29,6 +29,10 @@ export async function hostGameAction(game: NewGame) {
     if (!me) throw new Error("請先登入");
     return hostGame(await supabaseServer(), me.id, game);
   });
+}
+
+export async function editGameAction(gameId: string, edit: GameEdit) {
+  return run(async () => editGame(await supabaseServer(), gameId, edit));
 }
 
 export async function addGuestAction(gameId: string, name: string) {

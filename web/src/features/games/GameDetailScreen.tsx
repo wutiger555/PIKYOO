@@ -184,11 +184,12 @@ export function GameDetailScreen({ game: g }: { game: Game }) {
         {isHost && (
           <div className="dblock" style={{ borderBottom: 0 }}>
             <h3>團主管理</h3>
-            <p className="text-muted" style={{ fontSize: 14, margin: "0 0 var(--space-3)" }}>朋友沒有 PIKYOO 也能幫他報名；額滿時會排進候補。</p>
+            <p className="text-muted" style={{ fontSize: 14, margin: "0 0 var(--space-3)" }}>朋友沒有 PIKYOO 也能幫他報名；額滿時會排進候補。改時間、地點或費用會通知報名的人。</p>
             <div className="btnrow">
               <button className="btn btn-secondary" onClick={() => setGuest(true)}><Icon name="plus" size={18} />幫朋友報名</button>
-              <button className="btn btn-ghost" style={{ color: "var(--color-danger)" }} onClick={() => setEnding(true)}>取消球局</button>
+              <Link className="btn btn-secondary" href={`/games/${g.id}/edit`}><Icon name="edit" size={18} />編輯資訊</Link>
             </div>
+            <button className="btn btn-ghost btn-block" style={{ color: "var(--color-danger)", marginTop: 8 }} onClick={() => setEnding(true)}>取消球局</button>
           </div>
         )}
       </div>
