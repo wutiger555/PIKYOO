@@ -25,9 +25,10 @@ export function OnboardingScreen() {
   const [level, setLevel] = useState<Level>(profile.level);
   const [areas, setAreas] = useState<string[]>(profile.areas);
 
-  const finish = () =>
-    account.saveProfile({ name: name.trim() || profile.name, level, areas }).then(() => router.push("/"), (e: Error) => toast(e.message));
-  const next = () => (step < STEPS.length - 1 ? setStep(step + 1) : finish());
+  // saved on every step, so leaving midway (e.g. to 程度自評) keeps what was filled in
+  const save = () => account.saveProfile({ name: name.trim() || profile.name, level, areas });
+  const finish = () => save().then(() => router.push("/"), (e: Error) => toast(e.message));
+  const next = () => (step < STEPS.length - 1 ? save().then(() => setStep(step + 1), (e: Error) => toast(e.message)) : finish());
 
   return (
     <>

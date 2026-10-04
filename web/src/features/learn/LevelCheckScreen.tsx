@@ -10,6 +10,7 @@ import { TopNav } from "@/components/pk/TopNav";
 import { GameTicket } from "@/components/pk/Ticket";
 import { useToast } from "@/components/pk/Toast";
 import { useAllGames, useCoaches, useDemo } from "@/lib/demo-store";
+import { useAccount } from "@/lib/use-account";
 import { LEVELS } from "@pikyoo/core/format";
 import type { Level } from "@pikyoo/core/types";
 import { CoachCard } from "../coaches/CoachCard";
@@ -38,7 +39,8 @@ const ADVICE: Record<number, string> = {
 export function LevelCheckScreen() {
   const router = useRouter();
   const toast = useToast();
-  const { setProfile } = useDemo();
+  const { profile } = useDemo();
+  const account = useAccount();
   const games = useAllGames();
   const allCoaches = useCoaches();
   const [answers, setAnswers] = useState<(number | null)[]>(() => QUESTIONS.map(() => null));
@@ -64,7 +66,7 @@ export function LevelCheckScreen() {
             <p style={{ margin: "var(--space-2) auto 0", color: "var(--color-on-carbon-muted)", maxWidth: "30ch" }}>{ADVICE[lv]}</p>
           </div>
           <div className="pad" style={{ marginTop: "var(--space-4)" }}>
-            <button className="btn btn-primary btn-lg btn-block" onClick={() => { setProfile((p) => ({ ...p, level: lv })); toast("已存到你的檔案"); router.push("/me"); }}>存到我的檔案</button>
+            <button className="btn btn-primary btn-lg btn-block" onClick={() => account.saveProfile({ ...profile, level: lv }).then(() => { toast("已存到你的檔案"); router.push("/me"); }, (e: Error) => toast(e.message))}>存到我的檔案</button>
             <button className="btn btn-ghost btn-block" style={{ marginTop: "var(--space-2)" }} onClick={() => { setAnswers(QUESTIONS.map(() => null)); setI(0); }}>重新作答</button>
           </div>
           {lv <= 1 && coaches.length > 0 && (
