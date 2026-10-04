@@ -9,7 +9,7 @@ import { AppBar, TabBar } from "@/components/pk/Shell";
 import { TopNav } from "@/components/pk/TopNav";
 import type { Notice } from "@pikyoo/core/source/notifications";
 import { useDemo } from "@/lib/demo-store";
-import { realAuth } from "@/lib/env";
+import { LINE_OA_ID, realAuth } from "@/lib/env";
 import { markAllReadAction } from "@/lib/notifications";
 
 /** 通知 (B6): bookings, payments, games and Q&A in one list, newest first. Opening the page marks them read. */
@@ -29,6 +29,13 @@ export function NotificationsScreen({ notices }: { notices: Notice[] }) {
       <div className="scroll dk dk-narrow" style={{ padding: "0 16px 24px" }}>
         <TopNav />
         <h1 className="dk-only" style={{ margin: "var(--space-4) 0" }}>通知</h1>
+        {signedIn && LINE_OA_ID && (
+          <a className="card" href={`https://line.me/R/ti/p/${encodeURIComponent(LINE_OA_ID)}`} target="_blank" rel="noreferrer"
+            style={{ flexDirection: "row", alignItems: "center", gap: 12, marginTop: 12, background: "var(--color-accent-100)" }}>
+            <span style={{ flex: 1 }}><b>加 PIKYOO 官方帳號好友</b><small className="text-muted" style={{ display: "block", fontSize: 13 }}>預約確認、候補遞補、付款確認會同時傳到 LINE</small></span>
+            <span className="btn btn-primary" style={{ minHeight: 38, padding: "0 14px" }}>加好友</span>
+          </a>
+        )}
         {!signedIn ? (
           <div className="empty-s" style={{ paddingTop: 48 }}>
             <h3>登入後就會收到通知</h3>

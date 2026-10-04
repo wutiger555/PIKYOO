@@ -403,3 +403,10 @@ reset role;
 do $$ begin
   assert exists (select 1 from public.notifications where user_id = test.uid('葉子') and kind = 'payment_received'), 'the student hears it was received';
 end $$;
+
+-- LINE push (B6): only pg_cron may kick the sender
+set role authenticated;
+do $$ begin
+  assert test.fails('select public.kick_notify()') like 'permission denied%', 'a signed-in person cannot kick the LINE sender';
+end $$;
+reset role;
