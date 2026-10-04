@@ -3,13 +3,13 @@ import type { Level, Profile } from "../types";
 import type { Database } from "./db.types";
 
 /** The signed-in person as the screens see them. `onboarded` is false until 首次登入設定 is saved (or skipped). */
-export interface Me { id: string; profile: Profile; onboarded: boolean }
+export interface Me { id: string; profile: Profile; onboarded: boolean; /** PIKYOO staff: 審核 and other admin pages */ isAdmin: boolean }
 
 /** Reads the signed-in user's own rows (RLS: profile_private is readable by its owner only). */
 export async function readMe(sb: SupabaseClient<Database>, id: string): Promise<Me | null> {
   const [pub, priv] = await Promise.all([
     sb.from("profiles").select("display_name, level, deleted_at").eq("id", id).maybeSingle(),
-    sb.from("profile_private").select("home_districts, onboarded_at").eq("id", id).maybeSingle(),
+    sb.from("profile_private").select("home_districts, onboarded_at, is_admin").eq("id", id).maybeSingle(),
   ]);
   if (pub.error) throw new Error(`Supabase: ${pub.error.message}`);
   if (priv.error) throw new Error(`Supabase: ${priv.error.message}`);
@@ -18,6 +18,7 @@ export async function readMe(sb: SupabaseClient<Database>, id: string): Promise<
     id,
     profile: { name: pub.data.display_name, level: (pub.data.level ?? 0) as Level, areas: priv.data?.home_districts ?? [] },
     onboarded: !!priv.data?.onboarded_at,
+    isAdmin: !!priv.data?.is_admin,
   };
 }
 
