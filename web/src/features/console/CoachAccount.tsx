@@ -2,11 +2,15 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Status, type StatusTone } from "@/components/pk/Badges";
+import { Icon } from "@/components/pk/Icon";
 import { LoginSheet } from "@/components/pk/LoginSheet";
+import { Sheet } from "@/components/pk/Shell";
 import { useToast } from "@/components/pk/Toast";
-import { applyCoachAction, saveCoachAction, submitCoachAction } from "@/lib/coach";
+import { addCredentialAction, applyCoachAction, removeCredentialAction, saveCoachAction, submitCoachAction } from "@/lib/coach";
 import { useCatalog, useDemo } from "@/lib/demo-store";
 import { realAuth } from "@/lib/env";
+import { uploadCredentialScan } from "@/lib/uploads";
 
 // 教練後台 with real sign-in (B4): sign in → 申請成為教練 (draft) → edit and 儲存 → 送出審核 → PIKYOO approves.
 // The demo skips all of this and edits Mia's page in memory.
@@ -107,5 +111,89 @@ export function CoachSaveBar() {
           onClick={() => act(() => submitCoachAction(mine.id), "已送出審核")}>送出審核</button>
       )}
     </div>
+  );
+}
+
+const REVIEW: Record<string, [string, StatusTone]> = {
+  pending: ["審核中", "almost"], verified: ["已查驗", "open"], rejected: ["未通過", "full"], self_reported: ["自填", "info"],
+};
+
+/** The coach's uploaded certificates with their review status; pending or rejected ones can be withdrawn. */
+export function CredentialList({ onAdd }: { onAdd: () => void }) {
+  const { myCoach: mine } = useCatalog();
+  const router = useRouter();
+  const toast = useToast();
+  if (!realAuth || !mine) return null;
+  const certs = mine.credentials.filter((x) => x.type === "coach_cert");
+  const remove = async (id: string) => {
+    const r = await removeCredentialAction(id);
+    if (r.error) return toast(r.error);
+    toast("已撤回");
+    router.refresh();
+  };
+  return (
+    <div style={{ marginTop: "var(--space-3)" }}>
+      {certs.map((x) => {
+        const [label, tone] = REVIEW[x.status] ?? [x.status, "info" as const];
+        return (
+          <div key={x.id} className="ed-tl" style={{ alignItems: "center" }}>
+            <Icon name="medal" size={18} />
+            <span style={{ flex: 1 }}>{x.issuer} {x.level}</span>
+            <Status tone={tone}>{label}</Status>
+            {(x.status === "pending" || x.status === "rejected") && <button className="linkbtn" onClick={() => remove(x.id)}>撤回</button>}
+          </div>
+        );
+      })}
+      <button className="btn btn-secondary" style={{ marginTop: 8 }} onClick={onAdd}><Icon name="medal" size={18} />上傳證照送審</button>
+    </div>
+  );
+}
+
+const ISSUERS = ["協會", "總會", "PPR", "IPTPA", "USA Pickleball"];
+
+/** 上傳證照送審: who issued it, which level, and a photo or PDF of the certificate. Rendered after the scroller. */
+export function CredentialSheet({ onClose }: { onClose: () => void }) {
+  const { myCoach: mine } = useCatalog();
+  const router = useRouter();
+  const toast = useToast();
+  const [issuer, setIssuer] = useState("");
+  const [level, setLevel] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [busy, setBusy] = useState(false);
+  if (!mine) return null;
+  const send = async () => {
+    if (!file) return;
+    setBusy(true);
+    try {
+      const path = await uploadCredentialScan(file);
+      const r = await addCredentialAction(mine.id, issuer, level, path);
+      if (r.error) throw new Error(r.error);
+      toast("已送審，PIKYOO 通常 2 個工作天內完成");
+      router.refresh();
+      onClose();
+    } catch (e) {
+      toast((e as Error).message);
+      setBusy(false);
+    }
+  };
+  return (
+    <Sheet onClose={onClose}>
+      <h2>上傳證照送審</h2>
+      <p className="text-muted" style={{ margin: "0 0 12px" }}>PIKYOO 會比對協會／總會的公開名單，通過後教練頁會顯示「已查驗」。證照檔案只有你和 PIKYOO 看得到。</p>
+      <div className="field">
+        <label htmlFor="cred-issuer">發證單位</label>
+        <input id="cred-issuer" className="input" list="cred-issuers" value={issuer} maxLength={30} placeholder="例：協會" onChange={(e) => setIssuer(e.target.value)} />
+        <datalist id="cred-issuers">{ISSUERS.map((x) => <option key={x} value={x} />)}</datalist>
+      </div>
+      <div className="field">
+        <label htmlFor="cred-level">等級</label>
+        <input id="cred-level" className="input" value={level} maxLength={30} placeholder="例：認證教練、丙級教練、Level 1" onChange={(e) => setLevel(e.target.value)} />
+      </div>
+      <div className="field">
+        <label htmlFor="cred-file">證照照片或 PDF</label>
+        <input id="cred-file" className="input" type="file" accept="image/*,application/pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+      </div>
+      <button className="btn btn-primary btn-lg btn-block" disabled={!issuer.trim() || !file || busy} onClick={send}>{busy ? "上傳中…" : "送出審核"}</button>
+    </Sheet>
   );
 }

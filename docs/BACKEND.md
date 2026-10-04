@@ -337,5 +337,5 @@ B1–B3 是最短的「真的能用」路徑：讀得到資料 → 能登入 →
   - **決定（2026-10-04）**：AI 一貼成局**先不接 LLM**，維持 `features/host/parse.ts` 的規則解析；等真的有團主在用、看得出解析不夠用再接
 - [ ] **B4 教練頁與後台**（進行中）：
   - [x] 第一部分：申請成為教練、編輯存檔、送出審核（`@pikyoo/core/source/me-coach`：`readMyCoach`／`applyCoach`／`saveMyCoach`／`submitMyCoach`；欄位對應抽到 `coach-rows.ts`，seed 產生器共用，產出的 `seed.sql` 不變）。catalog 帶 `myCoach`（自己的頁面，任何狀態）；`CoachGate` 在真登入時先要求登入、再申請；`CoachSaveBar` 顯示狀態（草稿／審核中／已公開）、儲存、送出審核。被刪掉的方案改成封存（`archived_at`），舊預約還指得到。資料庫流程（申請→存檔→方案封存→送審→自己核准被擋）在 `pikyoo-dev` 用會 rollback 的交易驗證過；demo 畫面不變
-  - [ ] 第二部分：照片與證書上傳（Supabase Storage；目前真登入時新加的照片不會儲存）
+  - [x] 第二部分：照片與證書上傳（`web/src/lib/uploads.ts`）。瀏覽器直接用使用者自己的 session 傳到 Storage（Server Action 有 1MB 上限）；照片先縮到最長邊 1600px 的 JPEG（bucket 上限 5MB，手機照常超過），證照圖片縮到 2400px、PDF 原檔（上限 10MB）。路徑 `<uid>/<時間>.jpg`，bucket 規則只讓人傳到自己的資料夾。照片按「儲存」後才寫進教練頁；證照送出即建立 `credentials`（一律「審核中」），審核中或未通過的可以撤回。DUPR 分數隨「儲存」存成「自填」。`next.config.ts` 允許這個專案的公開 Storage 圖片；「示意照」標籤改成只標 `/photos/` 的圖庫照片，教練自己上傳的不標。新增 checks：DUPR 只能自填、只能傳到自己的資料夾、看不到別人的證照檔。已刪除的照片檔目前留在 Storage（之後營運後台再清）
   - [ ] 第三部分：管理員審核頁（核准教練、核對證書）

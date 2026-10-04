@@ -1,6 +1,6 @@
 "use server";
 
-import { applyCoach, saveMyCoach, submitMyCoach } from "@pikyoo/core/source/me-coach";
+import { addCredential, applyCoach, removeCredential, saveMyCoach, submitMyCoach } from "@pikyoo/core/source/me-coach";
 import type { Coach } from "@pikyoo/core/types";
 import { SUPABASE_URL } from "./env";
 import { supabaseServer } from "./supabase";
@@ -32,3 +32,9 @@ export const saveCoachAction = async (coachRowId: string, coach: Coach) =>
 
 export const submitCoachAction = async (coachRowId: string) =>
   run(async () => { const { sb } = await viewer(); await submitMyCoach(sb, String(coachRowId)); });
+
+export const addCredentialAction = async (coachRowId: string, issuer: string, level: string, documentPath: string) =>
+  run(async () => { const { sb } = await viewer(); await addCredential(sb, String(coachRowId), String(issuer), String(level), String(documentPath)); });
+
+export const removeCredentialAction = async (credentialId: string) =>
+  run(async () => { const { sb } = await viewer(); await removeCredential(sb, String(credentialId)); });

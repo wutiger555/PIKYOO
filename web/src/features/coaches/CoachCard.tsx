@@ -10,10 +10,11 @@ import { useDemo } from "@/lib/demo-store";
 import { money } from "@pikyoo/core/format";
 import type { Coach, CoachProfile } from "@pikyoo/core/types";
 
-/** A photo filling its (position: relative) parent. The demo's bundled photos are free stock photos (docs/PHOTOS.md), not
- *  the coaches themselves, so they carry the「示意照」tag; blob: URLs are the coach's own uploads (console preview) and don't.
+/** A photo filling its (position: relative) parent. The demo's bundled photos (/photos/…) are free stock photos
+ *  (docs/PHOTOS.md), not the coaches themselves, so they carry the「示意照」tag; a coach's own uploads (Storage URLs, or
+ *  blob: before saving) don't.
  *  A missing file shows `fallback`. */
-export function Img({ src, alt, sizes, priority, demo = !src.startsWith("blob:"), fallback }: { src: string; alt: string; sizes: string; priority?: boolean; demo?: boolean; fallback?: React.ReactNode }) {
+export function Img({ src, alt, sizes, priority, demo = src.startsWith("/photos/"), fallback }: { src: string; alt: string; sizes: string; priority?: boolean; demo?: boolean; fallback?: React.ReactNode }) {
   const [st, setSt] = useState<{ src: string; ok: boolean } | null>(null);
   const status = st?.src === src ? (st.ok ? "ok" : "err") : "loading";
   // An image that finished (or failed) before hydration fires no event; read its state when the node attaches.

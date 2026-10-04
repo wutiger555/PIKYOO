@@ -12,8 +12,9 @@ import { useCatalog, useDemo } from "@/lib/demo-store";
 import { LEVELS } from "@pikyoo/core/format";
 import type { Coach, CoachProfile, Level, PayMethod, PlayProfile, TimelineItem } from "@pikyoo/core/types";
 import { CoachTabs, ConsoleFrame } from "./ConsoleScreens";
-import { CoachSaveBar } from "./CoachAccount";
+import { CoachSaveBar, CredentialList, CredentialSheet } from "./CoachAccount";
 import { realAuth } from "@/lib/env";
+import { uploadCoachPhotos } from "@/lib/uploads";
 
 const STRENGTHS = ["零基礎入門", "發球與接發球", "網前小球（dink）", "第三拍 drop", "重置球（reset）", "截擊", "快速對抽（hands battle）", "雙打站位與換位", "單打戰術", "比賽策略", "網球轉匹克球的揮拍修正", "親子課"];
 const AUDIENCE = ["第一次拿拍", "打過網球、羽球想轉項", "想先上課再去打新手局", "2.5–3.0 想升級", "準備參加積分賽", "一個人想找球伴", "跟朋友一起來的小班", "親子一起學", "銀髮族", "英文授課需求"];
@@ -44,6 +45,8 @@ export function CoachPageEditor() {
   const { myCoach: c, setMyCoach } = useDemo();
   const { courts } = useCatalog();
   const [preview, setPreview] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [credSheet, setCredSheet] = useState(false);
   const p = c.profile;
   const setC = (patch: Partial<Coach>) => setMyCoach((x) => ({ ...x, ...patch }));
   const setP = (patch: Partial<CoachProfile>) => setMyCoach((x) => ({ ...x, profile: { ...x.profile, ...patch } }));
@@ -52,11 +55,24 @@ export function CoachPageEditor() {
   const pct = Math.round((checks.filter((x) => x[1]).length / checks.length) * 100);
   const dupr = c.creds.find((x) => x.issuer === "DUPR");
 
-  const addPhotos = (files: FileList | null) => {
+  const addPhotos = async (files: FileList | null) => {
     if (!files?.length) return;
-    const added = [...files].slice(0, 10).map((f) => ({ src: URL.createObjectURL(f), alt: `${c.name} 的上課照片`, caption: "" }));
-    setP({ photos: [...p.photos, ...added] });
-    toast(realAuth ? "照片上傳下一版開放，這幾張先不會被儲存" : `已加入 ${added.length} 張照片（接上 Supabase Storage 後會真的上傳）`);
+    const picked = [...files].slice(0, 10); // copy now: the input is cleared right after this call
+    const photo = (src: string) => ({ src, alt: `${c.name} 的上課照片`, caption: "" });
+    if (!realAuth) {
+      setP({ photos: [...p.photos, ...picked.map((f) => photo(URL.createObjectURL(f)))] });
+      return toast(`已加入 ${picked.length} 張照片（接上 Supabase Storage 後會真的上傳）`);
+    }
+    setUploading(true);
+    try {
+      const urls = await uploadCoachPhotos(picked);
+      setMyCoach((x) => ({ ...x, profile: { ...x.profile, photos: [...x.profile.photos, ...urls.map(photo)] } }));
+      toast(`已上傳 ${urls.length} 張，按「儲存」後公開`);
+    } catch (e) {
+      toast((e as Error).message);
+    } finally {
+      setUploading(false);
+    }
   };
   const movePhoto = (i: number, to: number) => {
     const xs = [...p.photos];
@@ -115,10 +131,10 @@ export function CoachPageEditor() {
                   </div>
                 </figure>
               ))}
-              <label className="ed-add">
-                <input type="file" accept="image/*" multiple onChange={(e) => { addPhotos(e.target.files); e.target.value = ""; }} />
+              <label className="ed-add" aria-disabled={uploading}>
+                <input type="file" accept="image/*" multiple disabled={uploading} onChange={(e) => { addPhotos(e.target.files); e.target.value = ""; }} />
                 <Icon name="plus" size={26} />
-                上傳照片
+                {uploading ? "上傳中…" : "上傳照片"}
               </label>
             </div>
           </section>
@@ -219,8 +235,9 @@ export function CoachPageEditor() {
             ))}
             <div className="btnrow">
               <button className="btn btn-secondary" onClick={() => setP({ timeline: [{ year: "2026", text: "", kind: "trophy" }, ...p.timeline] })}><Icon name="plus" size={18} />新增經歷</button>
-              <SoonButton className="btn btn-secondary" msg="證照已送審，通常 2 個工作天內完成（接上後台後開放）"><Icon name="medal" size={18} />上傳證照送審</SoonButton>
+              {!realAuth && <SoonButton className="btn btn-secondary" msg="證照已送審，通常 2 個工作天內完成（接上後台後開放）"><Icon name="medal" size={18} />上傳證照送審</SoonButton>}
             </div>
+            <CredentialList onAdd={() => setCredSheet(true)} />
           </section>
 
           <section className="ed-card">
@@ -291,6 +308,7 @@ export function CoachPageEditor() {
       </div>
       </ConsoleFrame>
       <CoachTabs active="page" />
+      {credSheet && <CredentialSheet onClose={() => setCredSheet(false)} />}
     </>
   );
 }
