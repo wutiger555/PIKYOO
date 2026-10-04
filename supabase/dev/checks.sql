@@ -410,3 +410,24 @@ do $$ begin
   assert test.fails('select public.kick_notify()') like 'permission denied%', 'a signed-in person cannot kick the LINE sender';
 end $$;
 reset role;
+
+-- Reminders (B6): the evening before, once per person, never for a cancelled game
+do $$
+declare b uuid := (select id from public.lesson_bookings where student_id = test.uid('小安') and status = 'confirmed' limit 1);
+  g uuid := test.game('g4');
+  tomorrow timestamptz := ((now() at time zone 'Asia/Taipei')::date + 1 + time '10:00') at time zone 'Asia/Taipei';
+begin
+  update public.lesson_bookings set starts_at = tomorrow where id = b;
+  update public.games set starts_at = tomorrow, ends_at = tomorrow + interval '2 hours', cancelled_at = null where id = g;
+  perform public.remind_tomorrow();
+  perform public.remind_tomorrow();
+  assert (select count(*) from public.notifications where user_id = test.uid('小安') and kind = 'lesson_reminder' and payload ->> 'booking_id' = b::text) = 1, 'one lesson reminder, even if the job runs twice';
+  assert (select count(*) from public.notifications where kind = 'game_reminder' and payload ->> 'game_id' = g::text)
+       = (select count(*) from public.game_participants where game_id = g and status = 'joined' and user_id is not null), 'every joined player gets one game reminder';
+  assert (select count(*) from public.game_participants where game_id = g and status = 'joined' and user_id is not null) > 0, 'the check covers someone';
+end $$;
+set role authenticated;
+do $$ begin
+  assert test.fails('select public.remind_tomorrow()') like 'permission denied%', 'only pg_cron sends reminders';
+end $$;
+reset role;

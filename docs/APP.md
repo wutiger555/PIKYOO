@@ -150,7 +150,7 @@ android/ 用 Android Studio 產生 .aab → 上傳 Google Play Console
 
 對應 PRD §12 的 Phase 4。是順序與進入條件，不是固定日期。**每完成一步就在這裡打勾**（狀態：✅ 完成、👉 進行中、⬜ 未開始）。
 
-> **目前位置（2026-10-04）：第二階段第 9 步，B6 通知。** B5 完成：登入後找教練、預約、報名球局、問答、付款都是真的；正式站啟用真登入等 owner 決定時間（`BACKEND.md` §13）。
+> **目前位置（2026-10-05）：第二階段第 10 步，B7 營運後台與 SEO。** B6 完成：站內通知、LINE 推播（官方帳號「PIKYOO 匹友」）、前一天提醒都已上線；Email 等需要時再接。正式站啟用真登入等 owner 決定時間（`BACKEND.md` §13）。
 
 ### 第一階段：決定方向
 
@@ -171,8 +171,8 @@ App 等網站資料穩定才開工，避免兩邊一起追資料結構變動。
 | 6 | B3 球局：報名、候補、開團、編輯、分享、兩週列表 | Claude | ✅ [#20](https://github.com/wutiger555/PIKYOO/pull/20)–[#24](https://github.com/wutiger555/PIKYOO/pull/24) |
 | 7 | B4 教練頁與後台：申請、編輯存檔、照片與證照上傳、管理員審核 | owner＋Claude | ✅ [#25](https://github.com/wutiger555/PIKYOO/pull/25)–[#27](https://github.com/wutiger555/PIKYOO/pull/27) |
 | 8 | B5 預約、問與答、收款（揪朋友一起上先只在 demo，PLAN D7） | Claude | ✅ [#29](https://github.com/wutiger555/PIKYOO/pull/29)–[#32](https://github.com/wutiger555/PIKYOO/pull/32) |
-| 9 | B6 通知：LINE 推播、Email、提醒 | owner＋Claude | 👉 |
-| 10 | B7 營運後台與 SEO | Claude | ⬜ |
+| 9 | B6 通知：LINE 推播、Email、提醒 | owner＋Claude | ✅ |
+| 10 | B7 營運後台與 SEO | Claude | 👉 |
 | 11 | B8 封測：清掉示範資料、放入真實球場 | owner＋Claude | ⬜ |
 
 ### 第三階段：上架前準備（需要等審核，**現在就可以和第二階段同時進行**）

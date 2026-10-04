@@ -8,7 +8,7 @@ type Sb = SupabaseClient<Database>;
 
 export interface Notice { id: string; title: string; body?: string; href?: string; at: string; read: boolean }
 
-type Payload = { booking_id?: string; game_id?: string; question_id?: string; group_id?: string; note?: string; verified?: boolean; changed?: string[] };
+type Payload = { booking_id?: string; game_id?: string; question_id?: string; group_id?: string; note?: string; verified?: boolean; changed?: string[]; at?: string };
 
 /** Copy and link per kind (the kinds notify() is called with in supabase/migrations). Unknown kinds get a generic line. */
 export function describe(kind: string, p: Payload): Pick<Notice, "title" | "body" | "href"> {
@@ -34,6 +34,8 @@ export function describe(kind: string, p: Payload): Pick<Notice, "title" | "body
     case "credential_reviewed": return { title: p.verified ? "證照已查驗" : "證照未通過查驗", href: "/coach/profile" };
     case "group_joined": return { title: "有朋友加入你的揪團", href: "/me/lessons" };
     case "group_expired": return { title: "揪團人數不足，已取消", href: "/me/lessons" };
+    case "lesson_reminder": return { title: `明天 ${p.at ?? ""} 有課`, body: "記得帶球拍、提早 10 分鐘到", href: "/me/lessons" };
+    case "game_reminder": return { title: `明天 ${p.at ?? ""} 有球局`, body: "不能去請盡早取消，讓候補的人遞補", href: game };
     case "line_test": return { title: "LINE 通知測試", body: "收到這則就代表 PIKYOO 的 LINE 通知設定好了", href: "/me/notifications" };
     default: return { title: "PIKYOO 有新消息" };
   }
@@ -44,7 +46,7 @@ export const LINE_KINDS = new Set([
   "booking_requested", "booking_confirmed", "booking_declined", "booking_cancelled", "booking_expired",
   "payment_reported", "payment_received", "payment_not_received",
   "game_promoted", "game_changed", "game_cancelled", "game_removed",
-  "coach_approved", "coach_returned",
+  "coach_approved", "coach_returned", "lesson_reminder", "game_reminder",
   "line_test", // queued by hand (select public.notify(<user>, 'line_test', '{}')) to check the LINE setup
 ]);
 
