@@ -9,8 +9,11 @@ import { Crumbs } from "@/components/pk/Crumbs";
 import { AppBar, Sheet, SoonButton } from "@/components/pk/Shell";
 import { TopNav } from "@/components/pk/TopNav";
 import { GameTicket, Seats } from "@/components/pk/Ticket";
+import { LoginSheet } from "@/components/pk/LoginSheet";
 import { useToast } from "@/components/pk/Toast";
 import { useDemo, useGameView } from "@/lib/demo-store";
+import { realAuth } from "@/lib/env";
+import { useGameActions } from "@/lib/use-games";
 import { LEVELS, levelText } from "@pikyoo/core/format";
 import type { Game } from "@pikyoo/core/types";
 
@@ -18,12 +21,21 @@ import type { Game } from "@pikyoo/core/types";
 export function GameDetailScreen({ game: g }: { game: Game }) {
   const router = useRouter();
   const toast = useToast();
-  const { setMine, popSeat, setPopSeat, profile, hosted } = useDemo();
+  const { popSeat, setPopSeat, profile, hosted, signedIn } = useDemo();
+  const games = useGameActions();
+  const [login, setLogin] = useState(false);
+  const [cancel, setCancel] = useState(false);
   const { my, count, spots, waitN } = useGameView(g);
   const [confirm, setConfirm] = useState(false);
   const [share, setShare] = useState(false);
   const isHost = hosted.some((h) => h.id === g.id);
   const cancelHours = g.cancelHours ?? 12;
+  const leave = () => games.leave(g.id).then(
+    (r) => toast(r === "late" ? `已取消。離開始不到 ${cancelHours} 小時，會記一次晚取消` : "已取消，位子會釋出給候補"),
+    (e: Error) => toast(e.message),
+  );
+  // visitors sign in first when sign-in is real; the demo lets anyone try
+  const askJoin = () => (realAuth && !signedIn ? setLogin(true) : setConfirm(true));
   // "回到球局" from the success screen pops the new "你" seat once.
   const [pop] = useState(popSeat === g.id);
   useEffect(() => { if (popSeat) setPopSeat(null); }, [popSeat, setPopSeat]);
@@ -46,7 +58,7 @@ export function GameDetailScreen({ game: g }: { game: Game }) {
           <span className="sticky-cta-price" style={{ fontSize: 18, fontFamily: "var(--font-body)", fontWeight: 700 }}>你已報名</span>
           <span className="sticky-cta-sub">開始前 {cancelHours} 小時可免責取消</span>
         </div>
-        <button className="btn btn-secondary btn-lg" onClick={() => { setMine(g.id, null); toast("已取消，位子會釋出給候補"); }}>取消報名</button>
+        <button className="btn btn-secondary btn-lg" onClick={() => setCancel(true)}>取消報名</button>
       </>
     );
   } else if (my === "wait") {
@@ -56,7 +68,7 @@ export function GameDetailScreen({ game: g }: { game: Game }) {
           <span className="sticky-cta-price" style={{ fontSize: 18, fontFamily: "var(--font-body)", fontWeight: 700 }}>候補第 {waitN} 位</span>
           <span className="sticky-cta-sub">有人取消會自動遞補</span>
         </div>
-        <button className="btn btn-secondary btn-lg" onClick={() => { setMine(g.id, null); toast("已取消，位子會釋出給候補"); }}>取消候補</button>
+        <button className="btn btn-secondary btn-lg" onClick={() => setCancel(true)}>取消候補</button>
       </>
     );
   } else if (spots > 0) {
@@ -66,7 +78,7 @@ export function GameDetailScreen({ game: g }: { game: Game }) {
           <span className="sticky-cta-price">NT${g.fee}</span>
           <span className="sticky-cta-sub">還有 {spots} 個位子</span>
         </div>
-        <button className="btn btn-primary btn-lg" onClick={() => setConfirm(true)}>報名</button>
+        <button className="btn btn-primary btn-lg" onClick={askJoin}>報名</button>
       </>
     );
   } else {
@@ -76,7 +88,7 @@ export function GameDetailScreen({ game: g }: { game: Game }) {
           <span className="sticky-cta-price">NT${g.fee}</span>
           <span className="sticky-cta-sub">額滿・已有 {g.waitlist} 人候補</span>
         </div>
-        <button className="btn btn-ink btn-lg" onClick={() => setConfirm(true)}>加入候補（第 {g.waitlist + 1} 位）</button>
+        <button className="btn btn-ink btn-lg" onClick={askJoin}>加入候補（第 {g.waitlist + 1} 位）</button>
       </>
     );
   }
@@ -168,16 +180,17 @@ export function GameDetailScreen({ game: g }: { game: Game }) {
       <div className="sticky-cta">{cta}</div>
 
       {share && <ShareSheet game={g} onClose={() => setShare(false)} />}
+      {login && <LoginSheet reason="登入後就能報名球局" onClose={() => setLogin(false)} />}
+      {cancel && <CancelSheet game={g} waiting={my === "wait"} onClose={() => setCancel(false)} onConfirm={() => leave().finally(() => setCancel(false))} />}
       {confirm && (
         <ConfirmSheet
           game={g}
           full={spots <= 0}
           onClose={() => setConfirm(false)}
-          onConfirm={() => {
-            setMine(g.id, spots > 0 ? "joined" : "wait");
+          onConfirm={() => games.join(g.id, spots <= 0).then(() => {
             setConfirm(false);
             router.push(`/games/${g.id}/success`);
-          }}
+          }, (e: Error) => { setConfirm(false); toast(e.message); })}
         />
       )}
     </>
@@ -209,6 +222,30 @@ function ConfirmSheet({ game: g, full, onClose, onConfirm }: { game: Game; full:
       <button className="btn btn-primary btn-lg btn-block" style={{ marginTop: "var(--space-4)" }} onClick={onConfirm}>
         {full ? "確認候補" : "確認報名"}
       </button>
+    </Sheet>
+  );
+}
+
+/** Cancelling is one tap away on the CTA, so it asks first and says what it costs (PRD §6.2 晚取消). */
+function CancelSheet({ game: g, waiting, onClose, onConfirm }: { game: Game; waiting: boolean; onClose: () => void; onConfirm: () => Promise<unknown> }) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <Sheet onClose={onClose}>
+      <h2>{waiting ? "取消候補？" : "取消報名？"}</h2>
+      <div className="sum">
+        <span className="text-muted" style={{ fontSize: 13 }}>{g.dayLabel} {g.date}・{g.venue}</span>
+        <span className="big">{g.startsAt}–{g.endsAt}</span>
+      </div>
+      <p className="text-muted" style={{ fontSize: 14, margin: "var(--space-3) 0 0" }}>
+        {waiting
+          ? "取消後會失去目前的候補順位，之後再候補要重新排。"
+          : `位子會讓給候補的人。開始前 ${g.cancelHours ?? 12} 小時內取消會記一次晚取消，團主看得到。`}
+      </p>
+      <button className="btn btn-secondary btn-lg btn-block" style={{ marginTop: "var(--space-4)", color: "var(--color-danger)" }} disabled={busy}
+        onClick={() => { setBusy(true); onConfirm(); }}>
+        {busy ? "取消中…" : waiting ? "確定取消候補" : "確定取消報名"}
+      </button>
+      <button className="btn btn-ghost btn-block" style={{ marginTop: 8 }} onClick={onClose}>{waiting ? "繼續候補" : "保留報名"}</button>
     </Sheet>
   );
 }
