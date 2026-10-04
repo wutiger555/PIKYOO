@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useDemo } from "@/lib/demo-store";
 import { useAccount } from "@/lib/use-account";
+import { Icon } from "./Icon";
 import { PkMark } from "./Logo";
 import { LoginSheet } from "./LoginSheet";
 
@@ -20,7 +21,7 @@ const LINKS: [NavKey, string, string][] = [
 /** Desktop top navigation (docs/DESKTOP.md §4) — replaces the bottom TabBar at ≥1024px; hidden on phones.
  *  `coach` is the console variant: 教練模式 badge instead of the student links, and a switch back to the student side. */
 export function TopNav({ active, coach }: { active?: NavKey; coach?: boolean }) {
-  const { signedIn, profile, myCoach } = useDemo();
+  const { signedIn, profile, myCoach, unread } = useDemo();
   const account = useAccount();
   const [login, setLogin] = useState(false);
   if (coach) {
@@ -49,6 +50,10 @@ export function TopNav({ active, coach }: { active?: NavKey; coach?: boolean }) 
         <div className="topnav-r">
           {signedIn ? (
             <>
+              <Link href="/me/notifications" className="topnav-link" aria-label={unread ? `通知，${unread} 則未讀` : "通知"} style={{ position: "relative", display: "inline-flex" }}>
+                <Icon name="bell" size={20} />
+                {!!unread && <span className="tbadge">{unread}</span>}
+              </Link>
               <Link href="/me/lessons" className="topnav-link">我的課</Link>
               <details className="topnav-me">
                 <summary><span className="avatar">{profile.name.slice(0, 1)}</span>{profile.name}</summary>

@@ -44,6 +44,12 @@ export const markPaid = async (sb: Sb, paymentId: string) => {
   if (r.error) throw explain(r.error.message);
 };
 
+/** 還沒收到: the coach sends a report back to 待付款; the student is told (B6). */
+export const rejectReport = async (sb: Sb, paymentId: string) => {
+  const r = await sb.rpc("reject_payment_report", { p_payment: paymentId });
+  if (r.error) throw explain(r.error.message);
+};
+
 /** 我已付款: last5 for a bank transfer, empty otherwise. */
 export const reportPayment = async (sb: Sb, paymentId: string, last5: string) => {
   const r = await sb.rpc("report_payment", { p_payment: paymentId, p_last5: last5 });

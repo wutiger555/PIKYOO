@@ -345,3 +345,9 @@ B1–B3 是最短的「真的能用」路徑：讀得到資料 → 能登入 →
   - [x] 第二部分：問與答（`@pikyoo/core/source/questions`）。教練頁的問答改讀資料庫：訪客看到已回覆的；登入後也看到自己還沒被回覆的，教練看到自己頁面的全部（RLS，`lib/source.ts` 有登入時用 session 重讀）。真登入時提問、回覆寫進資料庫，擋電話／LINE 由資料庫再檢查一次（錯誤訊息沿用 `contactHint`）。seed 補上問答與預約裡出現的人的程度（`update profiles set level`，已套用到 `pikyoo-dev`）；沒填程度的人畫面上不顯示程度。驗證：`pikyoo-dev` 上會 rollback 的交易（含 LINE ID 的提問被擋、回覆前訪客看不到、回覆後看得到、兩則通知），事後沒留資料；正式站設定下教練頁顯示資料庫的問答
   - [x] 第三部分：收款（`@pikyoo/core/source/payments`，照 `PLAN.md` §12 模式 A：錢直接進教練帳戶）。教練在「收款 → 收款資訊」填 LINE Pay 連結、銀行（含代碼）／帳號／戶名（`coach_pay_details`；要收哪幾種仍在「教練頁 → 付款方式」）。教練確認預約後，學生在「我的預約」只看到自己選的那一種的資訊（`payment_instructions`），付好按「我已付款」（轉帳填末五碼）；教練在「收款」按「確認收到」，現場收現金可以直接按「已收到」。真登入時隱藏示範用的「還沒收到」「改現場收」「LINE 提醒」（提醒等 B6）。驗證：`pikyoo-dev` 上會 rollback 的交易（教練設收款資訊→學生轉帳預約→確認→學生只看到銀行資訊、其他學生什麼都看不到→回報末五碼→教練確認收到），事後沒留資料；demo 收款頁與付款流程不變
   - **先不接資料庫：揪朋友一起上**（湊最少人數、邀請碼、截止時間，規則最複雜）。demo 照常展示；正式站等有教練要用再做
+
+- [ ] **B6 通知**（進行中，照 D7 先做不用外部帳號的部分）：
+  - [x] 第一部分：站內通知中心（`@pikyoo/core/source/notifications`：每種事件的文字與連結、`myNotices`、`unreadCount`、`markAllRead`）。`/me/notifications`；「我的」有「通知（N 則未讀）」，桌機頂部有鈴鐺與未讀數，教練後台的鈴鐺也連到這裡；打開頁面就標為已讀。demo 有 4 則示範通知。未讀數讀不到時顯示 0，不會讓整頁出錯。**收款雙向確認**（D9）：`20261004141908_payment_confirmations` 讓「回報已付款」通知教練、「確認收到」通知學生，新增 `reject_payment_report()`（教練按「還沒收到」退回待付款並通知學生）；「我的課」已確認的課顯示 待付款／已回報付款／已付款。checks.sql 加上整個來回
+  - [ ] 第二部分：LINE 推播。**需要 owner**：建 LINE 官方帳號「PIKYOO 匹友」，在**同一個 Provider** 下開 Messaging API（LINE user ID 只在同一個 Provider 內通用），把 Channel access token 放到 Supabase／Vercel 的機密設定（不要貼在聊天室）。之後由排程每分鐘把佇列裡標 LINE 的通知推出去（PRD F6），學生要先加官方帳號好友才收得到
+  - [ ] 第三部分：上課／打球前提醒（排程產生通知）
+  - Email（Resend）先不做：站內＋LINE 已經夠用（D7）
