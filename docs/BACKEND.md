@@ -26,7 +26,7 @@
 | 開關 `NEXT_PUBLIC_DATA_SOURCE` | `demo` | `live`（接好之前維持 `demo`） |
 | 資料 | 現在的假資料（`packages/core/src/data/`），存在瀏覽器記憶體，重新整理就還原 | Supabase 資料庫 |
 | 登入 | 假登入（「我的」裡的登出／登入切換） | LINE 登入（LIFF） |
-| 用途 | 簡報、招商、教練說明會、給投資人看 | 真的使用者 |
+| 用途 | 簡報、招商、**向教練展示（owner 2026-10-04：之後的教練 demo 用這個網址）**、給投資人看 | 真的使用者 |
 
 - 開關**沒設定時一律當成 `demo`**，避免不小心讓 Demo 網址連到真的資料庫。
 - `main` 合併後兩個網址都會自動重新部署，所以**畫面永遠一致**。
@@ -339,3 +339,9 @@ B1–B3 是最短的「真的能用」路徑：讀得到資料 → 能登入 →
   - [x] 第一部分：申請成為教練、編輯存檔、送出審核（`@pikyoo/core/source/me-coach`：`readMyCoach`／`applyCoach`／`saveMyCoach`／`submitMyCoach`；欄位對應抽到 `coach-rows.ts`，seed 產生器共用，產出的 `seed.sql` 不變）。catalog 帶 `myCoach`（自己的頁面，任何狀態）；`CoachGate` 在真登入時先要求登入、再申請；`CoachSaveBar` 顯示狀態（草稿／審核中／已公開）、儲存、送出審核。被刪掉的方案改成封存（`archived_at`），舊預約還指得到。資料庫流程（申請→存檔→方案封存→送審→自己核准被擋）在 `pikyoo-dev` 用會 rollback 的交易驗證過；demo 畫面不變
   - [x] 第二部分：照片與證書上傳（`web/src/lib/uploads.ts`）。瀏覽器直接用使用者自己的 session 傳到 Storage（Server Action 有 1MB 上限）；照片先縮到最長邊 1600px 的 JPEG（bucket 上限 5MB，手機照常超過），證照圖片縮到 2400px、PDF 原檔（上限 10MB）。路徑 `<uid>/<時間>.jpg`，bucket 規則只讓人傳到自己的資料夾。照片按「儲存」後才寫進教練頁；證照送出即建立 `credentials`（一律「審核中」），審核中或未通過的可以撤回。DUPR 分數隨「儲存」存成「自填」。`next.config.ts` 允許這個專案的公開 Storage 圖片；「示意照」標籤改成只標 `/photos/` 的圖庫照片，教練自己上傳的不標。新增 checks：DUPR 只能自填、只能傳到自己的資料夾、看不到別人的證照檔。已刪除的照片檔目前留在 Storage（之後營運後台再清）
   - [x] 第三部分：管理員審核頁 `/admin`（`features/admin/ReviewScreen.tsx`，只有 `profile_private.is_admin` 看得到，其他人與 demo 都是 404；「我的」有入口）。待審核的教練頁可以「看頁面」（`/admin/coaches/[slug]`，跟公開後一樣）、核准公開、退回修改（附一句說明）；證照用 1 小時有效的簽名連結打開私密檔，標記已查驗／未通過。資料庫函式 `review_coach`、`review_credential`（`20261004093230_admin_review`）只給管理員，記下審核人並通知教練（`coach_approved`／`coach_returned`／`credential_reviewed`）。Owner 帳號已設為管理員（2026-10-04）。驗證：checks.sql；`pikyoo-dev` 上會 rollback 的交易（非管理員被擋、核准後公開、證照記下審核人、教練收到兩則通知，事後確認沒留下資料）；demo `/admin` 404；訪客呼叫函式被拒
+
+- [ ] **B5 預約、問與答、收款**（進行中；照 `PLAN.md` D7「先求能用、簡單好上手」縮小範圍，2026-10-04）：
+  - [ ] 第一部分：預約上課。學生選方案和時段送出 → 教練在後台「今天」確認或婉拒 → 學生在「我的課」看到結果，可以取消。48 小時沒回覆自動失效（`expire_stale()`，pg_cron 每小時跑）
+  - [ ] 第二部分：問與答。學生在教練頁提問、教練在後台回覆（擋電話／LINE 的規則已在資料庫）
+  - [ ] 第三部分：收款。教練確認後學生看到付款方式，付完按「我已付款」填末五碼，教練在「收款」按已收到
+  - **先不接資料庫：揪朋友一起上**（湊最少人數、邀請碼、截止時間，規則最複雜）。demo 照常展示；正式站等有教練要用再做
