@@ -7,6 +7,13 @@ import { useDemo } from "./demo-store";
 import { realAuth } from "./env";
 import { lineLogin, lineLogout } from "./line";
 
+/** The current page without the params LINE adds when it sends the browser back. */
+const cleanHere = () => {
+  const u = new URL(location.href);
+  for (const k of ["code", "state", "liffClientId", "liffRedirectUri", "liff.state"]) u.searchParams.delete(k);
+  return u.toString();
+};
+
 /** 登入／登出／刪除帳號／存個人資料: real LINE + Supabase when realAuth (env.ts), the demo toggle otherwise. */
 export function useAccount() {
   const router = useRouter();
@@ -21,8 +28,8 @@ export function useAccount() {
       }
       const r = await lineLogin();
       if (!r) return false;
-      if (r.onboarded) router.refresh();
-      else router.push("/welcome");
+      // a full load: client navigation keeps the root layout, which holds the signed-in state (TopNav, 我的)
+      location.assign(r.onboarded ? cleanHere() : "/welcome");
       return true;
     },
     async logout() {
@@ -34,8 +41,7 @@ export function useAccount() {
     async deleteAccount() {
       await deleteAccountAction();
       await lineLogout();
-      router.push("/");
-      router.refresh();
+      location.assign("/");
     },
     async saveProfile(p: Profile) {
       setProfile(p);
