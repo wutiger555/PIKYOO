@@ -321,7 +321,7 @@ B1–B3 是最短的「真的能用」路徑：讀得到資料 → 能登入 →
   - 四個變數現在都勾了 Production 與 Preview；Preview 網址也是 live 模式。
   - Claude 本機已登入 Vercel CLI（owner 的帳號）：可以 `vercel redeploy`、`vercel curl`（讀有保護的 Preview）、`vercel inspect --logs`。`vercel curl` 第一次使用時自動在專案建立了一組 Deployment Protection bypass token。
 - [ ] Owner：Auth 網址設定（SETUP §2.4）：LINE 登入用不到（§5），做 Email 登入（F1-2）前完成即可
-- [ ] **B2 登入**（目前卡在這）：
+- [x] **B2 登入**（程式與 Preview 實測完成；正式站啟用時間由 owner 決定）：
   - [x] Claude：程式完成（§5「實作」）；資料庫層用一個會 rollback 的交易在 `pikyoo-dev` 驗證過（建帳號 → 存設定 → 讀回 → 刪除），本機驗證訪客畫面、LIFF 錯誤提示、`/api/auth/line` 拒絕假 token
   - [x] Owner：LINE MINI App channel 已建（Developing `2011850000` / LIFF `2011850000-KYVRZraL`，endpoint = `claude/line-login` 分支的 Preview；Published `2011850002` / LIFF `2011850002-OPHHAngO`，endpoint `https://pikyoo.vercel.app`；Scopes `openid`、`profile`）
   - [x] Claude：Vercel `LINE_CHANNEL_ID`（Preview＝Developing、Production＝Published）；`NEXT_PUBLIC_LIFF_ID` 只設在 Preview 的 `claude/line-login` 分支
@@ -335,3 +335,7 @@ B1–B3 是最短的「真的能用」路徑：讀得到資料 → 能登入 →
   - [x] 第三部分 a：分享卡片與動態 OG 圖（[#23](https://github.com/wutiger555/PIKYOO/pull/23)）。`games/[id]/opengraph-image.tsx` 用 `next/og` 畫預覽圖，中文字用 Google Fonts `text=` 只抓卡片上的字；`ShareSheet` 在 LIFF 內用 `shareTargetPicker` 送 Flex 卡片（`lib/line.ts` `shareToLine`），其他地方開 `line.me/R/share`。LINE 會快取連結預覽，所以預覽圖上的「缺幾人」是第一次貼出時的數字
   - [x] 第三部分 b：列表看得到兩週（[#24](https://github.com/wutiger555/PIKYOO/pull/24)）。live 的 `DayGroup` 是台北日期（`YYYY-MM-DD`），`calendar()` 產生今天起 `GAME_DAYS = 14` 天；`Game.weekday` 給「週末」篩選；篩選面板加「日期」。篩選仍在瀏覽器做：兩週的局數量不多，等局多到一次讀不完再改成資料庫查詢
   - **決定（2026-10-04）**：AI 一貼成局**先不接 LLM**，維持 `features/host/parse.ts` 的規則解析；等真的有團主在用、看得出解析不夠用再接
+- [ ] **B4 教練頁與後台**（進行中）：
+  - [x] 第一部分：申請成為教練、編輯存檔、送出審核（`@pikyoo/core/source/me-coach`：`readMyCoach`／`applyCoach`／`saveMyCoach`／`submitMyCoach`；欄位對應抽到 `coach-rows.ts`，seed 產生器共用，產出的 `seed.sql` 不變）。catalog 帶 `myCoach`（自己的頁面，任何狀態）；`CoachGate` 在真登入時先要求登入、再申請；`CoachSaveBar` 顯示狀態（草稿／審核中／已公開）、儲存、送出審核。被刪掉的方案改成封存（`archived_at`），舊預約還指得到。資料庫流程（申請→存檔→方案封存→送審→自己核准被擋）在 `pikyoo-dev` 用會 rollback 的交易驗證過；demo 畫面不變
+  - [ ] 第二部分：照片與證書上傳（Supabase Storage；目前真登入時新加的照片不會儲存）
+  - [ ] 第三部分：管理員審核頁（核准教練、核對證書）

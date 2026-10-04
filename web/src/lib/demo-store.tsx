@@ -71,7 +71,8 @@ const init = (catalog: Catalog, me: Me | null | undefined): DemoState => ({
   booking: newBooking(),
   requests: initialRequests(),
   payments: initialPayments(),
-  myCoach: structuredClone(catalog.coaches.find((c) => c.id === "mia") ?? getCoach("mia")!),
+  // real sign-in: the viewer's own page (an empty placeholder until they apply, see CoachGate); demo: Mia
+  myCoach: structuredClone(catalog.myCoach?.coach ?? catalog.coaches.find((c) => c.id === "mia") ?? getCoach("mia")!),
   groups: initialGroups(),
   questions: initialQuestions(),
 });

@@ -11,6 +11,7 @@ import { PAYOUT_METHODS, RECEIVED_BEFORE, TODAY_AGENDA } from "@pikyoo/core/data
 import { useDemo } from "@/lib/demo-store";
 import { money } from "@pikyoo/core/format";
 import { AnswerCard } from "@/features/coaches/QuestionBoard";
+import { CoachGate } from "./CoachAccount";
 import type { BookingRequest, PaymentRow } from "@pikyoo/core/types";
 
 type ConsoleTab = "today" | "lessons" | "page" | "pay";
@@ -48,7 +49,7 @@ export function ConsoleFrame({ active, children, className }: { active: ConsoleT
             </Link>
           ))}
         </nav>
-        <div className="con-main">{children}</div>
+        <div className="con-main"><CoachGate>{children}</CoachGate></div>
       </div>
     </div>
   );
