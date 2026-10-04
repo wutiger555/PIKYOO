@@ -1,14 +1,14 @@
 import { useLocalSearchParams } from "expo-router";
 import { Text } from "react-native";
-import { getGame } from "@pikyoo/core/data/games";
 import { levelText, money } from "@pikyoo/core/format";
-import { Page } from "@/ui/Page";
+import { useCatalog } from "@/data/catalog";
+import { Page, WithCatalog } from "@/ui/Page";
 import { Card, Heading, s } from "@/ui/parts";
 
 export default function GamePage() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const g = getGame(id);
-  if (!g) return <Page><Text style={s.body}>找不到這個球局</Text></Page>;
+  const g = useCatalog().catalog?.games.find((x) => x.id === id);
+  if (!g) return <Page><WithCatalog>{() => <Text style={s.body}>找不到這個球局</Text>}</WithCatalog></Page>;
   return (
     <Page>
       <Text style={[{ fontSize: 26, fontWeight: "800" }, s.num]}>{g.dayLabel} {g.date} {g.startsAt}–{g.endsAt}</Text>

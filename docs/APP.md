@@ -151,7 +151,7 @@ android/ 用 Android Studio 產生 .aab → 上傳 Google Play Console
 
 對應 PRD §12 的 Phase 4。是順序與進入條件，不是固定日期。**每完成一步就在這裡打勾**（狀態：✅ 完成、👉 進行中、⬜ 未開始）。
 
-> **目前位置（2026-10-05）：第四階段第 17 步，App 登入。** 第 16 步完成：`app/`（Expo SDK 57、Expo Router、iOS 原生分頁列）用 `packages/core` 的示範資料跑首頁、找教練、教練頁、球局、我的課，已在 iPhone 17 Pro 模擬器確認。與第二階段第 11 步 B8 同時進行；第三階段上架帳號請 owner 現在就申請（`BACKEND.md` §13）。
+> **目前位置（2026-10-05）：第四階段第 17 步，App 登入。** 第 16 步完成：`app/`（Expo SDK 57、Expo Router、iOS 原生分頁列）跑首頁、找教練、教練頁、球局、我的課。**App 已接真資料**（[#41](https://github.com/wutiger555/PIKYOO/pull/41)）：跟正式網站同一個資料庫、同一份 `@pikyoo/core/source/live`，下拉重新整理；`EXPO_PUBLIC_DATA_SOURCE=demo` 切回示範資料。登入、預約、報名等需要登入的功能等第 17 步（要 owner 的 Apple 開發者帳號）。與第二階段第 11 步 B8 同時進行；第三階段上架帳號請 owner 現在就申請（`BACKEND.md` §13）。
 
 ### 第一階段：決定方向
 

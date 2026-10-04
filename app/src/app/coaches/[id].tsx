@@ -1,17 +1,17 @@
 import { Image } from "expo-image";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { Text, View } from "react-native";
-import { getCoach } from "@pikyoo/core/data/coaches";
 import { levelText, money } from "@pikyoo/core/format";
-import { Page } from "@/ui/Page";
+import { useCatalog } from "@/data/catalog";
+import { Page, WithCatalog } from "@/ui/Page";
 import { Card, Heading, Tag, s } from "@/ui/parts";
 import { photo } from "@/ui/theme";
 
 /** 教練頁: what a visitor sees on the website (CLAUDE.md "Visitors see only the basics"); booking comes with sign-in. */
 export default function CoachPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const c = getCoach(id);
-  if (!c) return <Page><Text style={s.body}>找不到這位教練</Text></Page>;
+  const c = useCatalog().catalog?.coaches.find((x) => x.id === id);
+  if (!c) return <Page><WithCatalog>{() => <Text style={s.body}>找不到這位教練</Text>}</WithCatalog></Page>;
   const cover = c.profile.photos[0];
   return (
     <Page>

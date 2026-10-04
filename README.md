@@ -26,6 +26,7 @@ A pickleball platform for Taiwan to find courts, coaches, classes, and games.
 
 | 日期 | PR | 內容 |
 |---|---|---|
+| 2026-10-05 | [#41](https://github.com/wutiger555/PIKYOO/pull/41) | **App 接真資料**：App 的球局、教練、教練頁改讀正式資料庫（跟網站同一份），下拉可重新整理，讀不到時可以點「再試一次」。我的課與我的頁說明登入即將推出 |
 | 2026-10-05 | [#40](https://github.com/wutiger555/PIKYOO/pull/40) | **App 開工（第 16 步）**：`app/` 建好 React Native + Expo App 骨架，iOS 原生分頁列（首頁、找教練、我的課、我的），用跟網站同一份示範資料顯示球局、教練、教練頁，在 iPhone 模擬器上確認。只改 App 或文件時，Vercel 不再重新部署網站 |
 | 2026-10-05 | [#39](https://github.com/wutiger555/PIKYOO/pull/39) | **B7 第二部分：管理頁**：「我的 → PIKYOO 管理」最上面看使用者、教練、球局、預約的數字，可以下架／恢復教練頁、下架球局（報名的人會收到通知）。B7 完成 |
 | 2026-10-05 | [#38](https://github.com/wutiger555/PIKYOO/pull/38) | **B7 第一部分：SEO**：sitemap、robots、教練／球場／球局頁的結構化資料與 canonical。開放真登入前不讓 Google 收錄（示範網站永遠不收錄）。**App 提前**：B7 完成就開始建 React Native + Expo App，與 B8 同時進行（PLAN D8、APP.md §8） |
