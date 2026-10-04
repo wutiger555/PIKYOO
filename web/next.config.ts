@@ -21,8 +21,19 @@ if (process.env.NEXT_PUBLIC_DATA_SOURCE === "live") {
   if (problems.length) throw new Error(`NEXT_PUBLIC_DATA_SOURCE=live, but:\n- ${problems.join("\n- ")}`);
 }
 
+// Uploaded coach photos are served from this project's public Storage buckets.
+const supabaseHost = (() => {
+  try {
+    return new URL((process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").trim()).hostname;
+  } catch {
+    return null;
+  }
+})();
+
 const nextConfig: NextConfig = {
-  /* config options here */
+  images: {
+    remotePatterns: supabaseHost ? [{ protocol: "https", hostname: supabaseHost, pathname: "/storage/v1/object/public/**" }] : [],
+  },
 };
 
 export default nextConfig;

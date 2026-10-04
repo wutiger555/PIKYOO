@@ -8,8 +8,10 @@ import { coachFromRows, type CoachCard } from "./live";
 // RLS lets the owner read and edit their row at any status; coaches_guard keeps status and approval for PIKYOO.
 
 export type CoachStatus = Enums<"coach_status">;
+/** A credential as its owner sees it, review status included (the public page shows verified ones only). */
+export interface MyCredential { id: string; type: Enums<"credential_type">; issuer: string; level: string; status: Enums<"verify_status"> }
 /** id: the coaches row (uuid); coach.id is the slug, as everywhere on screen */
-export interface MyCoach { id: string; status: CoachStatus; coach: Coach }
+export interface MyCoach { id: string; status: CoachStatus; coach: Coach; credentials: MyCredential[] }
 
 const MESSAGES: [RegExp, string][] = [
   [/coaches_slug_key|duplicate key.*slug/, "這個網址已經有人用了，換一個試試"],
@@ -31,7 +33,10 @@ export async function readMyCoach(sb: SupabaseClient<Database>, url: string, pro
   ]);
   if (creds.error) throw explain(creds.error.message);
   if (plans.error) throw explain(plans.error.message);
-  return { id, status: card.data.status!, coach: coachFromRows(url, card.data as CoachCard, creds.data, plans.data) };
+  return {
+    id, status: card.data.status!, coach: coachFromRows(url, card.data as CoachCard, creds.data, plans.data),
+    credentials: creds.data.map((x) => ({ id: x.id, type: x.type, issuer: x.issuer, level: x.level, status: x.status })),
+  };
 }
 
 /** 申請成為教練: a draft page with a slug (the public link) and a display name. */
@@ -54,6 +59,26 @@ export async function saveMyCoach(sb: SupabaseClient<Database>, url: string, id:
   if (keep.length) gone = gone.not("key", "in", `(${keep.map((k) => `"${k}"`).join(",")})`);
   const g = await gone;
   if (g.error) throw explain(g.error.message);
+  // DUPR is typed in the editor and self-reported (credentials_guard sets the status): replace it on save
+  const dupr = coach.creds.find((x) => x.issuer === "DUPR")?.level.trim();
+  const del = await sb.from("credentials").delete().eq("coach_id", id).eq("type", "dupr");
+  if (del.error) throw explain(del.error.message);
+  if (dupr) {
+    const ins = await sb.from("credentials").insert({ coach_id: id, type: "dupr", issuer: "DUPR", level: dupr });
+    if (ins.error) throw explain(ins.error.message);
+  }
+}
+
+/** 上傳證照送審: the scan is already in the private credentials bucket; PIKYOO checks it against the issuer's list. */
+export async function addCredential(sb: SupabaseClient<Database>, coachId: string, issuer: string, level: string, documentPath: string): Promise<void> {
+  const r = await sb.from("credentials").insert({ coach_id: coachId, type: "coach_cert", issuer: issuer.trim(), level: level.trim(), document_path: documentPath });
+  if (r.error) throw explain(r.error.message);
+}
+
+/** Withdraws a credential still waiting for review (or one that was rejected). */
+export async function removeCredential(sb: SupabaseClient<Database>, credentialId: string): Promise<void> {
+  const r = await sb.from("credentials").delete().eq("id", credentialId).in("status", ["pending", "rejected"]);
+  if (r.error) throw explain(r.error.message);
 }
 
 /** 送出審核: draft → pending. PIKYOO checks the page and credentials, then approves. */

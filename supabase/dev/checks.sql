@@ -99,6 +99,13 @@ begin
   assert test.fails($q$update public.coaches set status = 'suspended' where slug = 'mia'$q$) = 'coach status is set by PIKYOO', 'coach cannot change status';
   insert into public.credentials (coach_id, type, issuer, level, status) values (public.my_coach_id(), 'coach_cert', 'PPR', 'Certified', 'verified');
   assert (select status from public.credentials where issuer = 'PPR' and coach_id = public.my_coach_id()) = 'pending', 'new credentials wait for review';
+  insert into public.credentials (coach_id, type, issuer, level, status) values (public.my_coach_id(), 'dupr', 'DUPR', '4.3', 'verified');
+  assert (select status from public.credentials where type = 'dupr' and level = '4.3' and coach_id = public.my_coach_id()) = 'self_reported', 'DUPR stays self-reported';
+  -- uploads (B4): only into a folder named after yourself
+  insert into storage.objects (bucket_id, name) values ('coach-photos', test.uid('Mia 林')::text || '/cover.jpg');
+  insert into storage.objects (bucket_id, name) values ('credentials', test.uid('Mia 林')::text || '/cert.jpg');
+  assert test.fails(format('insert into storage.objects (bucket_id, name) values (%L, %L)', 'coach-photos', test.uid('趙柏宇')::text || '/x.jpg')) is not null,
+    'no uploads into someone else''s folder';
   insert into public.coach_pay_details (coach_id, details) values (public.my_coach_id(), '{"bank_transfer": "台新 812・1234567"}');
 end $$;
 reset role;
@@ -106,6 +113,7 @@ reset role;
 -- ── 小安 pays; group lesson end to end ──
 do $$ begin perform test.login('小安'); end $$;
 set role authenticated;
+do $$ begin assert (select count(*) from storage.objects where bucket_id = 'credentials') = 0, 'other people''s certificate scans are private'; end $$;
 do $$
 declare p uuid; g public.lesson_groups;
 begin
