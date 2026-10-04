@@ -1183,6 +1183,7 @@ export type Database = {
       }
     }
     Functions: {
+      admin_stats: { Args: never; Returns: Json }
       answer_question: {
         Args: { p_answer: string; p_question: string }
         Returns: undefined
@@ -1337,6 +1338,10 @@ export type Database = {
       }
       review_credential: {
         Args: { p_credential: string; p_verified: boolean }
+        Returns: undefined
+      }
+      set_coach_listed: {
+        Args: { p_coach: string; p_listed: boolean }
         Returns: undefined
       }
       submit_lesson_group: {

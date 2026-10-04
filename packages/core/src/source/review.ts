@@ -14,6 +14,7 @@ export interface CredentialToReview {
 const MESSAGES: [RegExp, string][] = [
   [/admins only|permission denied/, "只有 PIKYOO 管理員可以審核"],
   [/not waiting for review/, "這筆已經審核過了"],
+  [/nothing to change/, "狀態已經更新過了，重新整理看看"],
   [/not found/, "找不到這筆資料"],
 ];
 const explain = (message: string) => new Error(MESSAGES.find(([re]) => re.test(message))?.[1] ?? `沒有成功（${message}）`);
@@ -53,5 +54,36 @@ export async function reviewCoach(sb: SupabaseClient<Database>, coachId: string,
 
 export async function reviewCredential(sb: SupabaseClient<Database>, credentialId: string, verified: boolean): Promise<void> {
   const r = await sb.rpc("review_credential", { p_credential: credentialId, p_verified: verified });
+  if (r.error) throw explain(r.error.message);
+}
+
+// 營運 (B7): the numbers at the top of the admin page, and 下架 for coach pages and games.
+
+export interface AdminStats {
+  users: number; users_7d: number; coaches_public: number; coaches_pending: number;
+  games_upcoming: number; joins_7d: number; bookings_7d: number; confirmed_7d: number;
+}
+export interface ListedCoach { id: string; slug: string; name: string; listed: boolean }
+export interface GameToManage { id: string; startsAt: string; venue: string; host: string }
+
+export async function adminOverview(sb: SupabaseClient<Database>): Promise<{ stats: AdminStats; coaches: ListedCoach[]; games: GameToManage[] }> {
+  const [stats, coaches, games] = await Promise.all([
+    sb.rpc("admin_stats"),
+    sb.from("coaches").select("id, slug, name, status").in("status", ["approved", "suspended"]).order("name"),
+    sb.from("games").select("id, starts_at, location_text, profiles(display_name)").is("cancelled_at", null)
+      .gte("starts_at", new Date().toISOString()).order("starts_at").limit(100),
+  ]);
+  if (stats.error) throw explain(stats.error.message);
+  if (coaches.error) throw explain(coaches.error.message);
+  if (games.error) throw explain(games.error.message);
+  return {
+    stats: stats.data as unknown as AdminStats,
+    coaches: coaches.data.map((c) => ({ id: c.id, slug: c.slug, name: c.name, listed: c.status === "approved" })),
+    games: games.data.map((g) => ({ id: g.id, startsAt: g.starts_at, venue: g.location_text ?? "", host: g.profiles?.display_name ?? "" })),
+  };
+}
+
+export async function setCoachListed(sb: SupabaseClient<Database>, coachId: string, listed: boolean): Promise<void> {
+  const r = await sb.rpc("set_coach_listed", { p_coach: coachId, p_listed: listed });
   if (r.error) throw explain(r.error.message);
 }

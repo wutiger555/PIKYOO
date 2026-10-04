@@ -31,6 +31,7 @@ export function describe(kind: string, p: Payload): Pick<Notice, "title" | "body
     case "question_answered": return { title: "教練回覆了你的問題", href: "/coaches" };
     case "coach_approved": return { title: "你的教練頁已公開", body: "學生現在找得到你了", href: "/coach/profile" };
     case "coach_returned": return { title: "教練頁需要再補充", body: p.note || "請依說明修改後再送出審核", href: "/coach/profile" };
+    case "coach_suspended": return { title: "你的教練頁已暫停公開", body: "有疑問請回覆 PIKYOO 官方帳號", href: "/coach/profile" };
     case "credential_reviewed": return { title: p.verified ? "證照已查驗" : "證照未通過查驗", href: "/coach/profile" };
     case "group_joined": return { title: "有朋友加入你的揪團", href: "/me/lessons" };
     case "group_expired": return { title: "揪團人數不足，已取消", href: "/me/lessons" };
@@ -46,7 +47,7 @@ export const LINE_KINDS = new Set([
   "booking_requested", "booking_confirmed", "booking_declined", "booking_cancelled", "booking_expired",
   "payment_reported", "payment_received", "payment_not_received",
   "game_promoted", "game_changed", "game_cancelled", "game_removed",
-  "coach_approved", "coach_returned", "lesson_reminder", "game_reminder",
+  "coach_approved", "coach_returned", "coach_suspended", "lesson_reminder", "game_reminder",
   "line_test", // queued by hand (select public.notify(<user>, 'line_test', '{}')) to check the LINE setup
 ]);
 

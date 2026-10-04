@@ -349,6 +349,39 @@ do $$ begin
   assert exists (select 1 from public.notifications where user_id = test.uid('Mia 林') and kind = 'credential_reviewed'), 'certificate review is notified';
 end $$;
 
+-- ── 營運 (B7): numbers and 下架 are admin only; a page taken down disappears for visitors ──
+do $$ begin perform test.login('小安'); end $$;
+set role authenticated;
+do $$ begin
+  assert test.fails('select public.admin_stats()') = 'admins only', 'a non-admin cannot read the numbers';
+  assert test.fails(format('select public.set_coach_listed(%L, false)', (select id from public.coaches where slug = 'yezi'))) = 'admins only', 'a non-admin cannot take a page down';
+end $$;
+reset role;
+do $$ begin perform test.login('阿何'); end $$;
+set role authenticated;
+do $$
+declare cid uuid := (select id from public.coaches where slug = 'yezi');
+begin
+  assert (public.admin_stats() ->> 'coaches_public')::int > 0, 'an admin reads the numbers';
+  perform public.set_coach_listed(cid, false);
+  assert test.fails(format('select public.set_coach_listed(%L, false)', cid)) = 'nothing to change', 'already taken down';
+end $$;
+reset role;
+do $$ begin perform test.visitor(); end $$;
+set role anon;
+do $$ begin
+  assert not exists (select 1 from public.coach_cards where slug = 'yezi'), 'visitors no longer see a page taken down';
+end $$;
+reset role;
+do $$ begin perform test.login('阿何'); end $$;
+set role authenticated;
+do $$ begin perform public.set_coach_listed((select id from public.coaches where slug = 'yezi'), true); end $$;
+reset role;
+do $$ begin
+  assert (select status = 'approved' from public.coaches where slug = 'yezi'), '恢復 puts it back';
+  assert exists (select 1 from public.notifications where user_id = test.uid('葉子') and kind = 'coach_suspended'), 'the coach is told';
+end $$;
+
 -- ── 預約 (B5): open sessions, and an expired request stops holding its seat ──
 do $$ begin perform test.visitor(); end $$;
 set role anon;

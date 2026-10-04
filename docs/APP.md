@@ -150,7 +150,7 @@ android/ 用 Android Studio 產生 .aab → 上傳 Google Play Console
 
 對應 PRD §12 的 Phase 4。是順序與進入條件，不是固定日期。**每完成一步就在這裡打勾**（狀態：✅ 完成、👉 進行中、⬜ 未開始）。
 
-> **目前位置（2026-10-05）：第二階段第 10 步，B7 營運後台與 SEO。** B6 完成：站內通知、LINE 推播（官方帳號「PIKYOO 匹友」）、前一天提醒都已上線；Email 等需要時再接。正式站啟用真登入等 owner 決定時間（`BACKEND.md` §13）。
+> **目前位置（2026-10-05）：第四階段第 16 步，建 Expo App 骨架**（owner 決定提前，與第二階段第 11 步 B8 封測同時進行）。B1–B7 完成：網站登入、球局、教練、預約、收款、通知、管理、SEO 都是真的。B8 等 owner 提供真實球場與第一批教練、決定開放真登入的時間；第三階段上架帳號請 owner 現在就申請（`BACKEND.md` §13）。
 
 ### 第一階段：決定方向
 
@@ -171,8 +171,8 @@ App 等網站資料穩定才開工，避免兩邊一起追資料結構變動。B
 | 6 | B3 球局：報名、候補、開團、編輯、分享、兩週列表 | Claude | ✅ [#20](https://github.com/wutiger555/PIKYOO/pull/20)–[#24](https://github.com/wutiger555/PIKYOO/pull/24) |
 | 7 | B4 教練頁與後台：申請、編輯存檔、照片與證照上傳、管理員審核 | owner＋Claude | ✅ [#25](https://github.com/wutiger555/PIKYOO/pull/25)–[#27](https://github.com/wutiger555/PIKYOO/pull/27) |
 | 8 | B5 預約、問與答、收款（揪朋友一起上先只在 demo，PLAN D7） | Claude | ✅ [#29](https://github.com/wutiger555/PIKYOO/pull/29)–[#32](https://github.com/wutiger555/PIKYOO/pull/32) |
-| 9 | B6 通知：LINE 推播、Email、提醒 | owner＋Claude | ✅ |
-| 10 | B7 營運後台與 SEO | Claude | 👉 |
+| 9 | B6 通知：LINE 推播、Email、提醒 | owner＋Claude | ✅ [#34](https://github.com/wutiger555/PIKYOO/pull/34)–[#37](https://github.com/wutiger555/PIKYOO/pull/37) |
+| 10 | B7 營運後台與 SEO | Claude | ✅ [#38](https://github.com/wutiger555/PIKYOO/pull/38)、[#39](https://github.com/wutiger555/PIKYOO/pull/39) |
 | 11 | B8 封測：清掉示範資料、放入真實球場 | owner＋Claude | ⬜ |
 
 ### 第三階段：上架前準備（需要等審核，**現在就可以和第二階段同時進行**）
@@ -190,7 +190,7 @@ App 等網站資料穩定才開工，避免兩邊一起追資料結構變動。B
 
 | # | 步驟 | 負責 | 狀態 |
 |---|---|---|---|
-| 16 | 建 `app/`（Expo 骨架），接 `packages/core`，先用假資料跑 | Claude | ⬜ |
+| 16 | 建 `app/`（Expo 骨架），接 `packages/core`，先用假資料跑 | Claude | 👉 |
 | 17 | 登入：LINE＋Apple 登入，跟網站共用帳號 | Claude | ⬜ |
 | 18 | 學員核心畫面：找教練、教練頁、預約、我的課程、揪團、問與答（§4） | Claude | ⬜ |
 | 19 | 推播通知（§5） | Claude | ⬜ |
