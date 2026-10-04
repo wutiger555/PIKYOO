@@ -8,7 +8,7 @@ import { GameTicket } from "@/components/pk/Ticket";
 import { useToast } from "@/components/pk/Toast";
 import { TopNav } from "@/components/pk/TopNav";
 import { Img } from "@/features/coaches/CoachCard";
-import { LESSONS } from "@pikyoo/core/data/games";
+import { lessons as demoLessons } from "@pikyoo/core/data/games";
 import { useAllGames } from "@/lib/demo-store";
 import { money } from "@pikyoo/core/format";
 import type { Court } from "@pikyoo/core/types";
@@ -27,7 +27,7 @@ const BOOK_CTA: Record<Court["booking"], string> = {
 export function CourtDetailScreen({ court: c }: { court: Court }) {
   const toast = useToast();
   const games = useAllGames().filter((g) => g.courtId === c.id);
-  const lessons = LESSONS.filter((l) => l.courtId === c.id);
+  const lessons = demoLessons().filter((l) => l.courtId === c.id);
   const maps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.address)}`;
   const bookBtn =
     c.booking === "免預約" ? (

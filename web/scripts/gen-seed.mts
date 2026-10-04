@@ -5,7 +5,9 @@
 import { writeFileSync } from "node:fs";
 import { COACHES, initialGroups, initialRequests } from "../../packages/core/src/data/coaches.ts";
 import { COURTS } from "../../packages/core/src/data/courts.ts";
-import { GAMES } from "../../packages/core/src/data/games.ts";
+import { demoGames } from "../../packages/core/src/data/games.ts";
+
+const GAMES = demoGames(); // dated from the pinned demo day (PIKYOO_DEMO_TODAY in package.json), so seed.sql stays the same
 import { initialQuestions } from "../../packages/core/src/data/questions.ts";
 import { LESSON_DB, PAY_DB, planKind, UNIT_DB } from "../../packages/core/src/source/coach-rows.ts";
 

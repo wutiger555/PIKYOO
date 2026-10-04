@@ -8,7 +8,7 @@ import { Crumbs } from "@/components/pk/Crumbs";
 import { AppBar, SoonButton } from "@/components/pk/Shell";
 import { TopNav } from "@/components/pk/TopNav";
 import { useToast } from "@/components/pk/Toast";
-import { BOOKING_DAYS } from "@pikyoo/core/data/coaches";
+import { bookingDays } from "@pikyoo/core/data/coaches";
 import { useCoach, useDemo } from "@/lib/demo-store";
 import { money } from "@pikyoo/core/format";
 import type { Group, GroupMember } from "@pikyoo/core/types";
@@ -20,7 +20,7 @@ const DEMO_FRIENDS: GroupMember[] = [{ name: "Jason", initial: "J" }, { name: "å
 export function useGroupView(g: Group | undefined) {
   const c = useCoach(g?.coachId ?? "");
   const plan = c?.profile.plans.find((x) => x.id === g?.planId);
-  const day = BOOKING_DAYS.find((d) => d.key === g?.dayKey);
+  const day = bookingDays().find((d) => d.key === g?.dayKey);
   const range = plan?.group ?? { min: 2, max: 4 };
   return { c, plan, day, range, n: g?.members.length ?? 0 };
 }

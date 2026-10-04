@@ -24,7 +24,7 @@
 |---|---|---|
 | 網址（建議） | `pikyoo-demo.vercel.app`（新開的 Vercel 專案，同一個 repo） | `pikyoo.vercel.app` |
 | 開關 `NEXT_PUBLIC_DATA_SOURCE` | `demo` | `live`（接好之前維持 `demo`） |
-| 資料 | 現在的假資料（`packages/core/src/data/`），存在瀏覽器記憶體，重新整理就還原 | Supabase 資料庫 |
+| 資料 | 現在的假資料（`packages/core/src/data/`），存在瀏覽器記憶體，重新整理就還原。**日期跟著今天走**（`data/today.ts`，2026-10-04）：球局是今天／明天／接下來的週末，預約是明天起 7 天，任何時候展示都不會出現過去的日期；所以 demo 每次請求都重新產生頁面。seed 產生器固定在 2026-09-29（`PIKYOO_DEMO_TODAY`），`seed.sql` 不會每天變 | Supabase 資料庫 |
 | 登入 | 假登入（「我的」裡的登出／登入切換） | LINE 登入（LIFF） |
 | 用途 | 簡報、招商、**向教練展示（owner 2026-10-04：之後的教練 demo 用這個網址）**、給投資人看 | 真的使用者 |
 

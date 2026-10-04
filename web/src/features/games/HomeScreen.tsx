@@ -8,7 +8,7 @@ import { PkMark } from "@/components/pk/Logo";
 import { LoginSheet } from "@/components/pk/LoginSheet";
 import { TabBar } from "@/components/pk/Shell";
 import { TopNav } from "@/components/pk/TopNav";
-import { BOOKING_DAYS, slotsFor } from "@pikyoo/core/data/coaches";
+import { bookingDays, slotsFor } from "@pikyoo/core/data/coaches";
 import { shortAreas } from "@pikyoo/core/data/courts";
 import { useCatalog, useCoaches, useDemo } from "@/lib/demo-store";
 import { LEVELS, money } from "@pikyoo/core/format";
@@ -45,7 +45,7 @@ function MemberHome() {
   const gMin = gathering ? coaches.find((c) => c.id === gathering.coachId)?.profile.plans.find((p) => p.id === gathering.planId)?.group?.min ?? 2 : 0;
 
   // Soonest open sessions across coaches whose level range fits me.
-  const soon = BOOKING_DAYS.flatMap((d) =>
+  const soon = bookingDays().flatMap((d) =>
     fit.flatMap((c) => slotsFor(c, d).filter(([, left]) => left > 0).map(([t, left]) => ({ c, d, t, left, plan: c.profile.plans[0] }))),
   ).slice(0, 4);
 

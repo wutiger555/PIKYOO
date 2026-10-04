@@ -9,7 +9,7 @@ import { Icon, type IconName } from "@/components/pk/Icon";
 import { LoginSheet } from "@/components/pk/LoginSheet";
 import { useToast } from "@/components/pk/Toast";
 import { TopNav } from "@/components/pk/TopNav";
-import { BOOKING_DAYS, slotsFor } from "@pikyoo/core/data/coaches";
+import { bookingDays, slotsFor } from "@pikyoo/core/data/coaches";
 import { useCoach, useDemo } from "@/lib/demo-store";
 import { levelText, money } from "@pikyoo/core/format";
 import type { Coach, TimelineItem } from "@pikyoo/core/types";
@@ -50,7 +50,7 @@ export function CoachPublicPage({ coach: c, preview }: { coach: Coach; preview?:
   const [cover, ...gallery] = p.photos;
   const tiles = gallery.slice(0, 2);
   const groupPlan = p.plans.find((x) => x.group);
-  const days = BOOKING_DAYS.map((d) => ({ d, slots: slotsFor(c, d) })).filter((x) => x.slots.length);
+  const days = bookingDays().map((d) => ({ d, slots: slotsFor(c, d) })).filter((x) => x.slots.length);
   /** Scrolls the phone scroller, or the window on the desktop page (where the scroller doesn't scroll). */
   const jump = (id: string) => {
     const el = scroller.current;

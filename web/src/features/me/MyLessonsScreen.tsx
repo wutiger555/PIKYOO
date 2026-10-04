@@ -7,7 +7,8 @@ import { Icon } from "@/components/pk/Icon";
 import { Crumbs } from "@/components/pk/Crumbs";
 import { SoonButton, TabBar } from "@/components/pk/Shell";
 import { TopNav } from "@/components/pk/TopNav";
-import { BOOKING_DAYS } from "@pikyoo/core/data/coaches";
+import { bookingDays } from "@pikyoo/core/data/coaches";
+import { demoDate } from "@pikyoo/core/data/today";
 import { useCoaches, useDemo } from "@/lib/demo-store";
 import { money } from "@pikyoo/core/format";
 import type { MyBooking } from "@pikyoo/core/source/bookings";
@@ -21,8 +22,8 @@ const GROUP_STATE: Record<Group["status"], [string, "almost" | "info" | "open" |
   gathering: ["揪團中", "almost"], requested: ["等教練確認", "info"], confirmed: ["教練已確認", "open"], declined: ["教練婉拒", "ended"],
 };
 
-// Mock history until bookings come from Supabase.
-const HISTORY = [{ coachId: "mia", plan: "新手體驗課", when: "9/20（日）10:00" }];
+// Mock history for the demo: a lesson nine days ago.
+const history = () => [{ coachId: "mia", plan: "新手體驗課", when: `${demoDate(-9)}10:00` }];
 
 const LIVE_STATE: Record<MyBooking["state"], [string, "almost" | "info" | "open" | "ended"]> = {
   pending: ["待教練確認", "almost"], confirmed: ["教練已確認", "open"], done: ["已上課", "ended"],
@@ -54,7 +55,7 @@ export function MyLessonsScreen({ live }: { live?: MyBooking[] }) {
   const gathering = groups.filter((g) => g.status === "gathering" || g.status === "requested");
   const confirmedGroups = groups.filter((g) => g.status === "confirmed");
   const [tab, setTab] = useState<Tab>(gathering.length && !booking.slot ? "group" : "next");
-  const day = (key: string) => BOOKING_DAYS.find((d) => d.key === key)!;
+  const day = (key: string) => bookingDays().find((d) => d.key === key)!;
 
   const groupRow = (g: Group) => {
     const c = coach(g.coachId);
@@ -110,7 +111,7 @@ export function MyLessonsScreen({ live }: { live?: MyBooking[] }) {
   } else {
     body = (
       <div className="stack">
-        {HISTORY.map((h) => {
+        {history().map((h) => {
           const c = coach(h.coachId);
           return (
             <div key={h.when} className="lesson">

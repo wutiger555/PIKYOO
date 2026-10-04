@@ -9,7 +9,7 @@ import { Crumbs } from "@/components/pk/Crumbs";
 import { AppBar, SoonButton } from "@/components/pk/Shell";
 import { useToast } from "@/components/pk/Toast";
 import { TopNav } from "@/components/pk/TopNav";
-import { BOOKING_DAYS } from "@pikyoo/core/data/coaches";
+import { bookingDays } from "@pikyoo/core/data/coaches";
 import type { MyBooking } from "@pikyoo/core/source/bookings";
 import { cancelBookingAction } from "@/lib/bookings";
 import { newBooking, useCoach, useDemo } from "@/lib/demo-store";
@@ -54,7 +54,7 @@ export function BookingStatusScreen({ demo, live }: { demo?: BookingStatus; live
   }
 
   const { plan, total } = bookingTotal(b, p);
-  const day = live?.day ?? BOOKING_DAYS.find((d) => d.key === b.dayKey)!;
+  const day = live?.day ?? bookingDays().find((d) => d.key === b.dayKey)!;
   const st = b.status;
   const ended = live && live.state !== "pending" && live.state !== "confirmed" ? live.state : null;
   const idx = ended === "done" ? 4 : { pending: 1, confirmed: 2, reported: 2, paid: 3 }[st];

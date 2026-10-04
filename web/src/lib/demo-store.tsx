@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
-import { BOOKING_DAYS, getCoach, initialGroups, initialPayments, initialRequests } from "@pikyoo/core/data/coaches";
+import { bookingDays, getCoach, initialGroups, initialPayments, initialRequests } from "@pikyoo/core/data/coaches";
 import { ME } from "@pikyoo/core/data/games";
 import { initialQuestions } from "@pikyoo/core/data/questions";
 import { LEVELS } from "@pikyoo/core/format";
@@ -116,7 +116,7 @@ function useDemoValue(catalog: Catalog, me: Me | null | undefined) {
       const plan = c?.profile.plans.find((x) => x.id === g?.planId);
       if (!g || !c || !plan) return p;
       const n = g.members.length;
-      const day = BOOKING_DAYS.find((d) => d.key === g.dayKey);
+      const day = bookingDays().find((d) => d.key === g.dayKey);
       const req: BookingRequest = {
         id: "r-" + g.id, groupId: g.id, headcount: n, initial: g.members[0].initial, name: `${g.host} 等 ${n} 人`, level: "新手",
         firstTime: true, when: day ? `${day.date}（${day.weekday}）${g.slot}` : g.slot, plan: `${plan.name} ×${n}（揪團）`, amount: plan.price * n,

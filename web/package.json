@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "db:seed": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/gen-seed.mts",
+    "db:seed": "PIKYOO_DEMO_TODAY=2026-09-29 node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/gen-seed.mts",
     "db:check": "bash ../supabase/dev/check.sh"
   },
   "dependencies": {
