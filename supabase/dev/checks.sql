@@ -219,6 +219,13 @@ do $$ begin
   assert (select line_user_id from public.profile_private where id = '00000000-0000-0000-0000-00000000a002') = 'Ureal',
     'the LINE id set by the server is stored';
 end $$;
+-- what Supabase Auth actually does: insert first, then write app_metadata
+insert into auth.users (id, raw_user_meta_data) values ('00000000-0000-0000-0000-00000000a003', '{"name": "後補 LINE"}');
+update auth.users set raw_app_meta_data = '{"provider": "email", "line_user_id": "Ulater"}' where id = '00000000-0000-0000-0000-00000000a003';
+do $$ begin
+  assert (select line_user_id from public.profile_private where id = '00000000-0000-0000-0000-00000000a003') = 'Ulater',
+    'a LINE id written to app_metadata after sign-up is stored too';
+end $$;
 
 -- ── 首次登入設定: people save their own profile and private settings, nobody else's ──
 do $$ begin perform test.login('小安'); end $$;
