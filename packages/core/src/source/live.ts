@@ -114,7 +114,7 @@ function toCoach(photo: Photo, c: CoachCard, creds: Tables<"credentials">[], pla
   };
 }
 
-function toGame(g: GameCard, group: DayGroup, roster: { name: string; host: boolean }[]): Game {
+function toGame(g: GameCard, group: DayGroup, roster: { name: string; host: boolean }[], viewerWaiting: boolean): Game {
   const s = tpe(g.starts_at);
   const name = (n: string) => ({ name: n, initial: initial(n) });
   return {
@@ -125,13 +125,13 @@ function toGame(g: GameCard, group: DayGroup, roster: { name: string; host: bool
     // host first, then everyone else in sign-up order
     participants: [...roster.filter((p) => p.host), ...roster.filter((p) => !p.host)].map((p) => name(p.name)),
     host: { ...name(g.host_name), summary: `開過 ${g.host_game_count} 團` },
-    fee: g.fee, payNote: g.fee_note, beginnerFriendly: g.beginner_friendly, waitlist: g.waitlist_count, notes: g.notes,
+    fee: g.fee, payNote: g.fee_note, beginnerFriendly: g.beginner_friendly, waitlist: g.waitlist_count - (viewerWaiting ? 1 : 0), notes: g.notes,
     courtId: g.court_slug ?? undefined, cancelHours: g.cancel_hours,
   };
 }
 
 export const createLive = ({ url, publishableKey }: LiveConfig): DataSource => ({
-  async catalog(): Promise<Catalog> {
+  async catalog(viewer?: string): Promise<Catalog> {
     const photo = photoUrl(url);
     const now = Date.now();
     const cal = calendar(now);
@@ -148,17 +148,26 @@ export const createLive = ({ url, publishableKey }: LiveConfig): DataSource => (
       const group = cal.groupOf(g.starts_at);
       return group ? [{ g, group }] : [];
     });
-    const roster = shown.length
-      ? await sb.from("game_participants").select("game_id, user_id, guest_name, profiles!game_participants_user_id_fkey(display_name)")
-          .in("game_id", shown.map((x) => x.g.id)).eq("status", "joined").order("joined_at").then(ok)
-      : [];
+    const ids = shown.map((x) => x.g.id);
+    const [roster, own] = ids.length
+      ? await Promise.all([
+          sb.from("game_participants").select("game_id, user_id, guest_name, profiles!game_participants_user_id_fkey(display_name)")
+            .in("game_id", ids).eq("status", "joined").order("joined_at").then(ok),
+          viewer
+            ? sb.from("game_participants").select("game_id, status").in("game_id", ids).eq("user_id", viewer)
+                .in("status", ["joined", "waitlisted"]).then(ok)
+            : [],
+        ])
+      : [[], []];
+    const mine = Object.fromEntries(own.map((p) => [p.game_id, p.status === "joined" ? ("joined" as const) : ("wait" as const)]));
     return {
       courts: courts.map((c, i) => toCourt(photo, c, i)),
       coaches: (coaches as CoachCard[]).map((c) =>
         toCoach(photo, c, creds.filter((x) => x.coach_id === c.id), plans.filter((p) => p.coach_id === c.id), cal.at)),
-      games: shown.map(({ g, group }) => toGame(g, group, roster.filter((p) => p.game_id === g.id)
-        .map((p) => ({ name: p.guest_name ?? p.profiles?.display_name ?? "", host: p.user_id === g.host_id })))),
+      games: shown.map(({ g, group }) => toGame(g, group, roster.filter((p) => p.game_id === g.id && (!viewer || p.user_id !== viewer))
+        .map((p) => ({ name: p.guest_name ?? p.profiles?.display_name ?? "", host: p.user_id === g.host_id })), mine[g.id] === "wait")),
       dayGroups: cal.labels,
+      mine,
     };
   },
 });

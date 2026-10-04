@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
+import { cache } from "react";
 import { readMe, type Me } from "@pikyoo/core/source/me";
 import type { Database } from "@pikyoo/core/source/db.types";
 import { realAuth, SUPABASE_KEY, SUPABASE_URL } from "./env";
@@ -32,10 +33,10 @@ export function supabaseAdmin() {
 }
 
 /** The signed-in person, null for a visitor, undefined when sign-in is the demo toggle (see env.ts). */
-export async function getMe(): Promise<Me | null | undefined> {
+export const getMe = cache(async (): Promise<Me | null | undefined> => {
   if (!realAuth) return undefined;
   const sb = await supabaseServer();
   const { data } = await sb.auth.getClaims();
   const id = data?.claims.sub;
   return id ? readMe(sb, id) : null;
-}
+});

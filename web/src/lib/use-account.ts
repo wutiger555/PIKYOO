@@ -41,6 +41,7 @@ export function useAccount() {
     async deleteAccount() {
       await deleteAccountAction();
       await lineLogout();
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- full load on purpose, as in login()
       location.assign("/");
     },
     async saveProfile(p: Profile) {

@@ -60,7 +60,7 @@ interface DemoState {
 const init = (catalog: Catalog, me: Me | null | undefined): DemoState => ({
   signedIn: me === undefined || !!me,
   profile: me?.profile ?? { name: ME.name, level: ME.level, areas: ["大安區", "信義區", "中山區"] },
-  mine: {},
+  mine: catalog.mine ?? {},
   hosted: [],
   popSeat: null,
   gameFilters: emptyGameFilters(),
