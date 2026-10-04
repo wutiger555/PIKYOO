@@ -26,6 +26,7 @@ A pickleball platform for Taiwan to find courts, coaches, classes, and games.
 
 | 日期 | PR | 內容 |
 |---|---|---|
+| 2026-10-04 | #PR | 文件：新增 [PAYMENTS.md](docs/PAYMENTS.md)，比較藍新、統一金流、綠界、TapPay、LINE Pay、街口、Stripe 的費率、能不能讓錢直接進教練帳戶、教練開通要準備什麼、開發維護成本與口碑。建議主選藍新平台商方案，備選統一金流 PAYUNi |
 | 2026-10-04 | [#32](https://github.com/wutiger555/PIKYOO/pull/32) | **B5 第三部分：收款接上資料庫（B5 完成）**：教練在「收款」填 LINE Pay 連結或銀行帳號；確認預約後，學生只看到自己選的付款方式資訊，付好按「我已付款」，教練按「確認收到」。錢直接進教練自己的帳戶 |
 | 2026-10-04 | [#31](https://github.com/wutiger555/PIKYOO/pull/31) | **B5 第二部分：問與答接上資料庫**：教練頁的問答改讀資料庫（正式站現在就是）；真登入後學生提問、教練在後台回覆都會存下來，回覆後才公開。留電話、LINE 的內容一樣會被擋 |
 | 2026-10-04 | [#30](https://github.com/wutiger555/PIKYOO/pull/30) | **示範網站的日期改成從當天開始**：球局列表是今天、明天和接下來的週末，預約時段是明天起 7 天，教練卡的「最近可約」、教練後台的預約申請也都跟著今天走。之後任何時候向教練展示，都不會看到過去的日期 |

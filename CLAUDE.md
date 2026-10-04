@@ -4,7 +4,7 @@ A pickleball platform for 雙北 (Taipei / New Taipei): find coaches and book le
 
 - **Live:** <https://pikyoo.vercel.app> is `main`, auto-deployed by Vercel (project `pikyoo`, root directory `web/`).
 - **Code:** npm workspaces from the repo root (run `npm install` there; the only lockfile is the root `package-lock.json`). `packages/core/` is plain TypeScript shared with the future app (`docs/APP.md` §3): types, mock data, `format`, `contact`; import it as `@pikyoo/core/<file>`. `web/` (Next.js App Router + TypeScript + Tailwind v4). Its own notes are in `web/CLAUDE.md` / `web/AGENTS.md`. Read the Next.js docs in `web/node_modules/next/dist/docs/` before relying on memory, because this Next.js version has breaking changes.
-- **Docs:** `docs/PRD.md` (spec, F-numbers), `docs/PLAN.md` (strategy), `docs/BUSINESS_MODEL.md` (pricing and revenue draft), `docs/DESIGN_SYSTEM.md`, `docs/DESKTOP.md` (desktop layouts and decisions), `docs/PHOTOS.md` (photo sources), `docs/SETUP.md`, `docs/BACKEND.md` (real data: architecture, schema, stages), `docs/APP.md` (native app plan: React Native + Expo, Phase 4).
+- **Docs:** `docs/PRD.md` (spec, F-numbers), `docs/PLAN.md` (strategy), `docs/BUSINESS_MODEL.md` (pricing and revenue draft), `docs/DESIGN_SYSTEM.md`, `docs/DESKTOP.md` (desktop layouts and decisions), `docs/PHOTOS.md` (photo sources), `docs/SETUP.md`, `docs/BACKEND.md` (real data: architecture, schema, stages), `docs/APP.md` (native app plan: React Native + Expo, Phase 4), `docs/PAYMENTS.md` (Taiwan payment providers compared; NewebPay platform plan first).
 - **Database:** `supabase/` at the repo root: `migrations/` (tables, RLS, RPC), `seed.sql` (generated), `dev/` (plain-Postgres checks).
 
 ## Working with the owner
