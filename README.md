@@ -26,6 +26,7 @@ A pickleball platform for Taiwan to find courts, coaches, classes, and games.
 
 | 日期 | PR | 內容 |
 |---|---|---|
+| 2026-10-05 | [#38](https://github.com/wutiger555/PIKYOO/pull/38) | **B7 第一部分：SEO**：sitemap、robots、教練／球場／球局頁的結構化資料與 canonical。開放真登入前不讓 Google 收錄（示範網站永遠不收錄）。**App 提前**：B7 完成就開始建 React Native + Expo App，與 B8 同時進行（PLAN D8、APP.md §8） |
 | 2026-10-05 | [#37](https://github.com/wutiger555/PIKYOO/pull/37) | **B6 第三部分：前一天提醒**：每天晚上 8 點，明天有課或有球局的人會在站內與 LINE 收到提醒（同一堂課只提醒一次）。B6 通知完成 |
 | 2026-10-05 | [#36](https://github.com/wutiger555/PIKYOO/pull/36) | LINE 通知測試訊息（設定檢查用），並讓通知頁的「加 PIKYOO 官方帳號好友」按鈕上線 |
 | 2026-10-04 | [#35](https://github.com/wutiger555/PIKYOO/pull/35) | **B6 第二部分：LINE 推播**：預約申請／確認／婉拒、候補遞補、球局變更、付款確認、教練頁審核結果會由官方帳號「PIKYOO 匹友」傳到 LINE（要先加好友，通知頁有按鈕）。逾 48 小時沒回覆的預約現在會自動逾時並通知 |
