@@ -1306,6 +1306,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      open_sessions: {
+        Args: { p_coach_slug: string; p_days?: number }
+        Returns: {
+          plan_key: string
+          seats_left: number
+          starts_at: string
+        }[]
+      }
       payment_instructions: { Args: { p_payment: string }; Returns: Json }
       promote_waitlist: { Args: { p_game: string }; Returns: number }
       report_payment: {

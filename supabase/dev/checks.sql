@@ -348,3 +348,25 @@ do $$ begin
   assert exists (select 1 from public.notifications where user_id = test.uid('葉子') and kind = 'coach_approved'), 'approval is notified';
   assert exists (select 1 from public.notifications where user_id = test.uid('Mia 林') and kind = 'credential_reviewed'), 'certificate review is notified';
 end $$;
+
+-- ── 預約 (B5): open sessions, and an expired request stops holding its seat ──
+do $$ begin perform test.visitor(); end $$;
+set role anon;
+do $$ begin
+  assert (select count(*) from public.open_sessions('mia', 7)) > 0, 'a visitor sees the coach''s open sessions';
+  assert not exists (select 1 from public.open_sessions('mia', 7) where starts_at <= now()), 'no sessions in the past';
+  assert not exists (select 1 from public.open_sessions('mia', 7) s
+                     where public.tpe_hhmi(s.starts_at) <> all (select jsonb_array_elements_text(c.availability -> public.tpe_weekday(s.starts_at))
+                                                                from public.coaches c where c.slug = 'mia')), 'only the coach''s weekly open times';
+end $$;
+reset role;
+do $$
+declare pl uuid := (select p.id from public.coach_plans p join public.coaches c on c.id = p.coach_id where c.slug = 'mia' and p.key = 'p1');
+        ts timestamptz := test.next_at('二', '19:30');
+        before int;
+begin
+  before := public.lesson_seats_left(pl, ts);
+  insert into public.lesson_bookings (coach_id, plan_id, student_id, starts_at, headcount, pay_method, amount, expires_at)
+  select coach_id, pl, test.uid('小安'), ts, 1, 'cash', 1500, now() - interval '1 minute' from public.coach_plans where id = pl;
+  assert public.lesson_seats_left(pl, ts) = before, 'an expired request does not hold a seat';
+end $$;

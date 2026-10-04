@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Status } from "@/components/pk/Badges";
 import { Icon } from "@/components/pk/Icon";
@@ -9,7 +10,10 @@ import { AppBar, SoonButton } from "@/components/pk/Shell";
 import { useToast } from "@/components/pk/Toast";
 import { TopNav } from "@/components/pk/TopNav";
 import { BOOKING_DAYS } from "@pikyoo/core/data/coaches";
+import type { MyBooking } from "@pikyoo/core/source/bookings";
+import { cancelBookingAction } from "@/lib/bookings";
 import { newBooking, useCoach, useDemo } from "@/lib/demo-store";
+import { realAuth } from "@/lib/env";
 import type { BookingStatus } from "@pikyoo/core/types";
 import { money } from "@pikyoo/core/format";
 import { Photo } from "./CoachCard";
@@ -18,10 +22,13 @@ import { bookingTotal } from "./BookScreen";
 const STEPS = ["送出申請", "教練確認", "付款", "上課"];
 
 /** docs/PRD.md §6.3 — 送出申請 → 教練確認 → 付款 → 上課. Payment happens only after the coach confirms.
- *  Desktop: progress and the current step on the left, the lesson summary on the right. */
-export function BookingStatusScreen({ demo }: { demo?: BookingStatus }) {
+ *  Desktop: progress and the current step on the left, the lesson summary on the right.
+ *  With real sign-in `live` is the student's booking from the database (null: none), and it can be cancelled here. */
+export function BookingStatusScreen({ demo, live }: { demo?: BookingStatus; live?: MyBooking | null }) {
   const toast = useToast();
-  const { booking: b, setBooking } = useDemo();
+  const router = useRouter();
+  const { booking: demoBooking, setBooking } = useDemo();
+  const b = realAuth && live ? live.booking : demoBooking;
   const [last5, setLast5] = useState("40213");
   // /me/booking?demo=pending|confirmed seeds Mia's trial lesson so the flow index can deep-link a state.
   useEffect(() => {
@@ -30,7 +37,7 @@ export function BookingStatusScreen({ demo }: { demo?: BookingStatus }) {
   const c = useCoach(b.coachId);
   const p = c?.profile;
 
-  if (!c || !p || !b.slot) {
+  if (!c || !p || !b.slot || (realAuth && !live)) {
     return (
       <>
         <AppBar title="我的預約" back="/me/lessons" />
@@ -47,21 +54,54 @@ export function BookingStatusScreen({ demo }: { demo?: BookingStatus }) {
   }
 
   const { plan, total } = bookingTotal(b, p);
-  const day = BOOKING_DAYS.find((d) => d.key === b.dayKey)!;
+  const day = live?.day ?? BOOKING_DAYS.find((d) => d.key === b.dayKey)!;
   const st = b.status;
-  const idx = { pending: 1, confirmed: 2, reported: 2, paid: 3 }[st];
+  const ended = live && live.state !== "pending" && live.state !== "confirmed" ? live.state : null;
+  const idx = ended === "done" ? 4 : { pending: 1, confirmed: 2, reported: 2, paid: 3 }[st];
+  const cancel = async () => {
+    if (!live || !confirm("確定取消這堂課的預約？教練會收到通知。")) return;
+    const r = await cancelBookingAction(live.id);
+    if (r.error) return toast(r.error);
+    toast("已取消預約");
+    router.refresh();
+  };
   const setStatus = (status: typeof st) => setBooking((prev) => ({ ...prev, status }));
 
   let main: React.ReactNode;
-  if (st === "pending") {
+  if (ended) {
+    const [tone, label, title, text] = {
+      declined: ["ended", "教練婉拒", "這個時段教練不方便", "換一個時段再送一次，或看看其他教練。"],
+      expired: ["ended", "已逾時", "教練沒有在 48 小時內回覆", "這筆預約已自動取消，沒有任何費用。換個時段再試試。"],
+      cancelled: ["ended", "已取消", "預約已取消", "需要的話可以重新預約。"],
+      done: ["open", "已上課", "這堂課結束了", "希望上得開心！"],
+    }[ended] as ["ended" | "open", string, string, string];
+    main = (
+      <div className="state-card">
+        <Status tone={tone}>{label}</Status>
+        <h1>{title}</h1>
+        <p className="text-muted">{text}</p>
+        {ended !== "done" && <Link className="btn btn-primary" href={`/coaches/${c.id}/book?plan=${b.planId}`}>重新選時段</Link>}
+      </div>
+    );
+  } else if (realAuth && st === "confirmed") {
+    main = (
+      <div className="state-card">
+        <Status tone="open">教練已確認</Status>
+        <h1>預約成功！</h1>
+        <p className="text-muted">付款方式：{b.pay}。付款資訊下一版會直接顯示在這裡，現在請依教練說明付款。</p>
+      </div>
+    );
+  } else if (st === "pending") {
     main = (
       <div className="state-card">
         <Status tone="almost">待教練確認</Status>
         <h1>預約已送出</h1>
         <p className="text-muted">{c.name} {p.reply}。確認後會用 LINE 通知你，48 小時未處理會自動取消。</p>
-        <button className="btn btn-ghost demo-btn" onClick={() => { setStatus("confirmed"); toast(`${c.name.split(" ")[0]} 已確認你的預約`); }}>
-          <Icon name="info" size={16} />Demo：模擬教練按下確認
-        </button>
+        {!realAuth && (
+          <button className="btn btn-ghost demo-btn" onClick={() => { setStatus("confirmed"); toast(`${c.name.split(" ")[0]} 已確認你的預約`); }}>
+            <Icon name="info" size={16} />Demo：模擬教練按下確認
+          </button>
+        )}
       </div>
     );
   } else if (st === "confirmed") {
@@ -131,14 +171,14 @@ export function BookingStatusScreen({ demo }: { demo?: BookingStatus }) {
         <Crumbs items={[["首頁", "/"], ["我的課", "/me/lessons"], ["我的預約"]]} />
         <div className="bk-cols">
         <div className="bk-main">
-        <ol className="tracker">
+        {!(ended && ended !== "done") && <ol className="tracker">
           {STEPS.map((s, i) => (
             <li key={s} className={i < idx ? "done" : i === idx ? "now" : ""}>
               <i>{i < idx && <Icon name="check" size={12} stroke={3} />}</i>
               <span>{s}</span>
             </li>
           ))}
-        </ol>
+        </ol>}
         {main}
         </div>
         <aside className="bk-aside">
@@ -162,7 +202,9 @@ export function BookingStatusScreen({ demo }: { demo?: BookingStatus }) {
         {st === "paid" && (
           <SoonButton className="btn btn-secondary btn-block btn-lg" style={{ marginTop: 16 }} msg="已加入行事曆"><Icon name="cal" size={18} />加入行事曆</SoonButton>
         )}
-        <SoonButton className="btn btn-ghost btn-block" style={{ marginTop: 8 }} msg="改期或取消（依教練取消規則）">改期或取消</SoonButton>
+        {realAuth
+          ? !ended && <button className="btn btn-ghost btn-block" style={{ marginTop: 8 }} onClick={cancel}>取消預約</button>
+          : <SoonButton className="btn btn-ghost btn-block" style={{ marginTop: 8 }} msg="改期或取消（依教練取消規則）">改期或取消</SoonButton>}
         </aside>
         </div>
       </div>

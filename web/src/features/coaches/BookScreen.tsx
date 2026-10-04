@@ -8,8 +8,11 @@ import { LoginSheet } from "@/components/pk/LoginSheet";
 import { AppBar } from "@/components/pk/Shell";
 import { useToast } from "@/components/pk/Toast";
 import { TopNav } from "@/components/pk/TopNav";
-import { BOOKING_DAYS, PAY_HINT, slotsFor } from "@pikyoo/core/data/coaches";
+import { PAY_HINT } from "@pikyoo/core/data/coaches";
+import { slotKey, type BookingCalendar } from "@pikyoo/core/source/bookings";
+import { requestBookingAction } from "@/lib/bookings";
 import { newBooking, useCoach, useDemo } from "@/lib/demo-store";
+import { realAuth } from "@/lib/env";
 import { money } from "@pikyoo/core/format";
 import type { Booking, Coach, CoachProfile } from "@pikyoo/core/types";
 import { Photo } from "./CoachCard";
@@ -23,29 +26,33 @@ export const bookingTotal = (b: Booking, p: CoachProfile) => {
 };
 
 /** F3-7 預約：一頁完成 — ① plan ② day + slot ③ alone or 揪朋友 + note ④ pay method; sticky live total.
- *  Desktop: the steps on the left, a sticky order summary on the right. A visitor is asked to sign in on submit. */
-export function BookScreen({ coach, planId, friends, dayKey, slot }: { coach: Coach; planId: string; friends?: boolean; dayKey?: string; slot?: string }) {
+ *  Desktop: the steps on the left, a sticky order summary on the right. A visitor is asked to sign in on submit.
+ *  `calendar`: the mock week in the demo, the coach's real open sessions when live (lib/source.ts). 揪朋友一起上 is demo-only for now (PLAN D7). */
+export function BookScreen({ coach, planId, friends, dayKey, slot, calendar }: { coach: Coach; planId: string; friends?: boolean; dayKey?: string; slot?: string; calendar: BookingCalendar }) {
   const router = useRouter();
   const toast = useToast();
   const { setBooking, addGroup, profile, signedIn } = useDemo();
   const [login, setLogin] = useState(false);
   const c = useCoach(coach.id) ?? coach;
   const p = c.profile;
+  const slotsOf = (pid: string, dk: string) => calendar.slots[slotKey(pid, dk)] ?? [];
   const [b, setB] = useState<Booking>(() => {
     const first = p.plans.find((x) => x.id === planId) ?? p.plans[0];
-    const days = BOOKING_DAYS.filter((d) => slotsFor(c, d).some((s) => s[1] > 0));
+    const days = calendar.days.filter((d) => slotsOf(first.id, d.key).some((s) => s[1] > 0));
     const base = newBooking(c.id, first.id);
     const picked = days.find((d) => d.key === dayKey);
-    const pickedSlot = picked && slotsFor(c, picked).some(([t, left]) => t === slot && left > 0) ? slot! : null;
-    return { ...base, note: friends ? "" : base.note, dayKey: picked?.key ?? days.find((d) => d.key === "d5")?.key ?? days[0]?.key ?? "d1", slot: pickedSlot };
+    const pickedSlot = picked && slotsOf(first.id, picked.key).some(([t, left]) => t === slot && left > 0) ? slot! : null;
+    return { ...base, note: friends || realAuth ? "" : base.note, dayKey: picked?.key ?? days.find((d) => d.key === "d5")?.key ?? days[0]?.key ?? calendar.days[0]?.key ?? "", slot: pickedSlot };
   });
   const set = (patch: Partial<Booking>) => setB((prev) => ({ ...prev, ...patch }));
   const { plan, total } = bookingTotal(b, p);
-  const [withFriends, setWithFriends] = useState(!!friends && !!plan.group);
-  const group = withFriends && plan.group ? plan.group : null;
+  const canFriends = !realAuth && !!plan.group;
+  const [withFriends, setWithFriends] = useState(!!friends && canFriends);
+  const group = withFriends && canFriends ? plan.group! : null;
   const perHead = plan.unit === "/人";
-  const day = BOOKING_DAYS.find((d) => d.key === b.dayKey)!;
-  const slots = slotsFor(c, day);
+  const day = calendar.days.find((d) => d.key === b.dayKey) ?? calendar.days[0];
+  const slots = day ? slotsOf(b.planId, day.key) : [];
+  const [sending, setSending] = useState(false);
 
   const startGroup = () => {
     const id = newGroupId();
@@ -56,13 +63,22 @@ export function BookScreen({ coach, planId, friends, dayKey, slot }: { coach: Co
     toast("揪團開好了，把邀請連結傳給朋友");
     router.push(`/groups/${id}`);
   };
-  const send = () => {
-    setBooking({ ...b, status: "pending" });
-    router.push("/me/booking");
+  const send = async () => {
+    if (!realAuth) {
+      setBooking({ ...b, status: "pending" });
+      return router.push("/me/booking");
+    }
+    setSending(true);
+    const r = await requestBookingAction(b);
+    if (r.error) {
+      setSending(false);
+      return toast(r.error);
+    }
+    router.push(`/me/booking?id=${r.id}`);
   };
   const submit = () => (!signedIn ? setLogin(true) : group ? startGroup() : send());
   const cta = !signedIn ? "登入後送出" : group ? "開始揪團" : "送出預約";
-  const when = b.slot ? `${day.date}（${day.weekday}）${b.slot}` : null;
+  const when = b.slot && day ? `${day.date}（${day.weekday}）${b.slot}` : null;
 
   return (
     <>
@@ -78,9 +94,9 @@ export function BookScreen({ coach, planId, friends, dayKey, slot }: { coach: Co
           <div className="seg-list" role="radiogroup">
             {p.plans.map((x) => (
               <label key={x.id} className={`radio-card${x.id === b.planId ? " on" : ""}`}>
-                <input type="radio" name="plan" checked={x.id === b.planId} onChange={() => { set({ planId: x.id }); if (!x.group) setWithFriends(false); }} />
+                <input type="radio" name="plan" checked={x.id === b.planId} onChange={() => { set({ planId: x.id, slot: slotsOf(x.id, b.dayKey).some(([t, left]) => t === b.slot && left > 0) ? b.slot : null }); if (!x.group) setWithFriends(false); }} />
                 <span className="dot" />
-                <span style={{ flex: 1 }}><b>{x.name}</b><small>{x.durationMin} 分・{x.size}{x.group ? "・可揪朋友" : ""}</small></span>
+                <span style={{ flex: 1 }}><b>{x.name}</b><small>{x.durationMin} 分・{x.size}{x.group && !realAuth ? "・可揪朋友" : ""}</small></span>
                 <span className="num" style={{ fontSize: 18, fontWeight: 600 }}>
                   {money(x.price)}<small style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "var(--color-muted)" }}>{x.unit}</small>
                 </span>
@@ -92,8 +108,8 @@ export function BookScreen({ coach, planId, friends, dayKey, slot }: { coach: Co
         <section className="blk">
           <h3 className="step-h"><span className="num">2</span>選時段</h3>
           <div className="dstrip">
-            {BOOKING_DAYS.map((d) => {
-              const open = slotsFor(c, d).filter((s) => s[1] > 0).length;
+            {calendar.days.map((d) => {
+              const open = slotsOf(b.planId, d.key).filter((s) => s[1] > 0).length;
               return (
                 <button key={d.key} className={`dcell${d.key === b.dayKey ? " on" : ""}`} disabled={!open} onClick={() => set({ dayKey: d.key, slot: null })} aria-pressed={d.key === b.dayKey}>
                   <small>週{d.weekday}</small>
@@ -119,8 +135,8 @@ export function BookScreen({ coach, planId, friends, dayKey, slot }: { coach: Co
         </section>
 
         <section className="blk">
-          <h3 className="step-h"><span className="num">3</span>{plan.group ? "自己上，還是揪朋友？" : "人數與備註"}</h3>
-          {plan.group && (
+          <h3 className="step-h"><span className="num">3</span>{canFriends ? "自己上，還是揪朋友？" : "人數與備註"}</h3>
+          {canFriends && (
             <div className="seg" style={{ display: "flex", marginBottom: 12 }} role="radiogroup" aria-label="預約方式">
               <label className="seg-opt"><input type="radio" name="who" checked={!withFriends} onChange={() => setWithFriends(false)} />自己預約</label>
               <label className="seg-opt"><input type="radio" name="who" checked={withFriends} onChange={() => setWithFriends(true)} /><Icon name="users" size={16} />揪朋友一起上</label>
@@ -171,7 +187,7 @@ export function BookScreen({ coach, planId, friends, dayKey, slot }: { coach: Co
               <dt>付款</dt><dd>{b.pay}</dd>
             </dl>
             <div className="bk-total"><span>{group ? "每人" : "合計"}</span><b className="num">{money(group ? plan.price : total)}</b></div>
-            <button className="btn btn-primary btn-lg btn-block" disabled={!b.slot} onClick={submit}>{b.slot ? cta : "請先選時段"}</button>
+            <button className="btn btn-primary btn-lg btn-block" disabled={!b.slot || sending} onClick={submit}>{b.slot ? (sending ? "送出中…" : cta) : "請先選時段"}</button>
             <p className="fine">教練確認後才需要付款，現在不會扣款。{p.policy}</p>
           </div>
         </aside>
@@ -182,7 +198,7 @@ export function BookScreen({ coach, planId, friends, dayKey, slot }: { coach: Co
           <span className="sticky-cta-price">{group ? <>{money(plan.price)}<small style={{ fontSize: 14, fontFamily: "var(--font-body)", color: "var(--color-on-carbon-muted)" }}> /人</small></> : money(total)}</span>
           <span className="sticky-cta-sub">{when ? `${when}・${plan.name}` : "請選時段"}</span>
         </div>
-        <button className="btn btn-primary btn-lg" disabled={!b.slot} onClick={submit}>{cta}</button>
+        <button className="btn btn-primary btn-lg" disabled={!b.slot || sending} onClick={submit}>{sending ? "送出中…" : cta}</button>
       </div>
       {login && <LoginSheet onClose={() => setLogin(false)} reason={`登入後就能送出 ${c.name} 的預約`} />}
     </>
