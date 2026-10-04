@@ -151,7 +151,7 @@ android/ 用 Android Studio 產生 .aab → 上傳 Google Play Console
 
 對應 PRD §12 的 Phase 4。是順序與進入條件，不是固定日期。**每完成一步就在這裡打勾**（狀態：✅ 完成、👉 進行中、⬜ 未開始）。
 
-> **目前位置（2026-10-05）：第四階段第 17 步，App 登入。** 第 16 步完成：`app/`（Expo SDK 57、Expo Router、iOS 原生分頁列）跑首頁、找教練、教練頁、球局、我的課。**App 已接真資料**（[#41](https://github.com/wutiger555/PIKYOO/pull/41)）：跟正式網站同一個資料庫、同一份 `@pikyoo/core/source/live`，下拉重新整理；`EXPO_PUBLIC_DATA_SOURCE=demo` 切回示範資料。登入、預約、報名等需要登入的功能等第 17 步（要 owner 的 Apple 開發者帳號）。與第二階段第 11 步 B8 同時進行；第三階段上架帳號請 owner 現在就申請（`BACKEND.md` §13）。
+> **目前位置（2026-10-05）：第四階段第 17 步，App 登入。** 第 16 步完成：`app/`（Expo SDK 57、Expo Router、iOS 原生分頁列）跑首頁、找教練、教練頁、球局、我的課。**App 已接真資料**（[#41](https://github.com/wutiger555/PIKYOO/pull/41)）：跟正式網站同一個資料庫、同一份 `@pikyoo/core/source/live`，下拉重新整理；`EXPO_PUBLIC_DATA_SOURCE=demo` 切回示範資料。登入、預約、報名等需要登入的功能等第 17 步（要 owner 的 Apple 開發者帳號）。**上課／找教練與網站對齊**（[#43](https://github.com/wutiger555/PIKYOO/pull/43)）：找教練（「我是【程度】，想上【類型】」、已認證／新手友善、標準教練卡、最多比較 3 位）、教練頁逐段對應網站（封面、碳黑資訊卡、上課照片、段落導覽、課程與價目、揪團、關於我、匹克球檔案、可約時段、經歷、評價、問與答、授課地點、訪客登入鎖、底部預約列）、預約四步驟、我的預約（送出→教練確認→付款→上課）、我的課。找教練的篩選規則搬到 `@pikyoo/core/coach-filters`，網站與 App 共用。正式資料的訪客看到與網站相同的公開範圍；預約、發問在 App 登入前會帶到網站登入。示範模式（`EXPO_PUBLIC_DATA_SOURCE=demo`）一開始就是登入狀態，可以走完整個預約流程。與第二階段第 11 步 B8 同時進行；第三階段上架帳號請 owner 現在就申請（`BACKEND.md` §13）。
 
 ### 第一階段：決定方向
 

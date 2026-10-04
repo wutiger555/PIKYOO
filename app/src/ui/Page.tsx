@@ -1,4 +1,5 @@
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text } from "react-native";
+import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Catalog } from "@pikyoo/core/source/types";
 import { useCatalog } from "@/data/catalog";
 import { s } from "./parts";
@@ -7,12 +8,17 @@ import { color } from "./theme";
 /** A scrolling page with its big title; insets follow the notch and the native tab bar. Pull down to reload the data. */
 export function Page({ title, children }: { title?: string; children: React.ReactNode }) {
   const { refreshing, refresh } = useCatalog();
+  const insets = useSafeAreaInsets();
   return (
+    <View style={{ flex: 1 }}>
     <ScrollView style={s.screen} contentContainerStyle={s.content} contentInsetAdjustmentBehavior="automatic"
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} />}>
       {title && <Text style={{ fontSize: 30, fontWeight: "800", marginTop: 8 }}>{title}</Text>}
       {children}
     </ScrollView>
+    {/* tab pages have no navigation bar: keep the status bar readable over scrolled content */}
+    <View pointerEvents="none" style={{ position: "absolute", top: 0, left: 0, right: 0, height: insets.top, backgroundColor: "rgba(242,243,239,.94)" }} />
+    </View>
   );
 }
 

@@ -6,21 +6,11 @@ import { Icon } from "@/components/pk/Icon";
 import { LevelPicker } from "@/components/pk/LevelPicker";
 import { Sheet, SoonButton, TabBar } from "@/components/pk/Shell";
 import { TopNav } from "@/components/pk/TopNav";
-import { isCertified } from "@pikyoo/core/data/coaches";
-import { emptyCoachFilters, useCoaches, useDemo, type CoachFilters } from "@/lib/demo-store";
+import { filterCoaches } from "@pikyoo/core/coach-filters";
+import { emptyCoachFilters, useCoaches, useDemo } from "@/lib/demo-store";
 import { LEVELS, levelText, money } from "@pikyoo/core/format";
 import type { Coach, LessonType } from "@pikyoo/core/types";
 import { CoachCard, Photo } from "./CoachCard";
-
-export function filterCoaches(list: Coach[], f: CoachFilters) {
-  return list.filter((c) => {
-    if (f.level != null && (f.level < c.levelMin || f.level > c.levelMax)) return false;
-    if (f.type && !c.types.includes(f.type)) return false;
-    if (f.cert && !isCertified(c)) return false;
-    if (f.beg && !c.beginnerFriendly) return false;
-    return true;
-  });
-}
 
 /** F3-3 找教練: "我是【程度】，想上【類型】" need sentence, standard cards, compare up to 3.
  *  Desktop (`.dk`, ≥1024px): top nav, the sentence as a header, filter sidebar, two-column card grid. */
