@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Barlow, Barlow_Condensed, Noto_Sans_TC } from "next/font/google";
 import { DemoProvider } from "@/lib/demo-store";
 import { getCatalog } from "@/lib/source";
+import { SITE_URL, indexable } from "@/lib/site";
 import { getMe } from "@/lib/supabase";
 import "./globals.css";
 
@@ -11,6 +12,8 @@ const barlowCondensed = Barlow_Condensed({ variable: "--font-barlow-condensed", 
 const notoTC = Noto_Sans_TC({ variable: "--font-noto-tc", weight: ["400", "500", "700", "900"], preload: false });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
+  robots: indexable ? undefined : { index: false, follow: false },
   title: { default: "PIKYOO 匹友｜找場、找課、找球友", template: "%s｜PIKYOO 匹友" },
   description: "雙北匹克球開團、找課、找場平台。Find your court. Find your coach. Find your game.",
 };
