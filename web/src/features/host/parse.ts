@@ -45,15 +45,18 @@ export function parseGameText(text: string, { courts, dayGroups }: Pick<Catalog,
   const sure = new Set<DraftField>();
   const t = text.replace(/[：]/g, ":").replace(/[～〜~－—]/g, "-");
 
-  // date: 今天 / 明天 / 週六 / 週日, or a date that is in the demo calendar
-  const day = t.match(/今天|今晚|明天|明晚|週六|周六|星期六|週日|周日|星期日|禮拜六|禮拜天/)?.[0];
+  // date: 今天 / 明天 / 週X (the next one in the list), or a date that is in the list
+  const keys = Object.keys(dayGroups);
+  const day = t.match(/今天|今晚|明天|明晚|(?:週|周|星期|禮拜)[一二三四五六日天]/)?.[0];
   if (day) {
-    d.group = /今/.test(day) ? "today" : /明/.test(day) ? "tomorrow" : /六/.test(day) ? "sat" : "sun";
-    sure.add("group");
+    const wd = day.slice(-1).replace("天", "日");
+    const hit = /今/.test(day) ? keys[0] : /明/.test(day) ? keys[1]
+      : keys.find((k, i) => i > 0 && (dayGroups[k].startsWith(`週${wd}`) || dayGroups[k].includes(`（${wd}）`)));
+    if (hit) { d.group = hit; sure.add("group"); }
   }
   const md = t.match(/(\d{1,2})\/(\d{1,2})/)?.[0];
   if (md) {
-    const hit = (Object.keys(dayGroups) as DayGroup[]).find((k) => dayGroups[k].includes(md));
+    const hit = keys.find((k) => new RegExp(` ${md}(?!\\d)`).test(dayGroups[k])); // 10/3 is not 10/31
     if (hit && (!d.group || d.group === hit)) { d.group = hit; sure.add("group"); }
     else if (hit) d.group = hit; // weekday and date disagree → keep unsure
   }

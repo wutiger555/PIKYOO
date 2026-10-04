@@ -41,24 +41,26 @@ const tpe = (t: string | number | Date) => {
   };
 };
 
-/** The list shows today, tomorrow and the coming weekend (2–8 days out), as the demo does. 開團 picks from the same days. */
+/** How far ahead the games list (and 開團) goes. */
+export const GAME_DAYS = 14;
+
+/** The list's days: today and the next two weeks, keyed by Taipei date. 開團 picks from the same days. */
 export function calendar(now: number) {
   const at = (n: number) => tpe(now + n * 864e5);
-  const next = (wd: Weekday) => [2, 3, 4, 5, 6, 7, 8].find((n) => at(n).wd === wd)!;
-  const offset: Record<DayGroup, number> = { today: 0, tomorrow: 1, sat: next("六"), sun: next("日") };
-  const labels: Record<DayGroup, string> = {
-    today: `今天 ${at(0).md}（${at(0).wd}）`, tomorrow: `明天 ${at(1).md}（${at(1).wd}）`,
-    sat: `週六 ${at(offset.sat).md}`, sun: `週日 ${at(offset.sun).md}`,
+  const dayLabel = (n: number) => (n === 0 ? "今天" : n === 1 ? "明天" : `週${at(n).wd}`);
+  const labels: Record<DayGroup, string> = Object.fromEntries(Array.from({ length: GAME_DAYS }, (_, n) =>
+    [at(n).ymd, n < 2 ? `${dayLabel(n)} ${at(n).md}（${at(n).wd}）` : `${dayLabel(n)} ${at(n).md}`]));
+  /** days from today, or undefined outside the list */
+  const offsetOf = (iso: string) => {
+    const n = tpe(iso).day - at(0).day;
+    return n >= 0 && n < GAME_DAYS ? n : undefined;
   };
-  const groupOf = (iso: string) => (Object.keys(offset) as DayGroup[]).find((k) => tpe(iso).day - at(0).day === offset[k]);
-  /** 開團: a day group plus HH:MM in Taipei → an ISO timestamp */
-  const isoAt = (group: DayGroup, hhmm: string) => new Date(`${at(offset[group]).ymd}T${hhmm}:00+08:00`).toISOString();
-  return { labels, groupOf, at, isoAt };
+  /** 開團: a day plus HH:MM in Taipei → an ISO timestamp */
+  const isoAt = (group: DayGroup, hhmm: string) => new Date(`${group}T${hhmm}:00+08:00`).toISOString();
+  return { labels, offsetOf, dayLabel, at, isoAt };
 }
 
 type Photo = ReturnType<typeof photoUrl>;
-
-const DAY_LABEL: Record<DayGroup, string> = { today: "今天", tomorrow: "明天", sat: "週六", sun: "週日" };
 
 // — rows —
 
@@ -121,11 +123,11 @@ function toCoach(photo: Photo, c: CoachCard, creds: Tables<"credentials">[], pla
 
 type Seat = { id: string; name: string; host: boolean };
 
-function toGame(g: GameCard, group: DayGroup, roster: Seat[], viewerWaiting: boolean, hosting: boolean): Game {
+function toGame(g: GameCard, dayLabel: string, roster: Seat[], viewerWaiting: boolean, hosting: boolean): Game {
   const s = tpe(g.starts_at);
   const name = (n: string) => ({ name: n, initial: initial(n) });
   return {
-    id: g.id, group, dayLabel: DAY_LABEL[group], date: s.md, startsAt: s.hhmm, endsAt: tpe(g.ends_at).hhmm,
+    id: g.id, group: s.ymd, dayLabel, weekday: s.wd, date: s.md, startsAt: s.hhmm, endsAt: tpe(g.ends_at).hhmm,
     venue: g.court_name ?? g.location_text, district: g.district,
     courtKind: g.court_kind ? `${KIND[g.court_kind]} ${g.court_count} 面` : "", address: g.address,
     levelMin: g.level_min as Level, levelMax: g.level_max as Level, capacity: g.capacity,
@@ -150,11 +152,11 @@ export const createLive = ({ url, publishableKey }: LiveConfig): DataSource => (
       sb.from("credentials").select("*").order("created_at").then(ok),
       sb.from("coach_plans").select("*").is("archived_at", null).order("sort").then(ok),
       sb.from("game_cards").select("*").is("cancelled_at", null).gt("ends_at", new Date(now).toISOString())
-        .lt("starts_at", new Date(now + 9 * 864e5).toISOString()).order("starts_at").then(ok),
+        .lt("starts_at", new Date(now + (GAME_DAYS + 1) * 864e5).toISOString()).order("starts_at").then(ok),
     ]);
     const shown = (games as GameCard[]).flatMap((g) => {
-      const group = cal.groupOf(g.starts_at);
-      return group ? [{ g, group }] : [];
+      const n = cal.offsetOf(g.starts_at);
+      return n === undefined ? [] : [{ g, dayLabel: cal.dayLabel(n) }];
     });
     const ids = shown.map((x) => x.g.id);
     const [roster, own] = ids.length
@@ -175,11 +177,11 @@ export const createLive = ({ url, publishableKey }: LiveConfig): DataSource => (
       courts: courts.map((c, i) => toCourt(photo, c, i)),
       coaches: (coaches as CoachCard[]).map((c) =>
         toCoach(photo, c, creds.filter((x) => x.coach_id === c.id), plans.filter((p) => p.coach_id === c.id), cal.at)),
-      games: shown.map(({ g, group }) => {
+      games: shown.map(({ g, dayLabel }) => {
         const mineHere = hosting.includes(g.id);
         const seats = roster.filter((p) => p.game_id === g.id && (!viewer || p.user_id !== viewer || mineHere))
           .map((p) => ({ id: p.id, name: p.guest_name ?? p.profiles?.display_name ?? "", host: p.user_id === g.host_id }));
-        return toGame(g, group, seats, mine[g.id] === "wait", mineHere);
+        return toGame(g, dayLabel, seats, mine[g.id] === "wait", mineHere);
       }),
       dayGroups: cal.labels,
       mine,

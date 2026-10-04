@@ -5,7 +5,8 @@
 /** Index into LEVELS: 0 新手 · 1 2.0 · 2 2.5 · 3 3.0 · 4 3.5 · 5 4.0 · 6 4.5+ */
 export type Level = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
-export type DayGroup = "today" | "tomorrow" | "sat" | "sun";
+/** A day in the games list, in display order: "today" … "sun" in the demo, a Taipei date (YYYY-MM-DD) in live mode. */
+export type DayGroup = string;
 
 export interface Host {
   name: string;
@@ -28,6 +29,8 @@ export interface Game {
   group: DayGroup;
   /** 今天 / 明天 / 週六 … */
   dayLabel: string;
+  /** for the 週末 filter (a Saturday can be 今天) */
+  weekday: Weekday;
   date: string;
   startsAt: string;
   endsAt: string;
