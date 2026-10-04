@@ -22,7 +22,7 @@ const RECORD = { played: 12, attended: 11, late: 1, noShow: 0 };
 /** 我的: profile, my games (joined / waitlist / hosted), bookings, attendance record, settings. */
 export function MeScreen() {
   const toast = useToast();
-  const { profile, mine, signedIn } = useDemo();
+  const { profile, mine, signedIn, isAdmin } = useDemo();
   const hosted = useHostedGames();
   const account = useAccount();
   const [login, setLogin] = useState(false);
@@ -103,6 +103,13 @@ export function MeScreen() {
               <span style={{ flex: 1 }}>我是教練：教練後台</span>
               <Icon name="right" size={18} />
             </Link>
+            {isAdmin && (
+              <Link className="row-item" href="/admin">
+                <Icon name="medal" size={22} />
+                <span style={{ flex: 1 }}>PIKYOO 審核：教練頁與證照</span>
+                <Icon name="right" size={18} />
+              </Link>
+            )}
             <button className="row-item" onClick={() => (signedIn ? account.logout().then(() => toast(account.real ? "已登出" : "已登出，現在看到的是訪客畫面")) : setLogin(true))}>
               <Icon name="user" size={22} />
               <span style={{ flex: 1 }}>{signedIn ? (account.real ? "登出" : "登出（Demo：看訪客畫面）") : "登入／註冊"}</span>

@@ -1322,6 +1322,14 @@ export type Database = {
         }
         Returns: string
       }
+      review_coach: {
+        Args: { p_approve: boolean; p_coach: string; p_note?: string }
+        Returns: undefined
+      }
+      review_credential: {
+        Args: { p_credential: string; p_verified: boolean }
+        Returns: undefined
+      }
       submit_lesson_group: {
         Args: {
           p_group: string

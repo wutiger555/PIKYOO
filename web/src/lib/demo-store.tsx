@@ -40,6 +40,8 @@ export const newBooking = (coachId = "mia", planId = "trial"): Booking => ({
 interface DemoState {
   /** false = visitor: coach pages show only the basics and ask to sign in (LINE login in the real app) */
   signedIn: boolean;
+  /** PIKYOO staff (real sign-in only): shows 審核 in 我的 */
+  isAdmin: boolean;
   profile: Profile;
   mine: Record<string, MyGameStatus>;
   /** games I opened via 開團 in the demo, newest first (live: catalog.hosting) */
@@ -61,6 +63,7 @@ interface DemoState {
 /** me: the real signed-in person (null = visitor); undefined = demo sign-in, which starts signed in as 小安. */
 const init = (catalog: Catalog, me: Me | null | undefined): DemoState => ({
   signedIn: me === undefined || !!me,
+  isAdmin: !!me?.isAdmin,
   profile: me?.profile ?? { name: ME.name, level: ME.level, areas: ["大安區", "信義區", "中山區"] },
   mine: catalog.mine ?? {},
   hosted: [],

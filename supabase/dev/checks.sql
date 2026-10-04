@@ -320,3 +320,31 @@ begin
   assert test.fails(format($q$update public.games set notes = '改回來' where id = %L$q$, g)) = 'game cancelled', 'a cancelled game cannot be edited';
 end $$;
 reset role;
+
+-- ── 審核 (B4): only admins approve coach pages and certificates; the coach is notified ──
+insert into public.coaches (profile_id, slug, name, status) values (test.uid('葉子'), 'yezi', '葉子教練', 'pending');
+update public.profile_private set is_admin = true where id = test.uid('阿何');
+do $$ begin perform test.login('小安'); end $$;
+set role authenticated;
+do $$ begin
+  assert test.fails(format('select public.review_coach(%L, true)', (select id from public.coaches where slug = 'yezi'))) = 'admins only',
+    'a non-admin cannot approve a coach';
+end $$;
+reset role;
+do $$ begin perform test.login('阿何'); end $$;
+set role authenticated;
+do $$
+declare cid uuid := (select id from public.coaches where slug = 'yezi');
+        cred uuid := (select id from public.credentials where issuer = 'PPR' and status = 'pending' limit 1);
+begin
+  perform public.review_coach(cid, true);
+  assert (select status = 'approved' and approved_at is not null from public.coaches where id = cid), 'an admin approves a coach page';
+  assert test.fails(format('select public.review_coach(%L, false)', cid)) = 'not waiting for review', 'only pages under review are reviewed';
+  perform public.review_credential(cred, true);
+  assert (select status = 'verified' and reviewed_by = test.uid('阿何') from public.credentials where id = cred), 'an admin verifies a certificate';
+end $$;
+reset role;
+do $$ begin
+  assert exists (select 1 from public.notifications where user_id = test.uid('葉子') and kind = 'coach_approved'), 'approval is notified';
+  assert exists (select 1 from public.notifications where user_id = test.uid('Mia 林') and kind = 'credential_reviewed'), 'certificate review is notified';
+end $$;

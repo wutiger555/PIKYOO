@@ -22,8 +22,13 @@ const MESSAGES: [RegExp, string][] = [
 ];
 const explain = (message: string) => new Error(MESSAGES.find(([re]) => re.test(message))?.[1] ?? `沒有成功，請稍後再試（${message}）`);
 
-export async function readMyCoach(sb: SupabaseClient<Database>, url: string, profileId: string): Promise<MyCoach | null> {
-  const card = await sb.from("coach_cards").select("*").eq("profile_id", profileId).maybeSingle();
+export const readMyCoach = (sb: SupabaseClient<Database>, url: string, profileId: string) => readCoach(sb, url, "profile_id", profileId);
+
+/** Any coach page by its slug, at any status the reader may see (an admin previewing a page under review). */
+export const readCoachBySlug = (sb: SupabaseClient<Database>, url: string, slug: string) => readCoach(sb, url, "slug", slug);
+
+async function readCoach(sb: SupabaseClient<Database>, url: string, column: "profile_id" | "slug", value: string): Promise<MyCoach | null> {
+  const card = await sb.from("coach_cards").select("*").eq(column, value).maybeSingle();
   if (card.error) throw explain(card.error.message);
   if (!card.data) return null;
   const id = card.data.id!;
