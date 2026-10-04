@@ -263,3 +263,52 @@ begin
     'the host cannot remove themselves';
 end $$;
 reset role;
+
+-- ── 編輯球局: the host edits their own game; people signed up hear about a new time, place or fee ──
+do $$ begin perform test.login('葉子'); end $$;
+set role authenticated;
+insert into public.games (host_id, location_text, starts_at, ends_at, level_min, level_max, capacity)
+values (test.uid('葉子'), '編輯測試', now() + interval '2 days', now() + interval '2 days 2 hours', 1, 3, 2);
+do $$ begin perform test.login('小安'); end $$;
+select public.join_game((select id from public.games where location_text = '編輯測試'));
+do $$ begin perform test.login('阿何'); end $$;
+do $$ begin assert public.join_game((select id from public.games where location_text = '編輯測試')) = 'waitlisted', 'the edit game is full'; end $$;
+do $$ begin perform test.login('小安'); end $$;
+do $$
+declare n int;
+begin
+  update public.games set notes = '不是我的' where location_text = '編輯測試';
+  get diagnostics n = row_count; assert n = 0, 'only the host edits a game';
+end $$;
+do $$ begin perform test.login('葉子'); end $$;
+do $$
+declare g uuid := (select id from public.games where location_text = '編輯測試');
+begin
+  update public.games set notes = '球由團主準備' where id = g;
+  update public.games set starts_at = starts_at + interval '1 hour', ends_at = ends_at + interval '1 hour', fee = 100 where id = g;
+  assert test.fails(format($q$update public.games set starts_at = now() - interval '1 hour' where id = %L$q$, g)) = 'start time is in the past',
+    'an edit cannot move the start into the past';
+  assert test.fails(format($q$update public.games set capacity = 1 where id = %L$q$, g)) like 'capacity below joined count%',
+    'capacity cannot drop below the people already in';
+  update public.games set capacity = 3 where id = g;
+  assert (select joined_count from public.game_cards where id = g) = 3, 'a bigger game moves the waitlist up';
+end $$;
+reset role;
+do $$
+declare g uuid := (select id from public.games where location_text = '編輯測試');
+begin
+  assert (select count(*) from public.notifications where kind = 'game_changed' and payload ->> 'game_id' = g::text) = 2,
+    'one change notice each for the player and the waitlisted (a notes edit sends none)';
+  assert (select payload -> 'changed' from public.notifications where kind = 'game_changed' and user_id = test.uid('小安')
+    and payload ->> 'game_id' = g::text) = '["time", "fee"]', 'the notice says what changed';
+  assert not exists (select 1 from public.notifications where kind = 'game_changed' and user_id = test.uid('葉子')), 'the host is not notified';
+end $$;
+do $$ begin perform test.login('葉子'); end $$;
+set role authenticated;
+do $$
+declare g uuid := (select id from public.games where location_text = '編輯測試');
+begin
+  perform public.cancel_game(g);
+  assert test.fails(format($q$update public.games set notes = '改回來' where id = %L$q$, g)) = 'game cancelled', 'a cancelled game cannot be edited';
+end $$;
+reset role;

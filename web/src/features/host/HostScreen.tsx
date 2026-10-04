@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/pk/Icon";
 import { ShareSheet } from "@/components/pk/ShareSheet";
@@ -21,16 +22,28 @@ type Step = "paste" | "parsing" | "form" | "done";
 
 const PAY_NOTE: Record<PayKind, string> = { 現場付現: "現場付現給團主", 轉帳: "轉帳（報名後團主提供帳號）", 免費: "免費" };
 
-/** F2-7 開團表單 + F2-8 AI 一貼成局: paste → parsing → pre-filled form (unsure fields highlighted) → publish → share. */
-export function HostScreen() {
+const payOf = (g: Game): PayKind =>
+  g.fee === 0 ? "免費" : (Object.keys(PAY_NOTE) as PayKind[]).find((k) => PAY_NOTE[k] === g.payNote) ?? (g.payNote.includes("轉帳") ? "轉帳" : "現場付現");
+
+/** The form filled in from an existing game (編輯資訊). */
+const draftOf = (g: Game): Draft => ({
+  group: g.group, start: g.startsAt, end: g.endsAt, courtId: g.courtId ?? "other", venueText: g.courtId ? "" : g.venue,
+  levelMin: g.levelMin, levelMax: g.levelMax, capacity: g.capacity, hostCounts: g.participants.some((p) => p.host),
+  fee: g.fee ? String(g.fee) : "", pay: payOf(g), cancelHours: g.cancelHours ?? 12, beginner: g.beginnerFriendly, notes: g.notes,
+});
+
+/** F2-7 開團表單 + F2-8 AI 一貼成局: paste → parsing → pre-filled form (unsure fields highlighted) → publish → share.
+ *  With `editing` it is F2-10 編輯資訊: the same form, filled in, saved back to the game. */
+export function HostScreen({ editing }: { editing?: Game } = {}) {
+  const router = useRouter();
   const toast = useToast();
   const { profile, signedIn } = useDemo();
   const games = useGameActions();
   const catalog = useCatalog();
   const { courts, dayGroups } = catalog;
-  const [step, setStep] = useState<Step>("paste");
+  const [step, setStep] = useState<Step>(editing ? "form" : "paste");
   const [text, setText] = useState("");
-  const [d, setD] = useState<Draft>(emptyDraft);
+  const [d, setD] = useState<Draft>(() => (editing ? draftOf(editing) : emptyDraft()));
   const [unsure, setUnsure] = useState<DraftField[]>([]);
   const [tried, setTried] = useState(false);
   const [created, setCreated] = useState<Game | null>(null);
@@ -73,23 +86,33 @@ export function HostScreen() {
     const [dayLabel, rest] = dayGroups[d.group!].split(" ");
     const [lo, hi] = d.levelMin <= d.levelMax ? [d.levelMin, d.levelMax] : [d.levelMax, d.levelMin];
     const initial = profile.name.slice(0, 1);
+    // a note the presets don't cover (e.g. 轉帳或現場付現) stays unless the host changes the payment type
+    const payNote = editing && d.pay === payOf(editing) ? editing.payNote : PAY_NOTE[d.pay];
     const g: Game = {
-      id: "h" + Date.now().toString(36), courtId: court?.id, group: d.group!, dayLabel, date: rest.replace(/（.*）/, ""),
+      id: editing?.id ?? "h" + Date.now().toString(36), courtId: court?.id, group: d.group!, dayLabel, date: rest.replace(/（.*）/, ""),
       startsAt: d.start, endsAt: d.end, venue: court?.name ?? d.venueText.trim(), district: court?.district ?? "自填地點",
       courtKind: court ? `${court.kind} ${court.courtCount} 面` : "場地資訊由團主提供", address: court?.address ?? d.venueText.trim(),
       levelMin: lo, levelMax: hi, capacity: d.capacity,
       participants: d.hostCounts ? [{ initial, name: profile.name, host: true }] : [],
       host: { name: profile.name, initial, summary: "你開的團" },
-      fee: d.pay === "免費" ? 0 : Number(d.fee), payNote: PAY_NOTE[d.pay], beginnerFriendly: d.beginner, waitlist: 0,
+      fee: d.pay === "免費" ? 0 : Number(d.fee), payNote, beginnerFriendly: d.beginner, waitlist: 0,
       notes: d.notes.trim(), cancelHours: d.cancelHours,
+      // editing keeps who signed up
+      ...(editing && { participants: editing.participants, host: editing.host, waitlist: editing.waitlist }),
+    };
+    const fields = {
+      group: g.group, start: d.start, end: d.end, court: court?.id, venue: d.venueText, levelMin: lo, levelMax: hi,
+      capacity: d.capacity, fee: g.fee, feeNote: g.payNote, cancelHours: d.cancelHours, beginner: d.beginner, notes: d.notes,
     };
     setBusy(true);
     try {
-      setCreated(await games.host(g, {
-        group: g.group, start: d.start, end: d.end, court: court?.id, venue: d.venueText, levelMin: lo, levelMax: hi,
-        capacity: d.capacity, hostCounts: d.hostCounts, fee: g.fee, feeNote: g.payNote, cancelHours: d.cancelHours,
-        beginner: d.beginner, notes: d.notes, sourceText: text,
-      }));
+      if (editing) {
+        await games.edit(g, fields);
+        toast(editing.participants.some((p) => !p.host) || editing.waitlist > 0 ? "已更新，報名的人會收到變更通知" : "已更新");
+        router.push(`/games/${g.id}`);
+        return;
+      }
+      setCreated(await games.host(g, { ...fields, hostCounts: d.hostCounts, sourceText: text }));
       setStep("done");
     } catch (e) {
       toast((e as Error).message);
@@ -140,13 +163,13 @@ export function HostScreen() {
 
   return (
     <>
-      <AppBar title="開團" back="/games" historyBack />
-      <div className="host-mode">{modeSwitch("mode")}</div>
+      <AppBar title={editing ? "編輯球局" : "開團"} back={editing ? `/games/${editing.id}` : "/games"} historyBack />
+      {!editing && <div className="host-mode">{modeSwitch("mode")}</div>}
 
       <div className="scroll dk dk-narrow dk-float" style={{ paddingBottom: "var(--space-6)" }}>
         <TopNav active="games" />
-        <Crumbs items={[["首頁", "/"], ["球局", "/games"], ["開團"]]} />
-        <div className="host-mode dk-only">{modeSwitch("mode-dk")}</div>
+        <Crumbs items={editing ? [["首頁", "/"], ["球局", "/games"], [editing.venue, `/games/${editing.id}`], ["編輯"]] : [["首頁", "/"], ["球局", "/games"], ["開團"]]} />
+        {!editing && <div className="host-mode dk-only">{modeSwitch("mode-dk")}</div>}
         {step === "paste" && (
           <div className="sec" style={{ paddingTop: "var(--space-4)" }}>
             <h2 style={{ margin: 0 }}>把平常的揪團文貼上來</h2>
@@ -231,10 +254,12 @@ export function HostScreen() {
                 <b className="num" aria-live="polite" style={{ minWidth: 56 }}>{d.capacity} 人</b>
                 <button type="button" aria-label="多一位" disabled={d.capacity >= 24} onClick={() => edit("capacity", d.capacity + 1)}><Icon name="plus" size={20} /></button>
               </div>
-              <div className="switch-row">
-                <span>我也要打（佔一個名額）</span>
-                <button type="button" className="switch" role="switch" aria-checked={d.hostCounts} aria-label="團主佔一個名額" onClick={() => edit("hostCounts", !d.hostCounts)} />
-              </div>
+              {!editing && (
+                <div className="switch-row">
+                  <span>我也要打（佔一個名額）</span>
+                  <button type="button" className="switch" role="switch" aria-checked={d.hostCounts} aria-label="團主佔一個名額" onClick={() => edit("hostCounts", !d.hostCounts)} />
+                </div>
+              )}
             </Group>
 
             <Group label="費用與付款" unsure={flag("fee") || flag("pay")} error={tried && missing.fee ? "填每人費用，免費就選「免費」" : undefined}>
@@ -285,7 +310,17 @@ export function HostScreen() {
       </div>
 
       <div className="sticky-cta">
-        {step === "form" ? (
+        {editing ? (
+          <>
+            <div className="sticky-cta-info">
+              <span className="sticky-cta-price" style={{ fontSize: 18, fontFamily: "var(--font-body)", fontWeight: 700 }}>
+                {blocked ? "還差一點" : "編輯資訊"}
+              </span>
+              <span className="sticky-cta-sub">改時間、地點或費用會通知報名的人</span>
+            </div>
+            <button className="btn btn-primary btn-lg" disabled={busy} onClick={publish}>{busy ? "儲存中…" : "儲存變更"}</button>
+          </>
+        ) : step === "form" ? (
           <>
             <div className="sticky-cta-info">
               <span className="sticky-cta-price" style={{ fontSize: 18, fontFamily: "var(--font-body)", fontWeight: 700 }}>

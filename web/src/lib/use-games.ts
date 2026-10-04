@@ -1,11 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import type { NewGame } from "@pikyoo/core/source/games";
+import type { GameEdit, NewGame } from "@pikyoo/core/source/games";
 import type { Game, MyGameStatus } from "@pikyoo/core/types";
 import { useDemo } from "./demo-store";
 import { realAuth } from "./env";
-import { addGuestAction, cancelGameAction, hostGameAction, joinGameAction, leaveGameAction, removeParticipantAction, type Result } from "./games";
+import { addGuestAction, cancelGameAction, editGameAction, hostGameAction, joinGameAction, leaveGameAction, removeParticipantAction, type Result } from "./games";
 
 const unwrap = <T,>(r: Result<T>): T => {
   if ("error" in r) throw new Error(r.error);
@@ -42,6 +42,13 @@ export function useGameActions() {
       const g = { ...draft, id: unwrap(await hostGameAction(n)) };
       refresh();
       return g;
+    },
+    /** 編輯資訊: `next` is the card the screen built from the form */
+    async edit(next: Game, e: GameEdit): Promise<void> {
+      if (realAuth) unwrap(await editGameAction(next.id, e));
+      else if (next.capacity < next.participants.length) throw new Error(`名額不能少於已報名的 ${next.participants.length} 人，要先移除參加者`);
+      else updateHosted(next.id, () => next);
+      refresh();
     },
     /** 代報名; "wait" when the game is full */
     async addGuest(g: Game, name: string): Promise<MyGameStatus> {
