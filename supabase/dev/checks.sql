@@ -44,7 +44,7 @@ begin
   assert test.fails('select * from public.lesson_bookings') like 'permission denied%', 'visitor cannot read bookings';
   assert test.fails('select * from public.profile_private') like 'permission denied%', 'visitor cannot read private profiles';
   assert test.fails('select * from public.coach_pay_details') like 'permission denied%', 'visitor cannot read pay details';
-  assert test.fails($q$select public.join_game(test.game('g2'))$q$) like 'permission denied%', 'visitor cannot join';
+  assert test.fails($q$select public.join_game(test.game('g4'))$q$) like 'permission denied%', 'visitor cannot join';
   assert (public.lesson_group_by_code('seedgrp1') -> 'members' -> 0 ->> 'name') = '小安', 'invite page works signed out';
 end $$;
 reset role;
@@ -55,8 +55,8 @@ set role authenticated;
 do $$
 declare n int;
 begin
-  assert public.join_game(test.game('g2')) = 'joined', 'free seat → joined';
-  assert public.join_game(test.game('g2')) = 'joined', 'joining twice is a no-op';
+  assert public.join_game(test.game('g4')) = 'joined', 'free seat → joined (g4 is on the weekend: today''s games may already have started when CI runs)';
+  assert public.join_game(test.game('g4')) = 'joined', 'joining twice is a no-op';
   assert public.join_game(test.game('g5')) = 'waitlisted', 'full → waitlisted';
   assert public.leave_game(test.game('g5')) = 'cancelled', 'leave the waitlist';
   assert (select count(*) from public.profile_private) = 1, 'only my private row';
