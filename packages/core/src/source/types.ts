@@ -1,4 +1,4 @@
-import type { Coach, Court, DayGroup, Game, MyGameStatus } from "../types";
+import type { Coach, Court, DayGroup, Game, MyGameStatus, Question } from "../types";
 import type { MyCoach } from "./me-coach";
 
 /** What the screens read: loaded once per request on the server and handed to the client store (docs/BACKEND.md §3). */
@@ -14,6 +14,8 @@ export interface Catalog {
   /** Games the viewer hosts. The host stays in their own roster and out of `mine`. */
   /** The viewer's own coach page at any status (draft, pending, approved); null = not a coach. Live with real sign-in only. */
   myCoach?: MyCoach | null;
+  /** 問與答 the reader may see (coach pages, the console's 學生提問) */
+  questions?: Question[];
   hosting?: string[];
 }
 

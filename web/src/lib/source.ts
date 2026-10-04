@@ -5,6 +5,7 @@ import { demoCalendar, liveCalendar, type BookingCalendar } from "@pikyoo/core/s
 import { demo } from "@pikyoo/core/source/demo";
 import { createLive } from "@pikyoo/core/source/live";
 import { readMyCoach } from "@pikyoo/core/source/me-coach";
+import { readQuestions } from "@pikyoo/core/source/questions";
 import type { Catalog } from "@pikyoo/core/source/types";
 import type { Coach } from "@pikyoo/core/types";
 import { isLive, SUPABASE_KEY, SUPABASE_URL } from "./env";
@@ -24,7 +25,11 @@ export const getCatalog = cache(async (): Promise<Catalog> => {
   const me = await getMe();
   const catalog = await source.catalog(me?.id);
   // the coach's own page at any status needs their session (RLS), not the visitor client the catalog uses
-  return me ? { ...catalog, myCoach: await readMyCoach(await supabaseServer(), SUPABASE_URL, me.id) } : catalog;
+  if (!me) return catalog;
+  const sb = await supabaseServer();
+  // with the session RLS adds the reader's own pending questions and, for a coach, all of theirs
+  const [myCoach, questions] = await Promise.all([readMyCoach(sb, SUPABASE_URL, me.id), readQuestions(sb, me.id)]);
+  return { ...catalog, myCoach, questions };
 });
 
 export const getCourt = async (id: string) => (await getCatalog()).courts.find((c) => c.id === id);
