@@ -6,4 +6,4 @@ Read `AGENTS.md` here (Expo's own guidance: versioned docs, `npx expo install`, 
 - **Run:** `npx expo start --ios` (Expo Go on the simulator). Native builds for the stores are local Xcode / Android Studio (docs/APP.md §6), not EAS cloud builds.
 - **Verify:** `npx tsc --noEmit` (CI: `.github/workflows/app.yml`), then look at it in the simulator.
 - **Same rules as the website:** the product decisions in the root `CLAUDE.md` apply (no private LINE contact, visitors see only the basics, photos tagged 示意照). Colours come from `src/ui/theme.ts`, which mirrors `web/src/styles/tokens.css`.
-- Demo photos load from the demo website (`DEMO_SITE`).
+- **Data:** `src/data/catalog.tsx` loads the catalog through `@pikyoo/core/source/live` (or `demo`), like `web/src/lib/source.ts`. `app/.env` holds the public Supabase URL and publishable key and sets `EXPO_PUBLIC_DATA_SOURCE=live`; unset or `demo` shows mock data. Demo photos load from the demo website (`DEMO_SITE`).
