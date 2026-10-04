@@ -110,7 +110,7 @@ export function MeScreen() {
             {isAdmin && (
               <Link className="row-item" href="/admin">
                 <Icon name="medal" size={22} />
-                <span style={{ flex: 1 }}>PIKYOO 審核：教練頁與證照</span>
+                <span style={{ flex: 1 }}>PIKYOO 管理：數字、審核、下架</span>
                 <Icon name="right" size={18} />
               </Link>
             )}

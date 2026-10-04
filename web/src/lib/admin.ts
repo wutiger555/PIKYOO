@@ -1,6 +1,6 @@
 "use server";
 
-import { reviewCoach, reviewCredential } from "@pikyoo/core/source/review";
+import { reviewCoach, reviewCredential, setCoachListed } from "@pikyoo/core/source/review";
 import { supabaseServer } from "./supabase";
 
 // 審核 actions for PIKYOO admins. review_coach / review_credential check is_admin() in the database.
@@ -20,3 +20,6 @@ export const reviewCoachAction = async (coachId: string, approve: boolean, note:
 
 export const reviewCredentialAction = async (credentialId: string, verified: boolean) =>
   run(async () => reviewCredential(await supabaseServer(), String(credentialId), !!verified));
+
+export const setCoachListedAction = async (coachId: string, listed: boolean) =>
+  run(async () => setCoachListed(await supabaseServer(), String(coachId), !!listed));
