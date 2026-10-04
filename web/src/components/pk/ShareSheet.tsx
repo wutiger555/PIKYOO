@@ -1,6 +1,8 @@
 "use client";
 
 import { useGameView } from "@/lib/demo-store";
+import { shareToLine } from "@/lib/line";
+import { levelText } from "@pikyoo/core/format";
 import type { Game } from "@pikyoo/core/types";
 import { LevelChip, Sprout } from "./Badges";
 import { Icon } from "./Icon";
@@ -9,11 +11,21 @@ import { Sheet } from "./Shell";
 import { useToast } from "./Toast";
 
 /** F2-9 分享到 LINE 群組: preview of the Flex card as it lands in a group chat, then
- *  shareTargetPicker (in LIFF) or copy link (browser). Both are simulated in the MVP. */
+ *  shareTargetPicker (in LIFF) or LINE's share page, or copy the link (its preview image is opengraph-image.tsx). */
 export function ShareSheet({ game: g, onClose }: { game: Game; onClose: () => void }) {
   const toast = useToast();
   const { spots } = useGameView(g);
-  const url = `https://pikyoo.tw/g/${g.id}`;
+  const url = `${location.origin}/games/${g.id}`;
+  const seats = spots > 0 ? `缺 ${spots}` : "額滿可候補";
+  const summary = `${g.dayLabel} ${g.date} ${g.startsAt}–${g.endsAt}\n${g.venue}・程度 ${levelText(g.levelMin, g.levelMax)}・每人 NT$${g.fee}・${seats}`;
+
+  const share = async () => {
+    try {
+      if (await shareToLine(`🏓 ${summary}\n${url}`, () => flexCard(g, url, seats, spots > 0))) onClose();
+    } catch (e) {
+      toast((e as Error).message);
+    }
+  };
 
   const copy = async () => {
     try {
@@ -54,7 +66,7 @@ export function ShareSheet({ game: g, onClose }: { game: Game; onClose: () => vo
           </div>
         </div>
       </div>
-      <button className="btn btn-primary btn-lg btn-block" style={{ marginTop: "var(--space-4)" }} onClick={() => { toast("已開啟 LINE 分享（選擇群組）"); onClose(); }}>
+      <button className="btn btn-primary btn-lg btn-block" style={{ marginTop: "var(--space-4)" }} onClick={share}>
         <Icon name="share" size={20} />選擇群組分享
       </button>
       <button className="btn btn-secondary btn-block" style={{ marginTop: "var(--space-2)" }} onClick={copy}>
@@ -62,4 +74,36 @@ export function ShareSheet({ game: g, onClose }: { game: Game; onClose: () => vo
       </button>
     </Sheet>
   );
+}
+
+/** The card shareTargetPicker posts: the same content as the preview above, in LINE's Flex Message JSON. */
+function flexCard(g: Game, url: string, seats: string, open: boolean) {
+  const t = (text: string, more: object = {}) => ({ type: "text", text, wrap: true, ...more });
+  return {
+    type: "flex",
+    altText: `${g.dayLabel} ${g.startsAt} ${g.venue}｜${seats}`,
+    contents: {
+      type: "bubble",
+      header: {
+        type: "box", layout: "vertical", backgroundColor: "#1A1D1B", contents: [
+          t("PIKYOO 匹友", { size: "xs", color: "#D4EE3A", weight: "bold" }),
+          t(`${g.dayLabel} ${g.date}`, { size: "sm", color: "#B8BEA9" }),
+          t(`${g.startsAt}–${g.endsAt}`, { size: "xxl", color: "#FFFFFF", weight: "bold" }),
+        ],
+      },
+      body: {
+        type: "box", layout: "vertical", spacing: "sm", contents: [
+          t(g.venue, { weight: "bold", size: "lg" }),
+          t([g.district, g.courtKind].filter(Boolean).join("・"), { size: "xs", color: "#6F775D" }),
+          t(`程度 ${levelText(g.levelMin, g.levelMax)}${g.beginnerFriendly ? "・新手友善" : ""}`, { size: "sm" }),
+          { type: "box", layout: "horizontal", contents: [t(`每人 NT$${g.fee}`, { size: "md" }), t(seats, { size: "md", weight: "bold", align: "end" })] },
+        ],
+      },
+      footer: {
+        type: "box", layout: "vertical", contents: [
+          { type: "button", style: "primary", color: "#1A1D1B", action: { type: "uri", label: open ? "我要報名" : "加入候補", uri: url } },
+        ],
+      },
+    },
+  };
 }

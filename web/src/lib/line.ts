@@ -41,3 +41,21 @@ export async function lineLogin(): Promise<{ onboarded: boolean } | null> {
 export async function lineLogout() {
   if (ready) (await ready).logout();
 }
+
+/**
+ * F2-9 分享到 LINE 群組. Inside LINE (LIFF, signed in, shareTargetPicker switched on for the channel) it sends `flex`;
+ * anywhere else it opens LINE's own share page with `text`, which needs no LIFF.
+ * Resolves false only when the person closed the picker.
+ */
+export async function shareToLine(text: string, flex: () => object): Promise<boolean> {
+  if (LIFF_ID && fromLine()) {
+    const liff = await liffReady().catch(() => null);
+    if (liff?.isLoggedIn() && liff.isApiAvailable("shareTargetPicker")) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- LIFF's message types aren't exported; the shape is LINE's Flex JSON
+      const r = await liff.shareTargetPicker([flex() as any]);
+      return !!r;
+    }
+  }
+  window.open(`https://line.me/R/share?text=${encodeURIComponent(text)}`, "_blank", "noopener");
+  return true;
+}

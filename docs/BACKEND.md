@@ -332,5 +332,6 @@ B1–B3 是最短的「真的能用」路徑：讀得到資料 → 能登入 →
   - [x] 第一部分：報名／候補／取消（`@pikyoo/core/source/games` 呼叫 `join_game`／`leave_game`；live catalog 帶入看的人，把他自己的報名放在 `mine`、不算進名單；取消前先確認）。Owner 在 Preview 用真帳號報名、取消成功；畫面流程 Claude 在 demo 模式測過
   - [x] 第二部分：開團、團主管理（`hostGame`、`addGuest`、`removeParticipant`、`cancelGame`）。live catalog 帶 `hosting`：團主留在自己的名單上、不算進「我報名的」，名單帶 participant id 給團主移除。資料庫流程（開團→團主自動入座→代報名→額滿進候補→移除後遞補→取消）在 `pikyoo-dev` 用會 rollback 的交易驗證過；畫面流程在 demo 模式測過。順便修掉 server action 的錯誤訊息在正式版會被 Next.js 遮掉的問題（改成回傳錯誤）
   - [x] 團主編輯球局資訊（F2-10，[#22](https://github.com/wutiger555/PIKYOO/pull/22)）：`/games/[id]/edit` 沿用開團表單（`HostScreen editing`），`editGame` 直接 update `games`（RLS 只讓團主改）。migration `20261004071220_game_edits`：已取消的局不能改、開始時間不能改到過去；時間、地點、費用有變時通知已報名與候補的人（`game_changed`，payload 帶 `changed`）。「我也要打」開團後不能改（`host_counts` 沒開放 update）
-  - [ ] 第三部分：列表伺服器端篩選（不只今天／明天／週末）、分享卡片與動態 OG 圖
-  - [ ] 第四部分：AI 一貼成局（需要 LLM API 金鑰）
+  - [x] 第三部分 a：分享卡片與動態 OG 圖（[#23](https://github.com/wutiger555/PIKYOO/pull/23)）。`games/[id]/opengraph-image.tsx` 用 `next/og` 畫預覽圖，中文字用 Google Fonts `text=` 只抓卡片上的字；`ShareSheet` 在 LIFF 內用 `shareTargetPicker` 送 Flex 卡片（`lib/line.ts` `shareToLine`），其他地方開 `line.me/R/share`。LINE 會快取連結預覽，所以預覽圖上的「缺幾人」是第一次貼出時的數字
+  - [ ] 第三部分 b：列表看得到更多天（目前只有今天／明天／這個週末四組，`DayGroup` 要改成日期）
+  - **決定（2026-10-04）**：AI 一貼成局**先不接 LLM**，維持 `features/host/parse.ts` 的規則解析；等真的有團主在用、看得出解析不夠用再接

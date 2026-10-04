@@ -3,10 +3,16 @@ import { notFound } from "next/navigation";
 import { GameDetailScreen } from "@/features/games/GameDetailScreen";
 import { HostedGameDetail } from "@/features/games/HostedGameDetail";
 import { getGame } from "@/lib/source";
+import { levelText } from "@pikyoo/core/format";
 
 export async function generateMetadata({ params }: PageProps<"/games/[id]">): Promise<Metadata> {
   const g = await getGame((await params).id);
-  return g ? { title: `${g.dayLabel} ${g.startsAt} ${g.venue}` } : {};
+  if (!g) return {};
+  const title = `${g.dayLabel} ${g.startsAt} ${g.venue}`;
+  const spots = g.capacity - g.participants.length;
+  // what LINE shows under the preview image (opengraph-image.tsx)
+  const description = `${g.date} ${g.startsAt}–${g.endsAt}・程度 ${levelText(g.levelMin, g.levelMax)}・每人 NT$${g.fee}・${spots > 0 ? `缺 ${spots}` : "額滿可候補"}`;
+  return { title, description, openGraph: { title: `${title}｜PIKYOO 匹友`, description } };
 }
 
 export default async function Page({ params }: PageProps<"/games/[id]">) {
