@@ -9,11 +9,12 @@ import { AppBar, Sheet, SoonButton } from "@/components/pk/Shell";
 import { TopNav } from "@/components/pk/TopNav";
 import { useToast } from "@/components/pk/Toast";
 import { PAYOUT_METHODS, RECEIVED_BEFORE, TODAY_AGENDA } from "@pikyoo/core/data/coaches";
-import { useDemo } from "@/lib/demo-store";
+import { useCatalog, useDemo } from "@/lib/demo-store";
 import { money } from "@pikyoo/core/format";
 import { AnswerCard } from "@/features/coaches/QuestionBoard";
 import { CoachGate } from "./CoachAccount";
 import { decideBookingAction } from "@/lib/bookings";
+import { markPaidAction, savePayoutAction } from "@/lib/payments";
 import { realAuth } from "@/lib/env";
 import type { BookingRequest, PaymentRow } from "@pikyoo/core/types";
 
@@ -246,7 +247,18 @@ const PAY_LABEL: Record<PaymentRow["status"], [string, "almost" | "info" | "open
 /** 收款對帳: received vs due, filter by state, confirm transfers by last-5, LINE reminders. */
 export function CoachPaymentsScreen() {
   const toast = useToast();
+  const router = useRouter();
   const { payments, markPaid } = useDemo();
+  // real sign-in: mark_payment_paid first (also for cash taken on the day); the row updates only if it went through
+  const received = async (p: PaymentRow) => {
+    if (realAuth) {
+      const r = await markPaidAction(p.id);
+      if (r.error) return toast(r.error);
+    }
+    markPaid(p.id);
+    toast(realAuth ? `已確認收到 ${p.name} 的款項` : "已確認收款，學生會收到通知");
+    if (realAuth) router.refresh();
+  };
   const [filter, setFilter] = useState<"all" | PaymentRow["status"]>("all");
   const [settings, setSettings] = useState(false);
   const list = payments.filter((p) => filter === "all" || p.status === filter);
@@ -267,12 +279,12 @@ export function CoachPaymentsScreen() {
           <button className="btn btn-secondary" onClick={() => setSettings(true)}><Icon name="sliders" size={18} />收款設定</button>
         </div>
         <div className="paysum carbon">
-          <small>10 月</small>
+          <small>{new Date().getMonth() + 1} 月</small>
           <div className="paysum-row">
             <div><span>已收</span><b className="num">{money(got)}</b></div>
             <div><span>待收</span><b className="num" style={{ color: "var(--color-accent)" }}>{money(due)}</b></div>
           </div>
-          <div className="bar"><i style={{ width: `${Math.round((got / (got + due)) * 100)}%` }} /></div>
+          <div className="bar"><i style={{ width: `${got + due ? Math.round((got / (got + due)) * 100) : 0}%` }} /></div>
         </div>
         <div className="pad con-filter" style={{ paddingTop: 16 }}>
           <div className="seg seg-tight" style={{ display: "flex" }} role="radiogroup">
@@ -297,11 +309,12 @@ export function CoachPaymentsScreen() {
                 <td>
                   {p.status === "reported" && (
                     <div className="con-acts">
-                      <button className="btn btn-secondary" onClick={() => toast("已請學生重新確認")}>還沒收到</button>
-                      <button className="btn btn-primary" onClick={() => { markPaid(p.id); toast("已確認收款，學生會收到通知"); }}>確認收到</button>
+                      {!realAuth && <button className="btn btn-secondary" onClick={() => toast("已請學生重新確認")}>還沒收到</button>}
+                      <button className="btn btn-primary" onClick={() => received(p)}>確認收到</button>
                     </div>
                   )}
-                  {p.status === "wait" && (
+                  {p.status === "wait" && realAuth && <div className="con-acts"><button className="btn btn-secondary" onClick={() => received(p)}>已收到</button></div>}
+                  {p.status === "wait" && !realAuth && (
                     <div className="con-acts">
                       <button className="btn btn-secondary" onClick={() => toast("已改為現場收款")}>改現場收</button>
                       <button className="btn btn-secondary" onClick={() => toast(`已用 LINE 傳付款提醒給 ${p.name}`)}><Icon name="bell" size={16} />提醒</button>
@@ -338,11 +351,12 @@ export function CoachPaymentsScreen() {
               </div>
               {p.status === "reported" && (
                 <div className="btnrow btnrow-tight">
-                  <button className="btn btn-secondary" onClick={() => toast("已請學生重新確認")}>還沒收到</button>
-                  <button className="btn btn-primary" onClick={() => { markPaid(p.id); toast("已確認收款，學生會收到通知"); }}>確認收到</button>
+                  {!realAuth && <button className="btn btn-secondary" onClick={() => toast("已請學生重新確認")}>還沒收到</button>}
+                  <button className="btn btn-primary" onClick={() => received(p)}>確認收到</button>
                 </div>
               )}
-              {p.status === "wait" && (
+              {p.status === "wait" && realAuth && <div className="btnrow btnrow-tight"><button className="btn btn-secondary" onClick={() => received(p)}>已收到（例如現場收現金）</button></div>}
+              {p.status === "wait" && !realAuth && (
                 <div className="btnrow btnrow-tight">
                   <button className="btn btn-secondary" onClick={() => toast("已改為現場收款")}>改現場收</button>
                   <button className="btn btn-secondary" onClick={() => toast(`已用 LINE 傳付款提醒給 ${p.name}`)}><Icon name="bell" size={16} />LINE 提醒</button>
@@ -351,10 +365,11 @@ export function CoachPaymentsScreen() {
             </article>
           ))}
         </div>
-        <p className="fine pad" style={{ marginTop: 12 }}>MVP：錢直接進教練自己的帳戶，PIKYOO 幫你發付款資訊與對帳。Phase 3 接藍新金流後可線上刷卡並自動對帳。</p>
+        {realAuth && !payments.length && <p className="text-muted pad">還沒有款項。確認預約後，學生的付款會出現在這裡。</p>}
+        <p className="fine pad" style={{ marginTop: 12 }}>錢直接進你自己的帳戶，PIKYOO 幫你把付款資訊給學生、記錄對帳。之後會接上線上刷卡。</p>
       </ConsoleFrame>
       <CoachTabs active="pay" />
-      {settings && <PayoutSettingsSheet onClose={() => setSettings(false)} />}
+      {settings && (realAuth ? <PayoutDetailsSheet onClose={() => setSettings(false)} /> : <PayoutSettingsSheet onClose={() => setSettings(false)} />)}
     </>
   );
 }
@@ -388,6 +403,52 @@ function PayoutSettingsSheet({ onClose }: { onClose: () => void }) {
         <button className="switch" role="switch" aria-checked={remind} aria-label="自動提醒" onClick={() => setRemind((v) => !v)} />
       </div>
       <button className="btn btn-primary btn-lg btn-block" style={{ marginTop: 12 }} onClick={onClose}>完成</button>
+    </Sheet>
+  );
+}
+
+/** 收款設定 with real sign-in: where students pay. Which methods are offered is set on 我的教練頁 (付款方式);
+ *  a student sees only the details of the method they picked, after the coach confirms (payment_instructions). */
+function PayoutDetailsSheet({ onClose }: { onClose: () => void }) {
+  const toast = useToast();
+  const router = useRouter();
+  const { myCoach: mine } = useCatalog();
+  const [link, setLink] = useState(mine?.payout.line_pay?.link ?? "");
+  const [bank, setBank] = useState(mine?.payout.bank_transfer?.bank ?? "");
+  const [account, setAccount] = useState(mine?.payout.bank_transfer?.account ?? "");
+  const [name, setName] = useState(mine?.payout.bank_transfer?.name ?? "");
+  const [busy, setBusy] = useState(false);
+  if (!mine) return null;
+  const save = async () => {
+    setBusy(true);
+    const r = await savePayoutAction(mine.id, { line_pay: { link }, bank_transfer: { bank, account, name } });
+    setBusy(false);
+    if (r.error) return toast(r.error);
+    toast("已儲存收款資訊");
+    router.refresh();
+    onClose();
+  };
+  return (
+    <Sheet className="sheet-coach" onClose={onClose}>
+      <h2>收款資訊</h2>
+      <p className="text-muted" style={{ fontSize: 14 }}>你確認預約後，學生才看得到這些資訊，而且只看得到他選的那一種。要開啟或關閉付款方式，到「教練頁 → 付款方式」。</p>
+      <div className="field">
+        <label htmlFor="pay-link">LINE Pay 收款連結</label>
+        <input id="pay-link" className="input" inputMode="url" placeholder="https://line.me/…" value={link} onChange={(e) => setLink(e.target.value)} />
+      </div>
+      <div className="field">
+        <label htmlFor="pay-bank">銀行（含代碼）</label>
+        <input id="pay-bank" className="input" placeholder="例：台新銀行 812" value={bank} onChange={(e) => setBank(e.target.value)} />
+      </div>
+      <div className="field">
+        <label htmlFor="pay-acct">帳號</label>
+        <input id="pay-acct" className="input num" inputMode="numeric" value={account} onChange={(e) => setAccount(e.target.value.replace(/[^\d-]/g, ""))} />
+      </div>
+      <div className="field">
+        <label htmlFor="pay-name">戶名</label>
+        <input id="pay-name" className="input" value={name} onChange={(e) => setName(e.target.value)} />
+      </div>
+      <button className="btn btn-primary btn-lg btn-block" style={{ marginTop: 12 }} disabled={busy} onClick={save}>{busy ? "儲存中…" : "儲存"}</button>
     </Sheet>
   );
 }

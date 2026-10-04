@@ -72,9 +72,9 @@ const init = (catalog: Catalog, me: Me | null | undefined): DemoState => ({
   compare: [],
   coachFilters: emptyCoachFilters(),
   booking: newBooking(),
-  // real sign-in: nobody's sample data; the coach's requests come from the database (B5), payments in B5 part 3
+  // real sign-in: nobody's sample data; the coach's requests and payments come from the database (B5)
   requests: me === undefined ? initialRequests() : catalog.myCoach?.requests ?? [],
-  payments: me === undefined ? initialPayments() : [],
+  payments: me === undefined ? initialPayments() : catalog.myCoach?.payments ?? [],
   // real sign-in: the viewer's own page (an empty placeholder until they apply, see CoachGate); demo: Mia
   myCoach: structuredClone(catalog.myCoach?.coach ?? catalog.coaches.find((c) => c.id === "mia") ?? getCoach("mia")!),
   groups: me === undefined ? initialGroups() : [], // 揪團 is demo-only for now (PLAN D7)
