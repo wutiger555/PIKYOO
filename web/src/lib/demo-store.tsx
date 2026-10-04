@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useMemo, useState } from "react
 import { bookingDays, getCoach, initialGroups, initialPayments, initialRequests } from "@pikyoo/core/data/coaches";
 import { ME } from "@pikyoo/core/data/games";
 import { initialQuestions } from "@pikyoo/core/data/questions";
+import { demoNotices } from "@pikyoo/core/data/notifications";
 import { LEVELS } from "@pikyoo/core/format";
 import type { Me } from "@pikyoo/core/source/me";
 import type { Catalog } from "@pikyoo/core/source/types";
@@ -42,6 +43,8 @@ interface DemoState {
   signedIn: boolean;
   /** PIKYOO staff (real sign-in only): shows 審核 in 我的 */
   isAdmin: boolean;
+  /** the bell's badge */
+  unread: number;
   profile: Profile;
   mine: Record<string, MyGameStatus>;
   /** games I opened via 開團 in the demo, newest first (live: catalog.hosting) */
@@ -64,6 +67,7 @@ interface DemoState {
 const init = (catalog: Catalog, me: Me | null | undefined): DemoState => ({
   signedIn: me === undefined || !!me,
   isAdmin: !!me?.isAdmin,
+  unread: me === undefined ? demoNotices().filter((n) => !n.read).length : me?.unread ?? 0,
   profile: me?.profile ?? { name: ME.name, level: ME.level, areas: ["大安區", "信義區", "中山區"] },
   mine: catalog.mine ?? {},
   hosted: [],
@@ -135,6 +139,7 @@ function useDemoValue(catalog: Catalog, me: Me | null | undefined) {
     ...s,
     catalog,
     setSignedIn: (v: boolean) => set("signedIn", v),
+    clearUnread: () => set("unread", 0),
     setProfile: (u: Updater<Profile>) => set("profile", u),
     addHosted: (g: Game) => set("hosted", (hs) => [g, ...hs]),
     /** demo 團主管理; null drops the game (取消球局) */
@@ -151,6 +156,7 @@ function useDemoValue(catalog: Catalog, me: Me | null | undefined) {
     setBooking: (u: Updater<Booking>) => set("booking", u),
     confirmRequest,
     markPaid: (id: string) => set("payments", (ps) => ps.map((x) => (x.id === id ? { ...x, status: "paid" as const } : x))),
+    unmarkReported: (id: string) => set("payments", (ps) => ps.map((x) => (x.id === id ? { ...x, status: "wait" as const, ref: undefined, at: "等學生重新確認" } : x))),
     resetConsole: () => setS((p) => ({ ...p, requests: initialRequests(), payments: initialPayments() })),
     setMyCoach: (u: Updater<Coach>) => set("myCoach", u),
     addGroup: (g: Group) => set("groups", (gs) => [g, ...gs.filter((x) => x.id !== g.id)]),

@@ -88,11 +88,15 @@ const PAY: Record<Enums<"pay_method">, PayMethod> = { line_pay: "LINE Pay", bank
 
 /** Where a booking stands for the student. A pending request past its window is 已逾時 even before expire_stale(). */
 export type MyBookingState = "pending" | "confirmed" | "declined" | "expired" | "cancelled" | "done";
-export interface MyBooking { id: string; state: MyBookingState; booking: Booking; day: BookingDay; coachName: string; planName: string; amount: number }
+export interface MyBooking {
+  id: string; state: MyBookingState; booking: Booking; day: BookingDay; coachName: string; planName: string; amount: number;
+  /** the student's payment once the coach confirmed (B5 收款) */
+  paid?: "wait" | "reported" | "paid";
+}
 
 export async function myBookings(sb: Sb, studentId: string): Promise<MyBooking[]> {
   const r = await sb.from("lesson_bookings")
-    .select("id, status, starts_at, expires_at, headcount, note, pay_method, amount, coach_plans(key, name), coaches(slug, name)")
+    .select("id, status, starts_at, expires_at, headcount, note, pay_method, amount, coach_plans(key, name), coaches(slug, name), payments(status, payer_id)")
     .eq("student_id", studentId).is("group_id", null).order("starts_at", { ascending: false }).limit(50);
   if (r.error) throw explain(r.error.message);
   const now = Date.now();
@@ -104,8 +108,10 @@ export async function myBookings(sb: Sb, studentId: string): Promise<MyBooking[]
       : x.status === "confirmed" ? (past ? "done" : "confirmed")
       : x.status === "attended" || x.status === "no_show" ? "done"
       : x.status;
+    const pay = x.payments.find((y) => y.payer_id === studentId)?.status;
     return {
       id: x.id, state, coachName: x.coaches?.name ?? "", planName: x.coach_plans?.name ?? "", amount: x.amount,
+      paid: pay === "waiting" ? "wait" : pay === "reported" ? "reported" : pay === "paid" || pay === "refunded" ? "paid" : undefined,
       day: { key: p.key, weekday: p.weekday, date: p.date },
       booking: {
         coachId: x.coaches?.slug ?? "", planId: x.coach_plans?.key ?? "", dayKey: p.key, slot: p.hhmm, headcount: x.headcount, note: x.note,

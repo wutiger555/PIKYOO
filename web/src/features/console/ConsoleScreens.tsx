@@ -14,7 +14,7 @@ import { money } from "@pikyoo/core/format";
 import { AnswerCard } from "@/features/coaches/QuestionBoard";
 import { CoachGate } from "./CoachAccount";
 import { decideBookingAction } from "@/lib/bookings";
-import { markPaidAction, savePayoutAction } from "@/lib/payments";
+import { markPaidAction, rejectReportAction, savePayoutAction } from "@/lib/payments";
 import { realAuth } from "@/lib/env";
 import type { BookingRequest, PaymentRow } from "@pikyoo/core/types";
 
@@ -171,7 +171,6 @@ function RequestTable({ requests }: { requests: BookingRequest[] }) {
 
 /** F5-5 教練首頁「今天」: pending bookings, this week, money still due; one-tap confirm sends payment info via LINE. */
 export function CoachTodayScreen() {
-  const toast = useToast();
   const { requests, payments, myCoach, questions } = useDemo();
   const pend = requests.filter((r) => r.status === "pending");
   const ask = questions.filter((q) => q.coachId === myCoach.id && !q.answer);
@@ -184,7 +183,7 @@ export function CoachTodayScreen() {
             <span className="role-pill"><Icon name="cap" size={14} />教練模式</span>
             <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
               <Link className="me-link" href="/">切換到學生</Link>
-              <button className="rbtn" onClick={() => toast("通知")} aria-label="通知"><Icon name="bell" size={20} /></button>
+              <Link className="rbtn" href="/me/notifications" aria-label="通知"><Icon name="bell" size={20} /></Link>
             </span>
           </div>
           <h1 style={{ margin: "20px 0 2px", fontSize: 28 }}>早安，{myCoach.name.split(" ")[0]}</h1>
@@ -248,7 +247,7 @@ const PAY_LABEL: Record<PaymentRow["status"], [string, "almost" | "info" | "open
 export function CoachPaymentsScreen() {
   const toast = useToast();
   const router = useRouter();
-  const { payments, markPaid } = useDemo();
+  const { payments, markPaid, unmarkReported } = useDemo();
   // real sign-in: mark_payment_paid first (also for cash taken on the day); the row updates only if it went through
   const received = async (p: PaymentRow) => {
     if (realAuth) {
@@ -258,6 +257,15 @@ export function CoachPaymentsScreen() {
     markPaid(p.id);
     toast(realAuth ? `已確認收到 ${p.name} 的款項` : "已確認收款，學生會收到通知");
     if (realAuth) router.refresh();
+  };
+  // 還沒收到: real sign-in sends the report back to 待付款 (reject_payment_report) and tells the student
+  const notReceived = async (p: PaymentRow) => {
+    if (!realAuth) return toast("已請學生重新確認");
+    const r = await rejectReportAction(p.id);
+    if (r.error) return toast(r.error);
+    unmarkReported(p.id);
+    toast(`已通知 ${p.name} 重新確認付款`);
+    router.refresh();
   };
   const [filter, setFilter] = useState<"all" | PaymentRow["status"]>("all");
   const [settings, setSettings] = useState(false);
@@ -309,7 +317,7 @@ export function CoachPaymentsScreen() {
                 <td>
                   {p.status === "reported" && (
                     <div className="con-acts">
-                      {!realAuth && <button className="btn btn-secondary" onClick={() => toast("已請學生重新確認")}>還沒收到</button>}
+                      <button className="btn btn-secondary" onClick={() => notReceived(p)}>還沒收到</button>
                       <button className="btn btn-primary" onClick={() => received(p)}>確認收到</button>
                     </div>
                   )}
@@ -351,7 +359,7 @@ export function CoachPaymentsScreen() {
               </div>
               {p.status === "reported" && (
                 <div className="btnrow btnrow-tight">
-                  {!realAuth && <button className="btn btn-secondary" onClick={() => toast("已請學生重新確認")}>還沒收到</button>}
+                  <button className="btn btn-secondary" onClick={() => notReceived(p)}>還沒收到</button>
                   <button className="btn btn-primary" onClick={() => received(p)}>確認收到</button>
                 </div>
               )}

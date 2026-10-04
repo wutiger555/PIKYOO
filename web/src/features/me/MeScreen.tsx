@@ -22,7 +22,7 @@ const RECORD = { played: 12, attended: 11, late: 1, noShow: 0 };
 /** 我的: profile, my games (joined / waitlist / hosted), bookings, attendance record, settings. */
 export function MeScreen() {
   const toast = useToast();
-  const { profile, mine, signedIn, isAdmin } = useDemo();
+  const { profile, mine, signedIn, isAdmin, unread } = useDemo();
   const hosted = useHostedGames();
   const account = useAccount();
   const [login, setLogin] = useState(false);
@@ -96,7 +96,11 @@ export function MeScreen() {
           <div className="sec-head"><h2><span className="en">Settings</span>設定</h2></div>
           <div className="card" style={{ padding: "0 var(--space-4)", gap: 0 }}>
             <Row icon="heart" label="收藏的球場與教練" msg="收藏（P1，下一輪）" />
-            <Row icon="bell" label="通知設定" sub="LINE：遞補、提醒、變更" msg="通知設定（下一輪）" />
+            <Link className="row-item" href="/me/notifications">
+              <Icon name="bell" size={22} />
+              <span style={{ flex: 1 }}>通知{!!unread && <small className="text-muted" style={{ display: "block", fontSize: 13 }}>{unread} 則未讀</small>}</span>
+              <Icon name="right" size={18} />
+            </Link>
             <Row icon="msg" label="LINE 帳號" sub="已連結" msg="帳號綁定（接 LINE Login 後開放）" />
             <Link className="row-item" href="/coach">
               <Icon name="whistle" size={22} />

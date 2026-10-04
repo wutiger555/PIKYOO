@@ -31,8 +31,13 @@ const LIVE_STATE: Record<MyBooking["state"], [string, "almost" | "info" | "open"
 };
 
 /** A real booking (real sign-in): opens its status page. */
+const PAID_STATE: Record<NonNullable<MyBooking["paid"]>, [string, "almost" | "info" | "open"]> = {
+  wait: ["待付款", "almost"], reported: ["已回報付款", "info"], paid: ["已付款", "open"],
+};
+
 function LiveRow({ x }: { x: MyBooking }) {
-  const [label, tone] = LIVE_STATE[x.state];
+  // a confirmed lesson shows where its payment stands, so both sides see the same thing
+  const [label, tone] = x.state === "confirmed" && x.paid ? PAID_STATE[x.paid] : LIVE_STATE[x.state];
   return (
     <Link href={`/me/booking?id=${x.id}`} className="lesson">
       <div className="lesson-t"><b className="num">{x.day.date}</b><small>週{x.day.weekday}</small><span className="num">{x.booking.slot}</span></div>

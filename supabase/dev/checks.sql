@@ -44,7 +44,7 @@ begin
   assert test.fails('select * from public.lesson_bookings') like 'permission denied%', 'visitor cannot read bookings';
   assert test.fails('select * from public.profile_private') like 'permission denied%', 'visitor cannot read private profiles';
   assert test.fails('select * from public.coach_pay_details') like 'permission denied%', 'visitor cannot read pay details';
-  assert test.fails($q$select public.join_game(test.game('g2'))$q$) like 'permission denied%', 'visitor cannot join';
+  assert test.fails($q$select public.join_game(test.game('g4'))$q$) like 'permission denied%', 'visitor cannot join';
   assert (public.lesson_group_by_code('seedgrp1') -> 'members' -> 0 ->> 'name') = '小安', 'invite page works signed out';
 end $$;
 reset role;
@@ -55,8 +55,8 @@ set role authenticated;
 do $$
 declare n int;
 begin
-  assert public.join_game(test.game('g2')) = 'joined', 'free seat → joined';
-  assert public.join_game(test.game('g2')) = 'joined', 'joining twice is a no-op';
+  assert public.join_game(test.game('g4')) = 'joined', 'free seat → joined (g4 is on the weekend: today''s games may already have started when CI runs)';
+  assert public.join_game(test.game('g4')) = 'joined', 'joining twice is a no-op';
   assert public.join_game(test.game('g5')) = 'waitlisted', 'full → waitlisted';
   assert public.leave_game(test.game('g5')) = 'cancelled', 'leave the waitlist';
   assert (select count(*) from public.profile_private) = 1, 'only my private row';
@@ -369,4 +369,37 @@ begin
   insert into public.lesson_bookings (coach_id, plan_id, student_id, starts_at, headcount, pay_method, amount, expires_at)
   select coach_id, pl, test.uid('小安'), ts, 1, 'cash', 1500, now() - interval '1 minute' from public.coach_plans where id = pl;
   assert public.lesson_seats_left(pl, ts) = before, 'an expired request does not hold a seat';
+end $$;
+
+-- ── 收款雙向確認 (B6): report → 還沒收到 → report again → 確認收到, each step tells the other side ──
+do $$ begin perform test.login('葉子'); end $$;
+set role authenticated;
+do $$
+declare p uuid := (select id from public.payments where payer_id = test.uid('葉子') and status = 'waiting' limit 1);
+begin
+  perform set_config('test.pay', p::text, false);
+  perform public.report_payment(p, '11111');
+end $$;
+reset role;
+do $$ begin perform test.login('趙柏宇'); end $$;
+set role authenticated;
+do $$ begin
+  assert test.fails(format('select public.reject_payment_report(%L)', current_setting('test.pay'))) = 'payment not found', 'another coach cannot send it back';
+end $$;
+reset role;
+do $$ begin perform test.login('Mia 林'); end $$;
+set role authenticated;
+do $$ begin perform public.reject_payment_report(current_setting('test.pay')::uuid); end $$;
+reset role;
+do $$ begin
+  assert (select status = 'waiting' and ref_last5 is null from public.payments where id = current_setting('test.pay')::uuid), '還沒收到 puts it back to 待付款';
+  assert exists (select 1 from public.notifications where user_id = test.uid('Mia 林') and kind = 'payment_reported'), 'the coach hears about the report';
+  assert exists (select 1 from public.notifications where user_id = test.uid('葉子') and kind = 'payment_not_received'), 'the student hears it was not received';
+end $$;
+do $$ begin perform test.login('Mia 林'); end $$;
+set role authenticated;
+do $$ begin perform public.mark_payment_paid(current_setting('test.pay')::uuid); end $$;
+reset role;
+do $$ begin
+  assert exists (select 1 from public.notifications where user_id = test.uid('葉子') and kind = 'payment_received'), 'the student hears it was received';
 end $$;

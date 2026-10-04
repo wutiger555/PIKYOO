@@ -1316,6 +1316,7 @@ export type Database = {
       }
       payment_instructions: { Args: { p_payment: string }; Returns: Json }
       promote_waitlist: { Args: { p_game: string }; Returns: number }
+      reject_payment_report: { Args: { p_payment: string }; Returns: undefined }
       report_payment: {
         Args: { p_last5: string; p_payment: string }
         Returns: undefined
