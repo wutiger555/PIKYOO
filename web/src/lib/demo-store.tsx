@@ -40,7 +40,7 @@ interface DemoState {
   signedIn: boolean;
   profile: Profile;
   mine: Record<string, MyGameStatus>;
-  /** games I opened via 開團, newest first */
+  /** games I opened via 開團 in the demo, newest first (live: catalog.hosting) */
   hosted: Game[];
   /** game id whose "你" seat should pop on the next detail render */
   popSeat: string | null;
@@ -130,6 +130,12 @@ function useDemoValue(catalog: Catalog, me: Me | null | undefined) {
     setSignedIn: (v: boolean) => set("signedIn", v),
     setProfile: (u: Updater<Profile>) => set("profile", u),
     addHosted: (g: Game) => set("hosted", (hs) => [g, ...hs]),
+    /** demo 團主管理; null drops the game (取消球局) */
+    updateHosted: (id: string, u: (g: Game) => Game | null) =>
+      set("hosted", (hs) => hs.flatMap((g) => {
+        const n = g.id === id ? u(g) : g;
+        return n ? [n] : [];
+      })),
     setMine,
     setPopSeat: (id: string | null) => set("popSeat", id),
     setGameFilters: (u: Updater<GameFilters>) => set("gameFilters", u),
@@ -180,6 +186,12 @@ export const useCatalog = () => useDemo().catalog;
 export function useAllGames() {
   const { catalog, hosted } = useDemo();
   return useMemo(() => [...catalog.games, ...hosted], [catalog, hosted]);
+}
+
+/** Games I host: opened this session in the demo, or the catalog's when signed in for real. */
+export function useHostedGames() {
+  const { catalog, hosted } = useDemo();
+  return useMemo(() => [...hosted, ...catalog.games.filter((g) => catalog.hosting?.includes(g.id))], [catalog, hosted]);
 }
 
 /** All coaches, with the signed-in coach's live edits applied (so the console preview and public page match). */

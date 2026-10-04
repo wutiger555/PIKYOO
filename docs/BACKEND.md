@@ -330,6 +330,7 @@ B1–B3 是最短的「真的能用」路徑：讀得到資料 → 能登入 →
   - [ ] 隱私權政策頁：需要 owner 提供營運者名稱與聯絡 Email
 - [ ] **B3 球局**（進行中）：
   - [x] 第一部分：報名／候補／取消（`@pikyoo/core/source/games` 呼叫 `join_game`／`leave_game`；live catalog 帶入看的人，把他自己的報名放在 `mine`、不算進名單；取消前先確認）。Owner 在 Preview 用真帳號報名、取消成功；畫面流程 Claude 在 demo 模式測過
-  - [ ] 第二部分：開團、團主管理（代報名、移除、取消球局）
+  - [x] 第二部分：開團、團主管理（`hostGame`、`addGuest`、`removeParticipant`、`cancelGame`）。live catalog 帶 `hosting`：團主留在自己的名單上、不算進「我報名的」，名單帶 participant id 給團主移除。資料庫流程（開團→團主自動入座→代報名→額滿進候補→移除後遞補→取消）在 `pikyoo-dev` 用會 rollback 的交易驗證過；畫面流程在 demo 模式測過。順便修掉 server action 的錯誤訊息在正式版會被 Next.js 遮掉的問題（改成回傳錯誤）
+  - [ ] 團主編輯球局資訊（F2-10：改時間、名額等，並通知已報名的人）
   - [ ] 第三部分：列表伺服器端篩選（不只今天／明天／週末）、分享卡片與動態 OG 圖
   - [ ] 第四部分：AI 一貼成局（需要 LLM API 金鑰）

@@ -11,7 +11,7 @@ import { TopNav } from "@/components/pk/TopNav";
 import { GameTicket, Seats } from "@/components/pk/Ticket";
 import { LoginSheet } from "@/components/pk/LoginSheet";
 import { useToast } from "@/components/pk/Toast";
-import { useDemo, useGameView } from "@/lib/demo-store";
+import { useDemo, useGameView, useHostedGames } from "@/lib/demo-store";
 import { realAuth } from "@/lib/env";
 import { useGameActions } from "@/lib/use-games";
 import { LEVELS, levelText } from "@pikyoo/core/format";
@@ -21,14 +21,17 @@ import type { Game } from "@pikyoo/core/types";
 export function GameDetailScreen({ game: g }: { game: Game }) {
   const router = useRouter();
   const toast = useToast();
-  const { popSeat, setPopSeat, profile, hosted, signedIn } = useDemo();
+  const { popSeat, setPopSeat, profile, signedIn } = useDemo();
   const games = useGameActions();
   const [login, setLogin] = useState(false);
   const [cancel, setCancel] = useState(false);
   const { my, count, spots, waitN } = useGameView(g);
   const [confirm, setConfirm] = useState(false);
   const [share, setShare] = useState(false);
-  const isHost = hosted.some((h) => h.id === g.id);
+  const [guest, setGuest] = useState(false);
+  const [removing, setRemoving] = useState<number | null>(null);
+  const [ending, setEnding] = useState(false);
+  const isHost = useHostedGames().some((h) => h.id === g.id);
   const cancelHours = g.cancelHours ?? 12;
   const leave = () => games.leave(g.id).then(
     (r) => toast(r === "late" ? `已取消。離開始不到 ${cancelHours} 小時，會記一次晚取消` : "已取消，位子會釋出給候補"),
@@ -157,14 +160,15 @@ export function GameDetailScreen({ game: g }: { game: Game }) {
           {g.notes && <p style={{ margin: "var(--space-3) 0 0", fontSize: 15 }}>{g.notes}</p>}
         </div>
 
-        <div className="dblock" style={{ borderBottom: 0 }}>
+        <div className="dblock" style={isHost ? undefined : { borderBottom: 0 }}>
           <h3>名單</h3>
           <div className="people">
             {g.participants.map((p, i) => (
               <div key={i} className="row-item">
                 <span className="avatar">{p.initial}</span>
-                <span style={{ flex: 1 }}>{p.name}{isHost && i === 0 ? "（你）" : ""}</span>
-                {i === 0 ? <span className="tag tag-accent">團主</span> : i === 2 ? <span className="tag tag-neutral">新成員</span> : null}
+                <span style={{ flex: 1 }}>{p.name}{isHost && p.host ? "（你）" : ""}</span>
+                {i === 0 ? <span className="tag tag-accent">團主</span> : i === 2 && !isHost ? <span className="tag tag-neutral">新成員</span> : null}
+                {isHost && !p.host && <button className="btn btn-ghost" style={{ minHeight: 36, padding: "0 10px", fontSize: 14 }} onClick={() => setRemoving(i)}>移除</button>}
               </div>
             ))}
             {my === "joined" && (
@@ -176,12 +180,47 @@ export function GameDetailScreen({ game: g }: { game: Game }) {
           </div>
           {g.waitlist > 0 && <p className="text-muted" style={{ fontSize: 14, margin: "var(--space-2) 0 0" }}>另有 {waitN} 人候補中</p>}
         </div>
+
+        {isHost && (
+          <div className="dblock" style={{ borderBottom: 0 }}>
+            <h3>團主管理</h3>
+            <p className="text-muted" style={{ fontSize: 14, margin: "0 0 var(--space-3)" }}>朋友沒有 PIKYOO 也能幫他報名；額滿時會排進候補。</p>
+            <div className="btnrow">
+              <button className="btn btn-secondary" onClick={() => setGuest(true)}><Icon name="plus" size={18} />幫朋友報名</button>
+              <button className="btn btn-ghost" style={{ color: "var(--color-danger)" }} onClick={() => setEnding(true)}>取消球局</button>
+            </div>
+          </div>
+        )}
       </div>
       <div className="sticky-cta">{cta}</div>
 
       {share && <ShareSheet game={g} onClose={() => setShare(false)} />}
       {login && <LoginSheet reason="登入後就能報名球局" onClose={() => setLogin(false)} />}
       {cancel && <CancelSheet game={g} waiting={my === "wait"} onClose={() => setCancel(false)} onConfirm={() => leave().finally(() => setCancel(false))} />}
+      {guest && (
+        <GuestSheet onClose={() => setGuest(false)} onAdd={(name) => games.addGuest(g, name).then(
+          (st) => { setGuest(false); toast(st === "wait" ? `已額滿，${name}排進候補` : `已幫${name}報名`); },
+          (e: Error) => toast(e.message),
+        )} />
+      )}
+      {removing !== null && g.participants[removing] && (
+        <ConfirmHostSheet
+          title={`移除 ${g.participants[removing].name}？`}
+          body="位子會讓給候補第一位。對方如果是 PIKYOO 會員，會收到通知。"
+          ok="確定移除"
+          onClose={() => setRemoving(null)}
+          onConfirm={() => games.remove(g, removing).then(() => toast("已移除"), (e: Error) => toast(e.message)).finally(() => setRemoving(null))}
+        />
+      )}
+      {ending && (
+        <ConfirmHostSheet
+          title="取消這場球局？"
+          body={`${g.dayLabel} ${g.date} ${g.startsAt}・${g.venue}。已報名和候補的人都會收到通知，取消後不能復原。`}
+          ok="確定取消球局"
+          onClose={() => setEnding(false)}
+          onConfirm={() => games.cancel(g.id).then(() => { toast("球局已取消，已通知報名的人"); router.push("/games"); }, (e: Error) => { setEnding(false); toast(e.message); })}
+        />
+      )}
       {confirm && (
         <ConfirmSheet
           game={g}
@@ -246,6 +285,43 @@ function CancelSheet({ game: g, waiting, onClose, onConfirm }: { game: Game; wai
         {busy ? "取消中…" : waiting ? "確定取消候補" : "確定取消報名"}
       </button>
       <button className="btn btn-ghost btn-block" style={{ marginTop: 8 }} onClick={onClose}>{waiting ? "繼續候補" : "保留報名"}</button>
+    </Sheet>
+  );
+}
+
+/** 代報名: a friend who isn't on PIKYOO, by name only. */
+function GuestSheet({ onClose, onAdd }: { onClose: () => void; onAdd: (name: string) => Promise<unknown> }) {
+  const [name, setName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const n = name.trim();
+  return (
+    <Sheet onClose={onClose}>
+      <h2>幫朋友報名</h2>
+      <div className="field">
+        <label htmlFor="guest">朋友的名字</label>
+        <input id="guest" className="input" maxLength={30} value={name} onChange={(e) => setName(e.target.value)} placeholder="例：阿明" />
+      </div>
+      <p className="text-muted" style={{ fontSize: 14, margin: "var(--space-2) 0 0" }}>名字會出現在公開名單上。</p>
+      <button className="btn btn-primary btn-lg btn-block" style={{ marginTop: "var(--space-4)" }} disabled={!n || busy}
+        onClick={() => { setBusy(true); onAdd(n).finally(() => setBusy(false)); }}>
+        {busy ? "報名中…" : "加入名單"}
+      </button>
+    </Sheet>
+  );
+}
+
+/** Asks before a host action that can't be undone. */
+function ConfirmHostSheet({ title, body, ok, onClose, onConfirm }: { title: string; body: string; ok: string; onClose: () => void; onConfirm: () => Promise<unknown> }) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <Sheet onClose={onClose}>
+      <h2>{title}</h2>
+      <p className="text-muted" style={{ fontSize: 14, margin: "var(--space-2) 0 0" }}>{body}</p>
+      <button className="btn btn-secondary btn-lg btn-block" style={{ marginTop: "var(--space-4)", color: "var(--color-danger)" }} disabled={busy}
+        onClick={() => { setBusy(true); onConfirm(); }}>
+        {busy ? "處理中…" : ok}
+      </button>
+      <button className="btn btn-ghost btn-block" style={{ marginTop: 8 }} onClick={onClose}>先不要</button>
     </Sheet>
   );
 }

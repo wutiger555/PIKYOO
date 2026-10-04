@@ -26,6 +26,7 @@ A pickleball platform for Taiwan to find courts, coaches, classes, and games.
 
 | 日期 | PR | 內容 |
 |---|---|---|
+| 2026-10-04 | [#21](https://github.com/wutiger555/PIKYOO/pull/21) | **B3 第二部分：開團與團主管理接上資料庫**：開團會寫進資料庫；團主在球局頁可以幫朋友報名（額滿自動排候補）、移除參加者（候補自動遞補）、取消球局（通知報名的人）。真登入啟用後生效，示範網站也能操作。另外修正：報名失敗時正式站原本看不到中文原因 |
 | 2026-10-04 | [#20](https://github.com/wutiger555/PIKYOO/pull/20) | **B3 第一部分：報名球局接上資料庫**：報名、加入候補、取消都寫進資料庫（真登入啟用後生效），取消前會先跳出確認並說明晚取消的規則。示範網站也有取消確認 |
 | 2026-10-04 | [#19](https://github.com/wutiger555/PIKYOO/pull/19) | **LINE 登入實測通過**（Preview）。修掉測試時發現的三個問題：LINE 帳號沒對應好會重複建帳號、首次設定中途離開會遺失、登入後右上角要重新整理才顯示名字。正式站先維持示範登入，等 B3 報名球局做完再一起啟用 |
 | 2026-10-04 | [#18](https://github.com/wutiger555/PIKYOO/pull/18) | **B2 登入（第一部分）**：LINE 登入、首次登入設定存檔、登出、刪除帳號都接上資料庫，等 LINE channel 建好、Vercel 設定 LIFF ID 後才啟用，**現在網站行為不變**。修掉一個資安漏洞：別人可以用 Email 註冊冒用你的 LINE 身分（[BACKEND.md](docs/BACKEND.md) §5） |

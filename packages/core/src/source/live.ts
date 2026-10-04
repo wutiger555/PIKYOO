@@ -35,11 +35,14 @@ const initial = (name: string) => (name.trim()[0] ?? "?").toUpperCase();
 const WD: Weekday[] = ["日", "一", "二", "三", "四", "五", "六"];
 const tpe = (t: string | number | Date) => {
   const d = new Date(new Date(t).getTime() + 8 * 3600e3);
-  return { day: Math.floor(d.getTime() / 864e5), md: `${d.getUTCMonth() + 1}/${d.getUTCDate()}`, wd: WD[d.getUTCDay()], hhmm: d.toISOString().slice(11, 16) };
+  return {
+    day: Math.floor(d.getTime() / 864e5), ymd: d.toISOString().slice(0, 10), md: `${d.getUTCMonth() + 1}/${d.getUTCDate()}`,
+    wd: WD[d.getUTCDay()], hhmm: d.toISOString().slice(11, 16),
+  };
 };
 
-/** The list shows today, tomorrow and the coming weekend (2–8 days out), as the demo does. */
-function calendar(now: number) {
+/** The list shows today, tomorrow and the coming weekend (2–8 days out), as the demo does. 開團 picks from the same days. */
+export function calendar(now: number) {
   const at = (n: number) => tpe(now + n * 864e5);
   const next = (wd: Weekday) => [2, 3, 4, 5, 6, 7, 8].find((n) => at(n).wd === wd)!;
   const offset: Record<DayGroup, number> = { today: 0, tomorrow: 1, sat: next("六"), sun: next("日") };
@@ -48,7 +51,9 @@ function calendar(now: number) {
     sat: `週六 ${at(offset.sat).md}`, sun: `週日 ${at(offset.sun).md}`,
   };
   const groupOf = (iso: string) => (Object.keys(offset) as DayGroup[]).find((k) => tpe(iso).day - at(0).day === offset[k]);
-  return { labels, groupOf, at };
+  /** 開團: a day group plus HH:MM in Taipei → an ISO timestamp */
+  const isoAt = (group: DayGroup, hhmm: string) => new Date(`${at(offset[group]).ymd}T${hhmm}:00+08:00`).toISOString();
+  return { labels, groupOf, at, isoAt };
 }
 
 type Photo = ReturnType<typeof photoUrl>;
@@ -114,7 +119,9 @@ function toCoach(photo: Photo, c: CoachCard, creds: Tables<"credentials">[], pla
   };
 }
 
-function toGame(g: GameCard, group: DayGroup, roster: { name: string; host: boolean }[], viewerWaiting: boolean): Game {
+type Seat = { id: string; name: string; host: boolean };
+
+function toGame(g: GameCard, group: DayGroup, roster: Seat[], viewerWaiting: boolean, hosting: boolean): Game {
   const s = tpe(g.starts_at);
   const name = (n: string) => ({ name: n, initial: initial(n) });
   return {
@@ -123,7 +130,8 @@ function toGame(g: GameCard, group: DayGroup, roster: { name: string; host: bool
     courtKind: g.court_kind ? `${KIND[g.court_kind]} ${g.court_count} 面` : "", address: g.address,
     levelMin: g.level_min as Level, levelMax: g.level_max as Level, capacity: g.capacity,
     // host first, then everyone else in sign-up order
-    participants: [...roster.filter((p) => p.host), ...roster.filter((p) => !p.host)].map((p) => name(p.name)),
+    participants: [...roster.filter((p) => p.host), ...roster.filter((p) => !p.host)]
+      .map((p) => ({ ...name(p.name), ...(hosting && { id: p.id, host: p.host }) })),
     host: { ...name(g.host_name), summary: `開過 ${g.host_game_count} 團` },
     fee: g.fee, payNote: g.fee_note, beginnerFriendly: g.beginner_friendly, waitlist: g.waitlist_count - (viewerWaiting ? 1 : 0), notes: g.notes,
     courtId: g.court_slug ?? undefined, cancelHours: g.cancel_hours,
@@ -151,7 +159,7 @@ export const createLive = ({ url, publishableKey }: LiveConfig): DataSource => (
     const ids = shown.map((x) => x.g.id);
     const [roster, own] = ids.length
       ? await Promise.all([
-          sb.from("game_participants").select("game_id, user_id, guest_name, profiles!game_participants_user_id_fkey(display_name)")
+          sb.from("game_participants").select("id, game_id, user_id, guest_name, profiles!game_participants_user_id_fkey(display_name)")
             .in("game_id", ids).eq("status", "joined").order("joined_at").then(ok),
           viewer
             ? sb.from("game_participants").select("game_id, status").in("game_id", ids).eq("user_id", viewer)
@@ -159,15 +167,23 @@ export const createLive = ({ url, publishableKey }: LiveConfig): DataSource => (
             : [],
         ])
       : [[], []];
-    const mine = Object.fromEntries(own.map((p) => [p.game_id, p.status === "joined" ? ("joined" as const) : ("wait" as const)]));
+    // a host is in their own roster (as 團主), not signed up as a player
+    const hosting = viewer ? shown.filter(({ g }) => g.host_id === viewer).map(({ g }) => g.id) : [];
+    const mine = Object.fromEntries(own.filter((p) => !hosting.includes(p.game_id))
+      .map((p) => [p.game_id, p.status === "joined" ? ("joined" as const) : ("wait" as const)]));
     return {
       courts: courts.map((c, i) => toCourt(photo, c, i)),
       coaches: (coaches as CoachCard[]).map((c) =>
         toCoach(photo, c, creds.filter((x) => x.coach_id === c.id), plans.filter((p) => p.coach_id === c.id), cal.at)),
-      games: shown.map(({ g, group }) => toGame(g, group, roster.filter((p) => p.game_id === g.id && (!viewer || p.user_id !== viewer))
-        .map((p) => ({ name: p.guest_name ?? p.profiles?.display_name ?? "", host: p.user_id === g.host_id })), mine[g.id] === "wait")),
+      games: shown.map(({ g, group }) => {
+        const mineHere = hosting.includes(g.id);
+        const seats = roster.filter((p) => p.game_id === g.id && (!viewer || p.user_id !== viewer || mineHere))
+          .map((p) => ({ id: p.id, name: p.guest_name ?? p.profiles?.display_name ?? "", host: p.user_id === g.host_id }));
+        return toGame(g, group, seats, mine[g.id] === "wait", mineHere);
+      }),
       dayGroups: cal.labels,
       mine,
+      hosting,
     };
   },
 });

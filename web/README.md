@@ -23,7 +23,7 @@ Every route has a phone layout and a desktop layout (≥1024px, see `../docs/DES
 | --- | --- |
 | `/` | 首頁. Signed in: 想上什麼課、適合你的教練、近期可約、揪朋友一起上 (F7). Visitor: landing page with 「用 LINE 免費註冊」 |
 | `/games` | 球局列表＋快速篩選＋篩選面板 (F2) |
-| `/games/[id]` | 球局詳情 → 確認報名／加入候補 (sheet) |
+| `/games/[id]` | 球局詳情 → 確認報名／加入候補 (sheet)；團主看到團主管理（幫朋友報名、移除、取消球局） |
 | `/games/[id]/success` | 報名成功／已加入候補 |
 | `/games/new` | 開團：AI 一貼成局／自己填 → 發布 → 分享 LINE Flex 卡片 (F2-7/8/9) |
 | `/learn`, `/learn/level-check` | 新手專區 (F3-1)、程度自評 (F3-2) |
