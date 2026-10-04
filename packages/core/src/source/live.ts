@@ -140,6 +140,12 @@ function toGame(g: GameCard, dayLabel: string, roster: Seat[], viewerWaiting: bo
   };
 }
 
+/** One coach as the screens see it (also used for a coach's own page at any status, see me-coach.ts). */
+export const coachFromRows = (url: string, c: CoachCard, creds: Tables<"credentials">[], plans: Tables<"coach_plans">[]) =>
+  toCoach(photoUrl(url), c, creds, plans, calendar(Date.now()).at);
+
+export type { CoachCard };
+
 export const createLive = ({ url, publishableKey }: LiveConfig): DataSource => ({
   async catalog(viewer?: string): Promise<Catalog> {
     const photo = photoUrl(url);

@@ -12,6 +12,8 @@ import { useCatalog, useDemo } from "@/lib/demo-store";
 import { LEVELS } from "@pikyoo/core/format";
 import type { Coach, CoachProfile, Level, PayMethod, PlayProfile, TimelineItem } from "@pikyoo/core/types";
 import { CoachTabs, ConsoleFrame } from "./ConsoleScreens";
+import { CoachSaveBar } from "./CoachAccount";
+import { realAuth } from "@/lib/env";
 
 const STRENGTHS = ["零基礎入門", "發球與接發球", "網前小球（dink）", "第三拍 drop", "重置球（reset）", "截擊", "快速對抽（hands battle）", "雙打站位與換位", "單打戰術", "比賽策略", "網球轉匹克球的揮拍修正", "親子課"];
 const AUDIENCE = ["第一次拿拍", "打過網球、羽球想轉項", "想先上課再去打新手局", "2.5–3.0 想升級", "準備參加積分賽", "一個人想找球伴", "跟朋友一起來的小班", "親子一起學", "銀髮族", "英文授課需求"];
@@ -54,7 +56,7 @@ export function CoachPageEditor() {
     if (!files?.length) return;
     const added = [...files].slice(0, 10).map((f) => ({ src: URL.createObjectURL(f), alt: `${c.name} 的上課照片`, caption: "" }));
     setP({ photos: [...p.photos, ...added] });
-    toast(`已加入 ${added.length} 張照片（接上 Supabase Storage 後會真的上傳）`);
+    toast(realAuth ? "照片上傳下一版開放，這幾張先不會被儲存" : `已加入 ${added.length} 張照片（接上 Supabase Storage 後會真的上傳）`);
   };
   const movePhoto = (i: number, to: number) => {
     const xs = [...p.photos];
@@ -77,6 +79,7 @@ export function CoachPageEditor() {
       <h1 className="con-titlebar dk-only">我的教練頁</h1>
       <div className="console-wide">
         <div className="editor">
+          <CoachSaveBar />
           <section className="ed-card ed-head">
             <div className="linkcard">
               <div style={{ flex: 1, minWidth: 0 }}>

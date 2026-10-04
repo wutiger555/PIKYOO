@@ -7,7 +7,7 @@ import { COACHES, initialGroups, initialRequests } from "../../packages/core/src
 import { COURTS } from "../../packages/core/src/data/courts.ts";
 import { GAMES } from "../../packages/core/src/data/games.ts";
 import { initialQuestions } from "../../packages/core/src/data/questions.ts";
-import type { LessonType, PayMethod, Plan } from "../../packages/core/src/types.ts";
+import { LESSON_DB, PAY_DB, planKind, UNIT_DB } from "../../packages/core/src/source/coach-rows.ts";
 
 const MOCK_TODAY = { m: 9, d: 29 };
 
@@ -28,13 +28,8 @@ const at = (md: string, hhmi: string) => {
 /** Question dates like 9/12 are in the past: keep them as fixed 2026 dates. */
 const past = (label: string) => (/^\d+\/\d+$/.test(label) ? `timestamptz '2026-${label.replace("/", "-")} 12:00+08'` : "now()");
 
-const PAY: Record<PayMethod, string> = { "LINE Pay": "line_pay", 銀行轉帳: "bank_transfer", 現場付現: "cash" };
 const KIND: Record<string, string> = { 室內: "indoor", 室外: "outdoor", 風雨: "covered" };
 const BOOKING: Record<string, string> = { 公立預約系統: "public_system", 官網預約: "website", "LINE 預約": "line", 電話預約: "phone", 免預約: "walk_in" };
-const UNIT: Record<Plan["unit"], string> = { "/人": "per_person", "/堂": "per_lesson", "/10 堂": "per_pack" };
-const planKind = (p: Plan): LessonType =>
-  p.name.includes("體驗") ? "體驗課" : p.name.includes("團體") ? "團體" : p.group ? "小班" : "一對一";
-const LESSON_KIND: Record<LessonType, string> = { 體驗課: "trial", 一對一: "private", 小班: "small", 團體: "group" };
 
 const users = new Set<string>();
 const person = (name: string) => users.add(name);
@@ -60,7 +55,7 @@ for (const c of COACHES) {
   ${uid(c.name)}, ${q(c.id)}, ${q(c.name)}, 'approved', ${q(c.tagline)}, ${q(p.bio)}, ${arr(c.areas)}, ${c.levelMin}, ${c.levelMax}, ${arr(c.style)},
   ${c.beginnerFriendly}, ${2026 - c.years}, ${q(p.reply)}, ${json(p.play)}, ${arr(p.audience)}, ${arr(p.languages)}, ${json(p.availability)},
   ${json(p.venues.map((v) => ({ name: v.name, sub: v.sub, court_slug: v.courtId ?? null })))}, ${arr(p.steps)},
-  ${arr(p.pay.map((x) => PAY[x]), "public.pay_method")}, ${q(p.policy)},
+  ${arr(p.pay.map((x) => PAY_DB[x]), "public.pay_method")}, ${q(p.policy)},
   ${json(p.photos.map((x) => ({ path: x.src, alt: x.alt, caption: x.caption ?? null })))}, ${json(p.timeline)}, ${json(p.quotes)}, now());`);
   for (const cr of c.creds) {
     const dupr = cr.issuer === "DUPR";
@@ -68,8 +63,8 @@ for (const c of COACHES) {
   }
   p.plans.forEach((pl, i) =>
     emit(`insert into public.coach_plans (coach_id, key, name, kind, duration_min, size_label, capacity, group_min, group_max, price, unit, note, tag, sort) values (
-  ${coachId(c.id)}, ${q(pl.id)}, ${q(pl.name)}, '${LESSON_KIND[planKind(pl)]}', ${pl.durationMin}, ${q(pl.size)}, ${pl.group?.max ?? 1},
-  ${pl.group?.min ?? "null"}, ${pl.group?.max ?? "null"}, ${pl.price}, '${UNIT[pl.unit]}', ${q(pl.note)}, ${q(pl.tag)}, ${i});`));
+  ${coachId(c.id)}, ${q(pl.id)}, ${q(pl.name)}, '${LESSON_DB[planKind(pl)]}', ${pl.durationMin}, ${q(pl.size)}, ${pl.group?.max ?? 1},
+  ${pl.group?.min ?? "null"}, ${pl.group?.max ?? "null"}, ${pl.price}, '${UNIT_DB[pl.unit]}', ${q(pl.note)}, ${q(pl.tag)}, ${i});`));
 }
 
 // — games: the host takes a seat through the insert trigger, the rest join in order, then the waitlist —
@@ -102,7 +97,7 @@ for (const r of initialRequests()) {
   const plan = mia.profile.plans.find((p) => r.plan.startsWith(p.name.slice(0, 3)))!;
   person(r.name);
   emit(`insert into public.lesson_bookings (coach_id, plan_id, student_id, starts_at, headcount, note, pay_method, amount, expires_at) values (
-  ${coachId("mia")}, ${planId("mia", plan.id)}, ${uid(r.name)}, ${at(md, hhmi)}, 1, ${q(r.note)}, '${PAY[r.pay]}', ${r.amount}, now() + interval '${parseInt(r.expiresIn)} hours');`);
+  ${coachId("mia")}, ${planId("mia", plan.id)}, ${uid(r.name)}, ${at(md, hhmi)}, 1, ${q(r.note)}, '${PAY_DB[r.pay]}', ${r.amount}, now() + interval '${parseInt(r.expiresIn)} hours');`);
 }
 const days: Record<string, string> = { d1: "9/30", d2: "10/1", d3: "10/2", d4: "10/3", d5: "10/4", d6: "10/5", d7: "10/6" };
 for (const g of initialGroups()) {

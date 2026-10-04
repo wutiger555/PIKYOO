@@ -8,6 +8,7 @@ import { useDemo } from "@/lib/demo-store";
 import { money } from "@pikyoo/core/format";
 import type { Coach, Plan, Weekday } from "@pikyoo/core/types";
 import { CoachTabs, ConsoleFrame } from "./ConsoleScreens";
+import { CoachSaveBar } from "./CoachAccount";
 
 const WEEK: Weekday[] = ["一", "二", "三", "四", "五", "六", "日"];
 const UNITS: Plan["unit"][] = ["/人", "/堂", "/10 堂"];
@@ -37,6 +38,7 @@ export function CoachLessonsScreen() {
       <ConsoleFrame active="lessons">
       <h1 className="con-titlebar dk-only">課程與時段</h1>
       <div className="console-wide">
+        <CoachSaveBar />
         <div className="editor editor-2">
           <section className="ed-card">
             <div className="sec-head"><h2><span className="en">Plans</span>課程方案</h2><span className="text-muted" style={{ fontSize: 13 }}>起價 {money(c.priceFrom)}</span></div>
