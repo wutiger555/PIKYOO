@@ -22,11 +22,11 @@ end $$;
 create function public.games_after_edit() returns trigger language plpgsql security definer set search_path = '' as $$
 declare r record; changed text[] := '{}';
 begin
-  if new.starts_at <> old.starts_at or new.ends_at <> old.ends_at then changed := changed || 'time'; end if;
+  if new.starts_at <> old.starts_at or new.ends_at <> old.ends_at then changed := array_append(changed, 'time'); end if;
   if new.court_id is distinct from old.court_id or new.location_text <> old.location_text or new.address <> old.address then
-    changed := changed || 'place';
+    changed := array_append(changed, 'place');
   end if;
-  if new.fee <> old.fee or new.fee_note <> old.fee_note then changed := changed || 'fee'; end if;
+  if new.fee <> old.fee or new.fee_note <> old.fee_note then changed := array_append(changed, 'fee'); end if;
   if cardinality(changed) = 0 then return new; end if;
   for r in select user_id from public.game_participants
            where game_id = new.id and status in ('joined', 'waitlisted') and user_id is not null and user_id <> new.host_id loop
