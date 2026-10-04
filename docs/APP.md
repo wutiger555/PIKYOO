@@ -169,7 +169,7 @@ App 等網站資料穩定才開工，避免兩邊一起追資料結構變動。
 | 4 | B1 重新上線：球場、教練、球局改讀資料庫；Supabase 查詢寫在 `packages/core` | owner＋Claude | ✅ [#17](https://github.com/wutiger555/PIKYOO/pull/17) |
 | 5 | B2 登入：LINE 登入、我的、刪除帳號（正式站等 B3 一起啟用；隱私權政策頁待 owner 資料） | owner＋Claude | ✅ [#18](https://github.com/wutiger555/PIKYOO/pull/18)、[#19](https://github.com/wutiger555/PIKYOO/pull/19) |
 | 6 | B3 球局：報名、候補、開團、編輯、分享、兩週列表 | Claude | ✅ [#20](https://github.com/wutiger555/PIKYOO/pull/20)–[#24](https://github.com/wutiger555/PIKYOO/pull/24) |
-| 7 | B4 教練頁與後台：申請、編輯存檔、照片與證照上傳、管理員審核 | owner＋Claude | ✅ [#25](https://github.com/wutiger555/PIKYOO/pull/25)–#PR |
+| 7 | B4 教練頁與後台：申請、編輯存檔、照片與證照上傳、管理員審核 | owner＋Claude | ✅ [#25](https://github.com/wutiger555/PIKYOO/pull/25)–[#27](https://github.com/wutiger555/PIKYOO/pull/27) |
 | 8 | B5 預約、揪團、問與答、收款 | Claude | 👉 |
 | 9 | B6 通知：LINE 推播、Email、提醒 | owner＋Claude | ⬜ |
 | 10 | B7 營運後台與 SEO | Claude | ⬜ |
