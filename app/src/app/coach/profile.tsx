@@ -1,15 +1,14 @@
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
-import { LEVELS } from "@pikyoo/core/format";
-import type { Coach, CoachProfile, Level, PayMethod, PlayProfile } from "@pikyoo/core/types";
+import type { Coach, CoachProfile, PayMethod, PlayProfile } from "@pikyoo/core/types";
 import { useCatalog } from "@/data/catalog";
 import { useSession } from "@/data/session";
-import { Chip, Num } from "@/ui/badges";
+import { Num } from "@/ui/badges";
 import { Btn } from "@/ui/Btn";
 import { Photo } from "@/ui/CoachCard";
 import { c, ConsolePage, SecHead } from "@/ui/console";
-import { Choice, Field, Multi } from "@/ui/form";
+import { Field, LevelRange, PickerRow, Segmented, SwitchRow } from "@/ui/form";
 import { Icon } from "@/ui/Icon";
 import { color, radius } from "@/ui/theme";
 
@@ -91,10 +90,11 @@ export default function CoachProfileEditor() {
       <View style={c.card}>
         <Field label="顯示名稱" value={co.name} max={20} onChange={(name) => setC({ name })} />
         <Field label="一句話介紹" value={co.tagline} max={40} hint="會出現在教練卡上" onChange={(tagline) => setC({ tagline })} />
-        <Multi label="授課區域" values={co.areas} options={AREAS} onChange={(areas) => setC({ areas })} />
-        <Choice label="授課程度（最低）" value={co.levelMin} options={[0, 1, 2, 3, 4, 5, 6] as Level[]} format={(l) => LEVELS[l]} onChange={(levelMin) => setC({ levelMin, levelMax: Math.max(levelMin, co.levelMax) as Level })} />
-        <Choice label="授課程度（最高）" value={co.levelMax} options={[0, 1, 2, 3, 4, 5, 6] as Level[]} format={(l) => LEVELS[l]} onChange={(levelMax) => setC({ levelMax, levelMin: Math.min(levelMax, co.levelMin) as Level })} />
-        <Choice label="回覆速度" value={p.reply as (typeof REPLY)[number]} options={REPLY} format={(x) => x.replace("通常 ", "")} onChange={(reply) => setP({ reply })} />
+        <LevelRange label="授課程度" min={co.levelMin} max={co.levelMax} onChange={(levelMin, levelMax) => setC({ levelMin, levelMax })} />
+        <View>
+          <PickerRow label="授課區域" multi values={co.areas} options={AREAS} onChange={(areas) => setC({ areas })} />
+          <PickerRow label="回覆速度" values={[p.reply]} options={REPLY} onChange={([reply]) => setP({ reply })} />
+        </View>
       </View>
 
       <SecHead en="About" title="關於我與上課方式" />
@@ -107,16 +107,22 @@ export default function CoachProfileEditor() {
             <View style={{ flex: 1 }}><Field label="" value={st} onChange={(v) => setP({ steps: p.steps.map((x, j) => (j === i ? v : x)) })} /></View>
           </View>
         ))}
-        <Multi label="適合誰" values={p.audience} options={AUDIENCE} onChange={(audience) => setP({ audience })} />
+        <View><PickerRow label="適合誰" multi values={p.audience} options={AUDIENCE} summary={(v) => `${v.length} 項：${v.join("、")}`} onChange={(audience) => setP({ audience })} /></View>
       </View>
 
       <SecHead en="Pickleball" title="匹克球檔案" />
       <View style={c.card}>
         <Text style={c.hint}>學生最常比較的資訊。DUPR 填了會標「自填」，送驗證後改成「已驗證」。</Text>
-        <Choice label="慣用手" value={p.play.hand} options={["右手", "左手"] as const} onChange={(hand) => setPlay({ hand })} />
-        <Choice label="打法" value={p.play.format} options={["雙打為主", "單打為主", "單打、雙打都教"]} onChange={(format) => setPlay({ format })} />
+        <Segmented label="慣用手" value={p.play.hand} options={["右手", "左手"] as const} onChange={(hand) => setPlay({ hand })} />
+        <Segmented label="打法" value={p.play.format} options={["雙打為主", "單打為主", "單打、雙打都教"]} format={(x) => x.replace("單打、雙打都教", "都教")} onChange={(format) => setPlay({ format })} />
         <Field label="運動背景" value={p.play.background} placeholder="例：網球教練 8 年" onChange={(background) => setPlay({ background })} />
-        <Multi label="擅長教（第一項會出現在教練卡）" values={p.play.strengths} options={STRENGTHS} onChange={(strengths) => setPlay({ strengths })} />
+        <Field label="DUPR 分數（選填）" value={co.creds.find((x) => x.issuer === "DUPR")?.level ?? ""} keyboard="decimal-pad" placeholder="例：4.21"
+          onChange={(v) => { const level = v.replace(/[^\d.]/g, "").slice(0, 4); const rest = co.creds.filter((x) => x.issuer !== "DUPR"); setC({ creds: level ? [...rest, { issuer: "DUPR", level, verified: false }] : rest }); }} />
+        <View>
+          <PickerRow label="開始打球" values={[p.play.since]} options={["2016", "2017", "2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025", "2026"]} summary={(v) => `${v[0]} 年`} onChange={([since]) => setPlay({ since })} />
+          <PickerRow label="擅長教" multi values={p.play.strengths} options={STRENGTHS} summary={(v) => `${v.length} 項：${v.join("、")}`} onChange={(strengths) => setPlay({ strengths })} />
+        </View>
+        <Text style={c.hint}>擅長的第一項會出現在教練卡上。</Text>
       </View>
 
       <SecHead en="Where" title="授課地點" />
@@ -136,11 +142,11 @@ export default function CoachProfileEditor() {
       <SecHead en="Payment" title="付款與取消" />
       <View style={c.card}>
         <Text style={c.label}>學生可以用的付款方式</Text>
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-          {PAYS.map((x) => <Chip key={x} on={p.pay.includes(x)} onPress={() => setP({ pay: p.pay.includes(x) ? p.pay.filter((y) => y !== x) : [...p.pay, x] })}>{x}</Chip>)}
+        <View>
+          {PAYS.map((x, i) => <SwitchRow key={x} first={i === 0} label={x} value={p.pay.includes(x)} onChange={(on) => setP({ pay: on ? [...p.pay, x] : p.pay.filter((y) => y !== x) })} />)}
         </View>
         <Field label="取消規則" value={p.policy} multiline onChange={(policy) => setP({ policy })} />
-        <Text style={c.hint}>課程方案與每週時段在「課程時段」設定。</Text>
+        <Text style={c.hint}>課程方案與每週時段在「課程」分頁設定。</Text>
       </View>
 
       <Btn kind="primary" label="預覽學生看到的教練頁" onPress={preview} />

@@ -15,7 +15,7 @@ export default function CoachLayout() {
         {today > 0 && <NativeTabs.Trigger.Badge>{String(today)}</NativeTabs.Trigger.Badge>}
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="lessons">
-        <NativeTabs.Trigger.Label>課程時段</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>課程</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="calendar" />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="profile">
