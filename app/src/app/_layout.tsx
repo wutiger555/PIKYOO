@@ -22,7 +22,10 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="coaches/[id]/index" options={{ headerShown: false }} />
           <Stack.Screen name="coaches/[id]/book" options={{ title: "預約" }} />
+          <Stack.Screen name="games/index" options={{ title: "球局" }} />
           <Stack.Screen name="games/[id]" options={{ title: "球局" }} />
+          <Stack.Screen name="courts/index" options={{ title: "找球場" }} />
+          <Stack.Screen name="courts/[id]" options={{ title: "球場" }} />
           <Stack.Screen name="me/booking" options={{ title: "我的預約" }} />
         </Stack>
       </SessionProvider>

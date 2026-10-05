@@ -1,6 +1,7 @@
 import { createContext, useContext, useMemo, useState } from "react";
 import { emptyCoachFilters, type CoachFilters } from "@pikyoo/core/coach-filters";
-import type { Booking, Question } from "@pikyoo/core/types";
+import { emptyGameFilters, type GameFilters } from "@pikyoo/core/game-filters";
+import type { Booking, Game, MyGameStatus, Question } from "@pikyoo/core/types";
 import { isLive, useCatalog } from "./catalog";
 
 // What the website keeps in lib/demo-store.tsx, for the app: sign-in, 找教練 filters, the compare tray, questions asked here.
@@ -21,6 +22,12 @@ interface Session {
   /** the demo's one booking (website: demo-store `booking`); live bookings come from the database after sign-in */
   booking: Booking | null;
   setBooking: (b: Booking | null) => void;
+  gameFilters: GameFilters;
+  setGameFilters: (f: (p: GameFilters) => GameFilters) => void;
+  /** my sign-ups: the catalog's (live, after sign-in) plus the demo's joins in this session */
+  mine: Record<string, MyGameStatus>;
+  join: (gameId: string, wait: boolean) => void;
+  leave: (gameId: string) => void;
 }
 const Ctx = createContext<Session | null>(null);
 
@@ -30,6 +37,14 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [compare, setCompare] = useState<string[]>([]);
   const [asked, setAsked] = useState<Question[]>([]);
   const [booking, setBooking] = useState<Booking | null>(null);
+  const [gameFilters, setGF] = useState(emptyGameFilters);
+  const { catalog } = useCatalog();
+  const [joined, setJoined] = useState<Record<string, MyGameStatus | null>>({});
+  const mine = useMemo(() => {
+    const m: Record<string, MyGameStatus> = { ...(catalog?.mine ?? {}) };
+    for (const [id, st] of Object.entries(joined)) { if (st) m[id] = st; else delete m[id]; }
+    return m;
+  }, [catalog, joined]);
   const value = useMemo<Session>(() => ({
     signedIn,
     signIn: () => { if (!isLive) setSignedIn(true); },
@@ -46,7 +61,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     asked,
     booking,
     setBooking,
-  }), [signedIn, filters, compare, asked, booking]);
+    gameFilters,
+    setGameFilters: (f) => setGF(f),
+    mine,
+    join: (id, wait) => setJoined((p) => ({ ...p, [id]: wait ? "wait" : "joined" })),
+    leave: (id) => setJoined((p) => ({ ...p, [id]: null })),
+  }), [signedIn, filters, compare, asked, booking, gameFilters, mine]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
@@ -61,4 +81,12 @@ export function usePublicQuestions(coachId: string) {
   const { catalog } = useCatalog();
   const { asked } = useSession();
   return useMemo(() => [...(catalog?.questions ?? []), ...asked].filter((q) => q.coachId === coachId && (q.answer || q.mine)), [catalog, asked, coachId]);
+}
+
+/** Seats as the viewer sees them (website: useGameView): their own seat or waitlist place counted in. */
+export function useGameView(g: Game) {
+  const { mine } = useSession();
+  const my = mine[g.id];
+  const count = g.participants.length + (my === "joined" ? 1 : 0);
+  return { my, count, spots: g.capacity - count, waitN: g.waitlist + (my === "wait" ? 1 : 0) };
 }
