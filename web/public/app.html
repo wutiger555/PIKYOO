@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>PIKYOO App 示範版</title>
+<style>
+  :root { --bg:#F2F3EF; --fg:#121412; --mut:#5F645E; --card:#fff; --acc:#D4EE3A; --line:#DFE1DA; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#121412; --fg:#F2F3EF; --mut:#B9BEB6; --card:#1A1D1B; --line:#363A35; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:-apple-system,"PingFang TC","Noto Sans TC",sans-serif; line-height:1.6; }
+  main { max-width:480px; margin:0 auto; padding:32px 16px 48px; }
+  h1 { font-size:26px; margin:0 0 4px; }
+  .mut { color:var(--mut); font-size:15px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:18px; margin-top:18px; }
+  ol { padding-left:20px; margin:8px 0 0; } li { margin:6px 0; }
+  .btn { display:block; text-align:center; background:var(--acc); color:#121412; font-weight:800; font-size:17px; padding:15px; border-radius:999px; text-decoration:none; margin-top:14px; }
+  .qr { display:block; width:220px; max-width:70%; margin:12px auto 0; background:#fff; padding:8px; border-radius:12px; }
+  code { word-break:break-all; font-size:12px; color:var(--mut); }
+</style>
+</head>
+<body><main>
+  <h1>PIKYOO App 示範版</h1>
+  <p class="mut">學生找教練、預約、付款，以及教練後台，都可以在手機上試用。示範資料，重開 App 就會還原。</p>
+
+  <div class="card">
+    <b>第一次使用</b>
+    <ol>
+      <li>到 App Store 或 Google Play 安裝免費的 <b>Expo Go</b>。</li>
+      <li>用手機打開這一頁，按下面的按鈕；或用相機掃 QR code。</li>
+    </ol>
+    <a class="btn" href="exp://u.expo.dev/ed32d0a0-1950-4825-847a-9b323b96f377?channel-name=demo&amp;runtime-version=exposdk:57.0.0">用 Expo Go 開啟</a>
+    <img class="qr" src="/app-demo-qr.png" alt="用相機掃描開啟 PIKYOO App 示範版">
+  </div>
+
+  <div class="card">
+    <b>按了沒反應？</b>
+    <ol>
+      <li>在 LINE 裡打開的話，請點右上角「⋯」→「用預設瀏覽器開啟」，再按一次按鈕。</li>
+      <li>或打開 Expo Go，貼上這個網址：<br><code>exp://u.expo.dev/ed32d0a0-1950-4825-847a-9b323b96f377?channel-name=demo&amp;runtime-version=exposdk:57.0.0</code></li>
+    </ol>
+  </div>
+</main></body>
+</html>
