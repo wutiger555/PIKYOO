@@ -34,6 +34,19 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "ed32d0a0-1950-4825-847a-9b323b96f377"
+      }
+    },
+    "owner": "msxlol",
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/ed32d0a0-1950-4825-847a-9b323b96f377"
     }
   }
 }
