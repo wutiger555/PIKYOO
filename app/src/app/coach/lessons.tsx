@@ -1,19 +1,17 @@
 import { useState } from "react";
-import { Alert, Pressable, ScrollView, Switch, Text, TextInput, View } from "react-native";
+import { Alert, Pressable, Switch, Text, TextInput, View } from "react-native";
 import { money } from "@pikyoo/core/format";
 import type { Coach, Plan, Weekday } from "@pikyoo/core/types";
 import { useSession } from "@/data/session";
-import { Chip, Num } from "@/ui/badges";
+import { Num } from "@/ui/badges";
 import { Btn } from "@/ui/Btn";
 import { c, ConsolePage, SecHead } from "@/ui/console";
-import { Choice, Field, Stepper } from "@/ui/form";
+import { Field, MoneyInput, Segmented, Stepper, TimeSheet } from "@/ui/form";
 import { Icon } from "@/ui/Icon";
-import { Sheet } from "@/ui/Sheet";
 import { color, radius } from "@/ui/theme";
 
 const WEEK: Weekday[] = ["一", "二", "三", "四", "五", "六", "日"];
 const UNITS: Plan["unit"][] = ["/人", "/堂", "/10 堂"];
-const TIMES = Array.from({ length: 33 }, (_, i) => `${String(6 + Math.floor(i / 2)).padStart(2, "0")}:${i % 2 ? "30" : "00"}`);
 /** 起價 = the lowest price a student can pay for one lesson (website: priceFrom). */
 const priceFrom = (plans: Plan[]) => Math.min(...plans.filter((p) => p.unit !== "/10 堂").map((p) => p.price), Infinity);
 
@@ -44,18 +42,10 @@ export default function CoachLessons() {
               <Icon name="x" size={18} tint={p.plans.length === 1 ? color.n300 : color.text} />
             </Pressable>
           </View>
-          <View style={{ flexDirection: "row", gap: 10 }}>
-            <View style={{ flex: 1, gap: 6 }}>
-              <Text style={c.label}>價格</Text>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                <Num style={{ fontSize: 16, color: color.muted }}>NT$</Num>
-                <TextInput value={String(pl.price)} keyboardType="number-pad" onChangeText={(v) => setPlan(i, { price: Number(v.replace(/\D/g, "").slice(0, 6)) || 0 })} style={[c.input, { flex: 1 }]} accessibilityLabel="價格" />
-              </View>
-            </View>
-            <View style={{ flex: 1 }}><Field label="人數" value={pl.size} onChange={(size) => setPlan(i, { size })} /></View>
-          </View>
-          <Choice label="計價" value={pl.unit} options={UNITS} onChange={(unit) => setPlan(i, { unit })} />
-          <Choice label="時長" value={pl.durationMin} options={[45, 60, 90, 120] as const} format={(m) => `${m} 分鐘`} onChange={(durationMin) => setPlan(i, { durationMin })} />
+          <MoneyInput label="價格" value={pl.price} step={pl.unit === "/10 堂" ? 500 : 50} onChange={(price) => setPlan(i, { price })} />
+          <Segmented label="計價" value={pl.unit} options={UNITS} format={(u) => ({ "/人": "每人", "/堂": "每堂", "/10 堂": "10 堂" })[u]} onChange={(unit) => setPlan(i, { unit })} />
+          <Segmented label="時長" value={pl.durationMin} options={[45, 60, 90, 120] as const} format={(m) => `${m} 分`} onChange={(durationMin) => setPlan(i, { durationMin })} />
+          <Field label="人數" value={pl.size} placeholder="例：1 人、3–4 人" onChange={(size) => setPlan(i, { size })} />
           <Field label="說明" value={pl.note} onChange={(note) => setPlan(i, { note })} />
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}><Icon name="users" size={16} /><Text style={{ fontSize: 15, fontWeight: "700" }}>可揪朋友一起上</Text></View>
@@ -98,14 +88,8 @@ export default function CoachLessons() {
       </View>
 
       {adding && (
-        <Sheet title={`週${adding} 新增時段`} onClose={() => setAdding(null)}>
-          <ScrollView style={{ maxHeight: 360 }} contentContainerStyle={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-            {TIMES.map((t) => {
-              const has = (p.availability[adding] ?? []).includes(t);
-              return <Chip key={t} on={has} onPress={() => { if (!has) setDay(adding, [...(p.availability[adding] ?? []), t]); setAdding(null); }}>{t}</Chip>;
-            })}
-          </ScrollView>
-        </Sheet>
+        <TimeSheet title={`週${adding} 開放時段`} taken={p.availability[adding] ?? []} onClose={() => setAdding(null)}
+          onAdd={(t) => setDay(adding, [...(p.availability[adding] ?? []), t])} />
       )}
     </ConsolePage>
   );
