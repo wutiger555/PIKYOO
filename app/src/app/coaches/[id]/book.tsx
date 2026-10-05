@@ -32,9 +32,11 @@ export default function BookPage() {
 function BookForm({ c, cal, planId, dayKey, slot }: { c: Coach; cal: BookingCalendar; planId?: string; dayKey?: string; slot?: string }) {
   const p = c.profile;
   const insets = useSafeAreaInsets();
-  const { signedIn, submitBooking } = useSession();
+  const { signedIn, submitBooking, isBlocked, myCoach } = useSession();
   const [login, setLogin] = useState(false);
-  const slotsOf = (pid: string, dk: string) => cal.slots[slotKey(pid, dk)] ?? [];
+  // demo day keys are d1…d7 (days from today); time the coach blocked off is not bookable
+  const off = (dk: string) => (c.id === myCoach?.id && /^d\d+$/.test(dk) ? Number(dk.slice(1)) : null);
+  const slotsOf = (pid: string, dk: string) => (cal.slots[slotKey(pid, dk)] ?? []).filter(([t]) => { const n = off(dk); return n == null || !isBlocked(n, t); });
   const [b, setB] = useState<Booking>(() => {
     const first = p.plans.find((x) => x.id === planId) ?? p.plans[0];
     const open = cal.days.find((d) => slotsOf(first.id, d.key).some((s) => s[1] > 0));

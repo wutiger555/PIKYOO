@@ -37,7 +37,7 @@ export default function CoachPage() {
 function CoachPublicPage({ c }: { c: Coach }) {
   const p = c.profile;
   const insets = useSafeAreaInsets();
-  const { signedIn } = useSession();
+  const { signedIn, isBlocked, myCoach } = useSession();
   const scroller = useRef<ScrollView>(null);
   const ys = useRef<Partial<Record<SectionKey | "locked", number>>>({});
   // sections report y inside the body container; the container's own y turns that into a scroll offset
@@ -53,7 +53,7 @@ function CoachPublicPage({ c }: { c: Coach }) {
   const hidden = SECTIONS.filter(([k]) => !shows(k)).map(([k]) => TITLES[k]);
   const [cover, ...gallery] = p.photos;
   const groupPlan = p.plans.find((x) => x.group);
-  const days = bookingDays().map((d) => ({ d, slots: slotsFor(c, d) })).filter((x) => x.slots.length);
+  const days = bookingDays().map((d) => ({ d, slots: slotsFor(c, d).filter(([t]) => c.id !== myCoach?.id || !isBlocked(Number(d.key.slice(1)), t)) })).filter((x) => x.slots.length);
   const jump = (k: SectionKey | "locked") => { const y = ys.current[k]; if (y != null) scroller.current?.scrollTo({ y: bodyY.current + y - barH + 1, animated: true }); };
   const at = (k: SectionKey | "locked") => ({ onLayout: (e: { nativeEvent: { layout: { y: number } } }) => { ys.current[k] = e.nativeEvent.layout.y; } });
   const askLogin = () => setLogin(`登入後可以預約 ${c.name} 的課`);

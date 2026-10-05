@@ -26,6 +26,7 @@ A pickleball platform for Taiwan to find courts, coaches, classes, and games.
 
 | 日期 | PR | 內容 |
 |---|---|---|
+| 2026-10-06 | [#50](https://github.com/wutiger555/PIKYOO/pull/50) | **App 教練後台改成以行事曆為中心**：日／週行事曆（課程、待確認預約、擋掉的時間）、點進一堂課可點名、收款、寫課前備註和課後筆記、下雨改室內或取消；學生名冊有套票剩餘堂數與歷次筆記；可把課加入手機行事曆、設定上課前提醒、每晚明天課表、訂場提醒。擋掉的時間學生預約不到 |
 | 2026-10-05 | [#49](https://github.com/wutiger555/PIKYOO/pull/49) | **App 示範版的固定網址**：`pikyoo-demo.vercel.app/app.html`，手機打開按「用 Expo Go 開啟」或掃 QR code，可以直接傳給教練 |
 | 2026-10-05 | [#48](https://github.com/wutiger555/PIKYOO/pull/48) | **App 示範版上線（給教練 demo）**：手機裝 Expo Go、掃 QR code 就能開，不需要開著電腦；iPhone 和 Android 都可以。發布方式寫在 `app/CLAUDE.md` |
 | 2026-10-05 | [#47](https://github.com/wutiger555/PIKYOO/pull/47) | **App 教練後台輸入改好用**：時段用 iPhone 原生時間滾輪、價格有 −／＋、程度直接點階梯選範圍、計價／時長／慣用手／打法用分段按鈕、區域／擅長／適合誰用清單勾選、付款方式用開關；新增 DUPR 欄位 |

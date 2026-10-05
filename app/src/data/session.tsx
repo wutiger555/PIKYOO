@@ -3,6 +3,7 @@ import { emptyCoachFilters, type CoachFilters } from "@pikyoo/core/coach-filters
 import { emptyGameFilters, type GameFilters } from "@pikyoo/core/game-filters";
 import { bookingDays, getCoach, initialPayments, initialRequests } from "@pikyoo/core/data/coaches";
 import type { Booking, BookingRequest, BookingStatus, Coach, Game, MyGameStatus, PaymentRow, Question } from "@pikyoo/core/types";
+import { demoBlocks, demoLessons, REQUEST_SLOTS, ROSTER, type Attendance, type CoachLesson, type RosterStudent, type TimeBlock } from "@pikyoo/core/data/schedule";
 import { bookingTotal } from "./booking";
 import { isLive, useCatalog } from "./catalog";
 
@@ -54,6 +55,23 @@ interface Session {
   answer: (id: string, text: string) => void;
   /** catalog coaches with the console's edits applied, so 找教練 and the coach page show them at once */
   coaches: Coach[];
+  // coach calendar (docs/APP.md §4): lessons, students, blocked time
+  lessons: CoachLesson[];
+  /** pending requests placed on the calendar as dashed cards */
+  pendingSlots: { id: string; offset: number; start: string; name: string; plan: string }[];
+  students: RosterStudent[];
+  blocks: TimeBlock[];
+  addBlock: (b: Omit<TimeBlock, "id">) => void;
+  removeBlock: (id: string) => void;
+  /** is the start time `hhmm` on day `offset` blocked off (student booking hides it) */
+  isBlocked: (offset: number, hhmm: string) => boolean;
+  attendance: Record<string, Attendance>;
+  setAttendance: (lessonId: string, sid: string, a: Attendance) => void;
+  setLesson: (id: string, patch: Partial<CoachLesson>) => void;
+  /** a seat's payment, read from the 收款 row when the seat has one */
+  seatPay: (lessonId: string, sid: string) => "paid" | "wait" | "reported";
+  markSeatPaid: (lessonId: string, sid: string) => void;
+  addNote: (sid: string, text: string) => void;
 }
 
 const MINE = "mine";
@@ -82,6 +100,39 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const questions = useMemo(() => [...(catalog?.questions ?? []), ...asked].map((q) => (answers[q.id] ? { ...q, answer: { text: answers[q.id], at: "剛剛" } } : q)), [catalog, asked, answers]);
   const coaches = useMemo(() => (catalog?.coaches ?? []).map((c) => (edited && c.id === edited.id ? edited : c)), [catalog, edited]);
   const patchPayment = (id: string, patch: Partial<PaymentRow>) => setPayments((ps) => ps.map((x) => (x.id === id ? { ...x, ...patch } : x)));
+  const [lessons, setLessons] = useState<CoachLesson[]>(demoLessons);
+  const [students, setStudents] = useState<RosterStudent[]>(() => ROSTER.map((x) => ({ ...x, notes: [...x.notes] })));
+  const [blocks, setBlocks] = useState<TimeBlock[]>(demoBlocks);
+  const [attendance, setAtt] = useState<Record<string, Attendance>>({});
+  const slotOf = (id: string): { offset: number; start: string } | null => {
+    if (id === MINE) return booking?.slot ? { offset: Number(booking.dayKey.replace("d", "")), start: booking.slot } : null;
+    return REQUEST_SLOTS[id] ?? null;
+  };
+  const pendingSlots = useMemo(() => requests.filter((r) => r.status === "pending").flatMap((r) => {
+    const at = slotOf(r.id);
+    return at ? [{ id: r.id, ...at, name: r.name, plan: r.plan }] : [];
+  }), [requests, booking]); // eslint-disable-line react-hooks/exhaustive-deps
+  const toMin = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
+  const addMin = (t: string, m: number) => { const x = toMin(t) + m; return `${String(Math.floor(x / 60)).padStart(2, "0")}:${String(x % 60).padStart(2, "0")}`; };
+  /** a confirmed request becomes a lesson on the calendar, and its student joins the roster */
+  const toLesson = (r: BookingRequest) => {
+    const at = slotOf(r.id);
+    if (!at) return;
+    const name = r.name.replace("（你）", "");
+    let sid = students.find((x) => x.name === name)?.id;
+    if (!sid) {
+      sid = r.id === MINE ? "xiaoan" : REQUEST_SLOTS[r.id]?.sid ?? r.id;
+      const add = { id: sid, name, initial: r.initial, level: r.level, times: 0, notes: [] };
+      setStudents((xs) => (xs.some((x) => x.id === add.id) ? xs : [...xs, add]));
+    }
+    const plan = r.plan.replace(/ ×\d+.*$/, "");
+    const dur = myCoach?.profile.plans.find((p) => p.name === plan)?.durationMin ?? 60;
+    setLessons((ls) => [...ls.filter((l) => l.id !== "R" + r.id), {
+      id: "R" + r.id, offset: at.offset, start: at.start, end: addMin(at.start, dur), plan, kind: plan.includes("體驗") ? "trial" : plan.includes("小班") ? "small" : "private",
+      venue: myCoach?.profile.venues[0]?.name ?? "", seats: [{ sid: sid!, pay: "wait", paymentId: "n" + r.id }], prep: r.note ? `學生備註：${r.note}` : "", status: "confirmed",
+    }]);
+  };
+
   const patchBooking = (st: BookingStatus) => setBooking((b) => (b ? { ...b, status: st } : b));
 
   const value = useMemo<Session>(() => ({
@@ -129,6 +180,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       if (st === "confirmed") {
         const r = requests.find((x) => x.id === MINE);
         if (r) {
+          toLesson(r);
           setRequests((rs) => rs.map((x) => (x.id === MINE ? { ...x, status: "ok" } : x)));
           setPayments((ps) => [{ id: "n" + MINE, initial: r.initial, name: r.name, what: `${r.plan}・${r.when}`, amount: r.amount, via: r.pay, status: "wait", at: "剛剛已傳付款資訊" }, ...ps.filter((x) => x.id !== "n" + MINE)]);
         }
@@ -143,6 +195,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       const r = requests.find((x) => x.id === id);
       if (!r) return;
       setRequests((rs) => rs.map((x) => (x.id === id ? { ...x, status: ok ? "ok" : "no" } : x)));
+      if (ok) toLesson(r);
       if (ok) setPayments((ps) => [{ id: "n" + id, initial: r.initial, name: r.name, what: `${r.plan}・${r.when}`, amount: r.amount, via: r.pay, status: "wait", at: "剛剛已傳付款資訊" }, ...ps.filter((x) => x.id !== "n" + id)]);
       if (id === MINE) setBooking((b) => (ok && b ? { ...b, status: "confirmed" } : null));
     },
@@ -152,7 +205,31 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     questions,
     answer: (id, text) => setAnswers((a) => ({ ...a, [id]: text })),
     coaches,
-  }), [signedIn, filters, compare, asked, booking, gameFilters, mine, myCoach, requests, payments, questions, coaches]);
+    lessons,
+    pendingSlots,
+    students,
+    blocks,
+    addBlock: (b) => setBlocks((bs) => [...bs, { ...b, id: "b" + Date.now().toString(36) }]),
+    removeBlock: (id) => setBlocks((bs) => bs.filter((b) => b.id !== id)),
+    isBlocked: (offset, hhmm) => blocks.some((b) => b.offset === offset && hhmm >= b.start && hhmm < b.end),
+    attendance,
+    setAttendance: (lid, sid, a) => setAtt((x) => ({ ...x, [`${lid}:${sid}`]: a })),
+    setLesson: (id, patch) => setLessons((ls) => ls.map((l) => (l.id === id ? { ...l, ...patch } : l))),
+    seatPay: (lid, sid) => {
+      const seat = lessons.find((l) => l.id === lid)?.seats.find((x) => x.sid === sid);
+      const row = seat?.paymentId ? payments.find((p) => p.id === seat.paymentId) : undefined;
+      return row ? row.status : seat?.pay ?? "wait";
+    },
+    markSeatPaid: (lid, sid) => {
+      const seat = lessons.find((l) => l.id === lid)?.seats.find((x) => x.sid === sid);
+      if (seat?.paymentId && payments.some((p) => p.id === seat.paymentId)) {
+        patchPayment(seat.paymentId, { status: "paid", at: "剛剛" });
+        if (seat.paymentId === "n" + MINE) patchBooking("paid");
+      }
+      setLessons((ls) => ls.map((l) => (l.id === lid ? { ...l, seats: l.seats.map((x) => (x.sid === sid ? { ...x, pay: "paid" } : x)) } : l)));
+    },
+    addNote: (sid, text) => setStudents((xs) => xs.map((x) => (x.id === sid ? { ...x, notes: [{ offset: 0, text }, ...x.notes] } : x))),
+  }), [lessons, pendingSlots, students, blocks, attendance, signedIn, filters, compare, asked, booking, gameFilters, mine, myCoach, requests, payments, questions, coaches]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
