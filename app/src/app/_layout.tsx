@@ -20,6 +20,7 @@ export default function RootLayout() {
         <StatusBar style="dark" />
         <Stack screenOptions={{ headerTintColor: color.text, headerBackButtonDisplayMode: "minimal", contentStyle: { backgroundColor: color.bg } }}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="coach" options={{ headerShown: false }} />
           <Stack.Screen name="coaches/[id]/index" options={{ headerShown: false }} />
           <Stack.Screen name="coaches/[id]/book" options={{ title: "預約" }} />
           <Stack.Screen name="games/index" options={{ title: "球局" }} />

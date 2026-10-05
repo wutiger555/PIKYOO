@@ -18,6 +18,6 @@ export const font = { num: "BarlowCondensed_600SemiBold", numBold: "BarlowConden
 
 /** Demo photos live on the demo website (web/public/photos), so the app loads them from there. */
 export const DEMO_SITE = "https://pikyoo-demo.vercel.app";
-export const photo = (src: string) => (src.startsWith("http") ? src : `${DEMO_SITE}${src}`);
+export const photo = (src: string) => (/^(https?|file|ph|content):/.test(src) ? src : `${DEMO_SITE}${src}`);
 /** Bundled demo photos are stock photos of other players: tag them 示意照 (CLAUDE.md "Photos"). */
 export const isStock = (src: string) => src.startsWith("/photos/");

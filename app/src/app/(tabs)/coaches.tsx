@@ -19,7 +19,7 @@ const TYPES: LessonType[] = ["體驗課", "一對一", "小班", "團體"];
 
 /** F3-3 找教練 (website: FindCoachesScreen): "我是【程度】，想上【類型】", standard cards, compare up to 3. */
 export default function FindCoaches() {
-  const { filters: f, setFilters, compare } = useSession();
+  const { filters: f, setFilters, compare, coaches } = useSession();
   const [sheet, setSheet] = useState<"lv" | "cmp" | null>(null);
   const any = f.level != null || f.type != null || f.cert || f.beg;
   return (
@@ -39,7 +39,7 @@ export default function FindCoaches() {
           <View style={{ width: 24 }} />
         </ScrollView>
         <WithCatalog>{(cat) => {
-          const list = filterCoaches(cat.coaches, f);
+          const list = filterCoaches(coaches, f);
           return (
             <>
               <View style={{ flexDirection: "row", alignItems: "center", marginTop: 4 }}>
@@ -54,7 +54,7 @@ export default function FindCoaches() {
                 </View>
               )}
               <Text style={{ fontSize: 12, color: color.muted, lineHeight: 18, marginBottom: compare.length ? 72 : 0 }}>所有教練用同一張卡片格式，價格、程度、認證都寫在同一個位置，方便比較。標「示意照」的是免費圖庫照片，不是教練本人。</Text>
-              {sheet === "cmp" && <CompareSheet coaches={compare.map((id) => cat.coaches.find((c) => c.id === id)).filter((c): c is Coach => !!c)} onClose={() => setSheet(null)} />}
+              {sheet === "cmp" && <CompareSheet coaches={compare.map((id) => coaches.find((c) => c.id === id)).filter((c): c is Coach => !!c)} onClose={() => setSheet(null)} />}
             </>
           );
         }}</WithCatalog>

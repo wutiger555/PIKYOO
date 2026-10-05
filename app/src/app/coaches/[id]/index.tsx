@@ -5,7 +5,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { bookingDays, slotsFor } from "@pikyoo/core/data/coaches";
 import { levelText, money } from "@pikyoo/core/format";
 import type { Coach, TimelineItem } from "@pikyoo/core/types";
-import { useCatalog } from "@/data/catalog";
 import { useSession } from "@/data/session";
 import { Cred, LevelChip, Num, Rating, Tag } from "@/ui/badges";
 import { Btn } from "@/ui/Btn";
@@ -30,7 +29,7 @@ const TL_ICON: Record<TimelineItem["kind"], IconName> = { cert: "shield", trophy
 
 export default function CoachPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const coach = useCatalog().catalog?.coaches.find((x) => x.id === id);
+  const coach = useSession().coaches.find((x) => x.id === id);
   if (!coach) return <Page><WithCatalog>{() => <Text style={{ fontSize: 16 }}>找不到這位教練</Text>}</WithCatalog></Page>;
   return <CoachPublicPage c={coach} />;
 }

@@ -5,7 +5,6 @@ import { bookingDays } from "@pikyoo/core/data/coaches";
 import { money } from "@pikyoo/core/format";
 import type { BookingStatus } from "@pikyoo/core/types";
 import { bookingTotal } from "@/data/booking";
-import { useCatalog } from "@/data/catalog";
 import { useSession } from "@/data/session";
 import { Num, Tag } from "@/ui/badges";
 import { Btn } from "@/ui/Btn";
@@ -19,8 +18,8 @@ const STEPS = ["送出申請", "教練確認", "付款", "上課"];
 /** 我的預約 (website: BookingStatusScreen, docs/PRD.md §6.3): 送出申請 → 教練確認 → 付款 → 上課; payment only after the coach confirms.
  *  The app's demo booking for now; live bookings, with the coach's real payment details, come with sign-in (step 17). */
 export default function BookingStatusPage() {
-  const { booking: b, setBooking } = useSession();
-  const c = useCatalog().catalog?.coaches.find((x) => x.id === b?.coachId);
+  const { booking: b, setBookingStatus, reportPayment, coaches } = useSession();
+  const c = coaches.find((x) => x.id === b?.coachId);
   const [last5, setLast5] = useState("");
   if (!b || !b.slot || !c) {
     return (
@@ -36,14 +35,15 @@ export default function BookingStatusPage() {
   const day = bookingDays().find((d) => d.key === b.dayKey) ?? { date: b.dayKey, weekday: "" };
   const st = b.status;
   const idx = { pending: 1, confirmed: 2, reported: 2, paid: 3 }[st];
-  const setStatus = (status: BookingStatus) => setBooking({ ...b, status });
+  const setStatus = (status: BookingStatus) => setBookingStatus(status);
 
-  const card = (tone: StatusTone, label: string, title: string, text: string, extra?: React.ReactNode) => (
+  const card = (tone: StatusTone, label: string, title: string, text: string, extra?: React.ReactNode, tip?: string) => (
     <View style={s.state}>
       <Status tone={tone}>{label}</Status>
       <Text style={{ fontSize: 24, fontWeight: "800" }}>{title}</Text>
       <Text style={{ color: color.muted, fontSize: 15, lineHeight: 22 }}>{text}</Text>
       {extra}
+      {tip && <Text style={{ fontSize: 13, color: color.muted, lineHeight: 19 }}>{tip}</Text>}
     </View>
   );
   let main: React.ReactNode;
@@ -51,14 +51,15 @@ export default function BookingStatusPage() {
     main = card("almost", "待教練確認", "預約已送出", `${c.name} ${p.reply}。確認後會用 LINE 通知你，48 小時未處理會自動取消。`,
       <Pressable onPress={() => { setStatus("confirmed"); Alert.alert(`${c.name} 已確認你的預約`); }} style={s.demoBtn}>
         <Text style={{ fontWeight: "700" }}>示範：模擬教練按下確認</Text>
-      </Pressable>);
+      </Pressable>,
+      c.id === "mia" ? "也可以到「我的 → 我是教練：教練後台」，以 Mia 的身分在「今天」按確認。" : undefined);
   } else if (st === "confirmed") {
     main = (
       <>
         {card("open", "教練已確認", "完成付款就搞定了", "錢直接付給教練。上課前 24 小時可免費改期。")}
         <View style={s.paybox}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" }}><Text style={{ color: color.muted }}>應付金額</Text><Num style={{ fontSize: 28 }}>{money(total)}</Num></View>
-          {b.pay === "LINE Pay" && <Btn kind="primary" label="用 LINE Pay 付款" onPress={() => { setStatus("paid"); Alert.alert("LINE Pay 付款完成"); }} />}
+          {b.pay === "LINE Pay" && <Btn kind="primary" label="用 LINE Pay 付款" onPress={() => { reportPayment(""); Alert.alert("LINE Pay 付款完成", "已自動通知教練"); }} />}
           {b.pay === "銀行轉帳" && (
             <>
               <View style={{ gap: 4 }}>
@@ -68,7 +69,7 @@ export default function BookingStatusPage() {
               </View>
               <Text style={{ fontWeight: "700" }}>轉帳帳號末五碼</Text>
               <TextInput value={last5} onChangeText={(t) => setLast5(t.replace(/\D/g, "").slice(0, 5))} keyboardType="number-pad" style={s.input} placeholder="12345" placeholderTextColor={color.n500} />
-              <Btn kind="primary" label="我已轉帳" disabled={last5.length !== 5} onPress={() => setStatus("reported")} />
+              <Btn kind="primary" label="我已轉帳" disabled={last5.length !== 5} onPress={() => reportPayment(last5)} />
             </>
           )}
           {b.pay === "現場付現" && <Text style={{ fontSize: 16 }}>上課當天付 <Text style={{ fontWeight: "800" }}>{money(total)}</Text> 給教練即可。</Text>}
