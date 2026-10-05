@@ -7,7 +7,6 @@ import { slotKey, type BookingCalendar } from "@pikyoo/core/source/bookings";
 import { money } from "@pikyoo/core/format";
 import type { Booking, Coach } from "@pikyoo/core/types";
 import { bookingTotal, loadCalendar } from "@/data/booking";
-import { useCatalog } from "@/data/catalog";
 import { useSession } from "@/data/session";
 import { Num } from "@/ui/badges";
 import { Btn } from "@/ui/Btn";
@@ -20,7 +19,7 @@ import { color, radius } from "@/ui/theme";
 
 export default function BookPage() {
   const { id, plan, day, slot } = useLocalSearchParams<{ id: string; plan?: string; day?: string; slot?: string }>();
-  const coach = useCatalog().catalog?.coaches.find((x) => x.id === id);
+  const coach = useSession().coaches.find((x) => x.id === id);
   const [cal, setCal] = useState<BookingCalendar | null>(null);
   const [err, setErr] = useState<string | null>(null);
   useEffect(() => { if (coach) loadCalendar(coach).then(setCal, (e: Error) => setErr(e.message)); }, [coach]);
@@ -33,7 +32,7 @@ export default function BookPage() {
 function BookForm({ c, cal, planId, dayKey, slot }: { c: Coach; cal: BookingCalendar; planId?: string; dayKey?: string; slot?: string }) {
   const p = c.profile;
   const insets = useSafeAreaInsets();
-  const { signedIn, setBooking } = useSession();
+  const { signedIn, submitBooking } = useSession();
   const [login, setLogin] = useState(false);
   const slotsOf = (pid: string, dk: string) => cal.slots[slotKey(pid, dk)] ?? [];
   const [b, setB] = useState<Booking>(() => {
@@ -51,7 +50,7 @@ function BookForm({ c, cal, planId, dayKey, slot }: { c: Coach; cal: BookingCale
   const when = b.slot && day ? `${day.date}（${day.weekday}）${b.slot}` : null;
   const submit = () => {
     if (!signedIn) return setLogin(true);
-    setBooking({ ...b, status: "pending" });
+    submitBooking(b);
     router.replace("/me/booking");
   };
 

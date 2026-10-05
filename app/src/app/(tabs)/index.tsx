@@ -43,9 +43,9 @@ export default function Home() {
 }
 
 function MemberHome({ cat, top }: { cat: Catalog; top: number }) {
-  const { setFilters, booking } = useSession();
-  const fit = cat.coaches.filter((c) => ME.level >= c.levelMin && ME.level <= c.levelMax);
-  const rail = [...fit, ...cat.coaches.filter((c) => !fit.includes(c))];
+  const { setFilters, booking, coaches } = useSession();
+  const fit = coaches.filter((c) => ME.level >= c.levelMin && ME.level <= c.levelMax);
+  const rail = [...fit, ...coaches.filter((c) => !fit.includes(c))];
   // the soonest open sessions across coaches whose level range fits me
   const soon = bookingDays().flatMap((d) => fit.flatMap((c) => slotsFor(c, d).filter(([, left]) => left > 0).map(([t, left]) => ({ c, d, t, left, plan: c.profile.plans[0] })))).slice(0, 4);
   const want = (t: LessonType) => { setFilters((p) => ({ ...p, type: t, level: ME.level })); router.push("/coaches"); };
@@ -127,8 +127,9 @@ const STEPS: [string, string][] = [
 
 /** Visitor landing (website: GuestHome): what PIKYOO is, the three ways in, featured coaches, how it works, sign up. */
 function GuestHome({ cat, top, onSignUp }: { cat: Catalog; top: number; onSignUp: () => void }) {
+  const { coaches } = useSession();
   const entries: [Href, string, string, IconName][] = [
-    ["/coaches", "找教練", `${cat.coaches.length} 位教練，價格、程度、認證一眼比較`, "cap"],
+    ["/coaches", "找教練", `${coaches.length} 位教練，價格、程度、認證一眼比較`, "cap"],
     ["/games", "找球局", `這兩週 ${cat.games.length} 場球局，照程度找人一起打`, "users"],
     ["/courts", "找球場", `雙北 ${cat.courts.length} 個球場與預約方式`, "pin"],
   ];
@@ -159,7 +160,7 @@ function GuestHome({ cat, top, onSignUp }: { cat: Catalog; top: number; onSignUp
         <View style={{ gap: 12 }}>
           <SecHead en="Coaches" title="精選教練" more="看全部" href="/coaches" />
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingHorizontal: 16 }} style={{ marginHorizontal: -16 }}>
-            {cat.coaches.map((c) => <CoachMini key={c.id} coach={c} />)}
+            {coaches.map((c) => <CoachMini key={c.id} coach={c} />)}
           </ScrollView>
         </View>
         <View style={{ gap: 12 }}>

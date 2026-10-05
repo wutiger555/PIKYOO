@@ -19,7 +19,7 @@ const BOOKING_STATE = { pending: ["待教練確認", "almost"], confirmed: ["待
 
 /** 我的課 (website: MyLessonsScreen): 即將上課 and 上過的. Live bookings need sign-in (step 17); 揪團 stays on the demo website (PLAN D7). */
 export default function Lessons() {
-  const { booking: b, signedIn } = useSession();
+  const { booking: b, signedIn, coaches } = useSession();
   const [tab, setTab] = useState<"next" | "done">("next");
   const [login, setLogin] = useState(false);
   return (
@@ -38,7 +38,7 @@ export default function Lessons() {
       ) : (
         <WithCatalog>{(cat) => {
           if (tab === "done") {
-            const mia = cat.coaches.find((c) => c.id === "mia");
+            const mia = coaches.find((c) => c.id === "mia");
             return mia ? (
               <View style={s.row}>
                 <View style={{ flex: 1, gap: 4 }}><Text style={s.title}>新手體驗課</Text><Text style={s.muted}>{mia.name}・{demoDate(-9)}10:00</Text><Status tone="ended">已完成</Status></View>
@@ -46,7 +46,7 @@ export default function Lessons() {
               </View>
             ) : <Empty />;
           }
-          const c = b?.slot ? cat.coaches.find((x) => x.id === b.coachId) : null;
+          const c = b?.slot ? coaches.find((x) => x.id === b.coachId) : null;
           const plan = c?.profile.plans.find((p) => p.id === b?.planId);
           const d = b && bookingDays().find((x) => x.key === b.dayKey);
           if (!b || !c || !plan || !d) return <Empty />;

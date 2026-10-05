@@ -12,6 +12,7 @@ const MAP = {
   shield: ["checkmark.shield", "verified_user"], trophy: ["trophy", "emoji_events"], cap: ["graduationcap", "school"],
   cal: ["calendar", "calendar_month"], filter: ["line.3.horizontal.decrease", "filter_list"],
   bell: ["bell", "notifications"], user: ["person", "person"], whistle: ["figure.pickleball", "sports_tennis"], logout: ["rectangle.portrait.and.arrow.right", "logout"],
+  sun: ["sun.max", "light_mode"], wallet: ["creditcard", "account_balance_wallet"], image: ["photo", "image"], swap: ["arrow.left.arrow.right", "swap_horiz"], settings: ["slider.horizontal.3", "tune"],
 } as const;
 export type IconName = keyof typeof MAP;
 

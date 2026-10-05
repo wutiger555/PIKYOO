@@ -79,6 +79,14 @@ export default function Me() {
           </Link>
 
           {signedIn && (
+            <Pressable onPress={() => router.push("/coach")} style={[s.rowCard, { backgroundColor: color.carbon, borderColor: color.carbon }]}>
+              <Icon name="whistle" size={22} tint={color.accent} />
+              <View style={{ flex: 1 }}><Text style={{ fontSize: 16, fontWeight: "800", color: "#fff" }}>我是教練：教練後台</Text><Text style={{ fontSize: 13, color: color.onCarbonMuted }}>確認預約、收款對帳、回覆提問、編輯教練頁（示範：Mia 教練）</Text></View>
+              <Icon name="right" size={14} tint={color.onCarbonMuted} />
+            </Pressable>
+          )}
+
+          {signedIn && (
             <View style={{ gap: 12 }}>
               <View style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between" }}>
                 <View><Text style={s.en}>MY GAMES</Text><Text style={{ fontSize: 24, fontWeight: "800" }}>我的球局</Text></View>
@@ -103,7 +111,7 @@ export default function Me() {
             <View style={s.card}>
               {signedIn && <Row icon="bell" label="通知" sub={unread ? `${unread} 則未讀` : undefined} onPress={() => router.push("/me/notifications")} />}
               <Row icon="heart" label="收藏的球場與教練" sub="下一輪推出" onPress={() => Alert.alert("收藏", "收藏功能下一輪推出")} />
-              <Row icon="whistle" label="我是教練：教練後台" sub="在網站使用" onPress={() => web("/coach")} />
+              <Row icon="whistle" label="我是教練：教練後台" sub={signedIn ? "示範：以 Mia 教練的身分" : "登入後使用"} onPress={() => (signedIn ? router.push("/coach") : setLogin(true))} />
               <Row icon="sprout" label="第一次打匹克球？" sub="規則與程度自評（網站）" onPress={() => web("/learn")} />
               {signedIn
                 ? <Row icon="logout" label="登出（示範：看訪客畫面）" onPress={signOut} last />
