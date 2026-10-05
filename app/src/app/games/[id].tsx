@@ -122,7 +122,7 @@ function GameDetail({ g }: { g: Game }) {
           <Text style={{ fontSize: 14, color: color.muted, lineHeight: 21 }}>
             {my === "wait" ? "取消後會失去目前的候補順位，之後再候補要重新排。" : `位子會讓給候補的人。開始前 ${cancelHours} 小時內取消會記一次晚取消，團主看得到。`}
           </Text>
-          <Btn label={my === "wait" ? "確定取消候補" : "確定取消報名"} onPress={() => { leave(g.id); setSheet(null); }} />
+          <Btn label={my === "wait" ? "確定取消候補" : "確定取消報名"} onPress={() => { leave(g.id); setSheet(null); Alert.alert(my === "wait" ? "已取消候補" : "已取消報名", my === "wait" ? undefined : "位子會釋出給候補的人"); }} />
           <Btn kind="ghost" label={my === "wait" ? "繼續候補" : "保留報名"} onPress={() => setSheet(null)} />
         </Sheet>
       )}

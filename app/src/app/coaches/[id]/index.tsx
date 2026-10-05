@@ -41,6 +41,8 @@ function CoachPublicPage({ c }: { c: Coach }) {
   const { signedIn } = useSession();
   const scroller = useRef<ScrollView>(null);
   const ys = useRef<Partial<Record<SectionKey | "locked", number>>>({});
+  // sections report y inside the body container; the container's own y turns that into a scroll offset
+  const bodyY = useRef(0);
   const [anchorY, setAnchorY] = useState(9999);
   const [stuck, setStuck] = useState(false);
   const [pastCover, setPastCover] = useState(false);
@@ -53,10 +55,11 @@ function CoachPublicPage({ c }: { c: Coach }) {
   const [cover, ...gallery] = p.photos;
   const groupPlan = p.plans.find((x) => x.group);
   const days = bookingDays().map((d) => ({ d, slots: slotsFor(c, d) })).filter((x) => x.slots.length);
-  const jump = (k: SectionKey | "locked") => { const y = ys.current[k]; if (y != null) scroller.current?.scrollTo({ y: y - barH + 1, animated: true }); };
+  const jump = (k: SectionKey | "locked") => { const y = ys.current[k]; if (y != null) scroller.current?.scrollTo({ y: bodyY.current + y - barH + 1, animated: true }); };
   const at = (k: SectionKey | "locked") => ({ onLayout: (e: { nativeEvent: { layout: { y: number } } }) => { ys.current[k] = e.nativeEvent.layout.y; } });
   const askLogin = () => setLogin(`登入後可以預約 ${c.name} 的課`);
-  const book = (planId: string, friends?: boolean) => (locked ? askLogin() : router.push({ pathname: "/coaches/[id]/book", params: { id: c.id, plan: planId, ...(friends ? { with: "friends" } : {}) } }));
+  const book = (planId: string, friends?: boolean, day?: string, slot?: string) =>
+    locked ? askLogin() : router.push({ pathname: "/coaches/[id]/book", params: { id: c.id, plan: planId, ...(friends ? { with: "friends" } : {}), ...(day && slot ? { day, slot } : {}) } });
   const share = () => Share.share({ message: `${c.name}｜PIKYOO 匹友 https://pikyoo.vercel.app/coaches/${c.id}` });
 
   const anchors = (
@@ -112,7 +115,7 @@ function CoachPublicPage({ c }: { c: Coach }) {
 
         <View onLayout={(e) => setAnchorY(e.nativeEvent.layout.y)} style={s.anchorsWrap}>{anchors}</View>
 
-        <View style={{ paddingHorizontal: 16 }}>
+        <View onLayout={(e) => { bodyY.current = e.nativeEvent.layout.y; }} style={{ paddingHorizontal: 16 }}>
           <Block {...at("plans")} title={TITLES.plans} right={<LevelChip min={c.levelMin} max={c.levelMax} />}>
             {p.plans.map((pl) => (
               <Pressable key={pl.id} onPress={() => book(pl.id)} style={({ pressed }) => [s.plan, pressed && { borderColor: color.text }]}>
@@ -182,7 +185,7 @@ function CoachPublicPage({ c }: { c: Coach }) {
                   <View style={{ width: 44 }}><Num style={{ fontSize: 17 }}>{d.date}</Num><Text style={{ fontSize: 12, color: color.muted }}>週{d.weekday}</Text></View>
                   <View style={{ flex: 1, flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
                     {slots.map(([t, left]) => (
-                      <Pressable key={t} disabled={!left} onPress={() => book(p.plans[0].id)} style={[s.slot, !left && { backgroundColor: color.n100, borderColor: color.n100 }]}>
+                      <Pressable key={t} disabled={!left} onPress={() => book(p.plans[0].id, false, d.key, t)} style={[s.slot, !left && { backgroundColor: color.n100, borderColor: color.n100 }]}>
                         <Num style={{ fontSize: 16, color: left ? color.text : color.n500 }}>{t}</Num>
                         <Text style={{ fontSize: 12, color: color.muted }}>{left ? `剩 ${left}` : "額滿"}</Text>
                       </Pressable>

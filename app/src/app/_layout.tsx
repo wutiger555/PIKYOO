@@ -27,6 +27,7 @@ export default function RootLayout() {
           <Stack.Screen name="courts/index" options={{ title: "找球場" }} />
           <Stack.Screen name="courts/[id]" options={{ title: "球場" }} />
           <Stack.Screen name="me/booking" options={{ title: "我的預約" }} />
+          <Stack.Screen name="me/notifications" options={{ title: "通知" }} />
         </Stack>
       </SessionProvider>
     </CatalogProvider>

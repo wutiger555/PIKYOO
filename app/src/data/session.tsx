@@ -12,6 +12,8 @@ export const MAX_COMPARE = 3;
 interface Session {
   signedIn: boolean;
   signIn: () => void;
+  /** demo: back to the visitor view (website: 登出（Demo：看訪客畫面）) */
+  signOut: () => void;
   filters: CoachFilters;
   setFilters: (f: (p: CoachFilters) => CoachFilters) => void;
   compare: string[];
@@ -48,6 +50,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<Session>(() => ({
     signedIn,
     signIn: () => { if (!isLive) setSignedIn(true); },
+    signOut: () => setSignedIn(false),
     filters,
     setFilters: (f) => setF(f),
     compare,

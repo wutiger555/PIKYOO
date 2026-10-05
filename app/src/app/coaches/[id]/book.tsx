@@ -19,17 +19,18 @@ import { color, radius } from "@/ui/theme";
 // 揪朋友一起上 stays on the demo website for now (PLAN D7), as on the live website.
 
 export default function BookPage() {
-  const { id, plan } = useLocalSearchParams<{ id: string; plan?: string }>();
+  const { id, plan, day, slot } = useLocalSearchParams<{ id: string; plan?: string; day?: string; slot?: string }>();
   const coach = useCatalog().catalog?.coaches.find((x) => x.id === id);
   const [cal, setCal] = useState<BookingCalendar | null>(null);
   const [err, setErr] = useState<string | null>(null);
   useEffect(() => { if (coach) loadCalendar(coach).then(setCal, (e: Error) => setErr(e.message)); }, [coach]);
   if (!coach) return null;
   if (!cal) return <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>{err ? <Text style={{ color: color.muted }}>讀不到時段，請稍後再試。</Text> : <ActivityIndicator />}</View>;
-  return <BookForm c={coach} cal={cal} planId={plan} />;
+  return <BookForm c={coach} cal={cal} planId={plan} dayKey={day} slot={slot} />;
 }
 
-function BookForm({ c, cal, planId }: { c: Coach; cal: BookingCalendar; planId?: string }) {
+/** `dayKey` + `slot` pre-select a time picked elsewhere (首頁 近期可約, the coach page's 可約時段), as on the website. */
+function BookForm({ c, cal, planId, dayKey, slot }: { c: Coach; cal: BookingCalendar; planId?: string; dayKey?: string; slot?: string }) {
   const p = c.profile;
   const insets = useSafeAreaInsets();
   const { signedIn, setBooking } = useSession();
@@ -38,7 +39,9 @@ function BookForm({ c, cal, planId }: { c: Coach; cal: BookingCalendar; planId?:
   const [b, setB] = useState<Booking>(() => {
     const first = p.plans.find((x) => x.id === planId) ?? p.plans[0];
     const open = cal.days.find((d) => slotsOf(first.id, d.key).some((s) => s[1] > 0));
-    return { coachId: c.id, planId: first.id, dayKey: open?.key ?? cal.days[0]?.key ?? "", slot: null, headcount: 1, note: "", pay: p.pay[0], status: "pending" };
+    const picked = cal.days.find((d) => d.key === dayKey);
+    const pickedSlot = picked && slotsOf(first.id, picked.key).some(([t, left]) => t === slot && left > 0) ? slot! : null;
+    return { coachId: c.id, planId: first.id, dayKey: picked?.key ?? open?.key ?? cal.days[0]?.key ?? "", slot: pickedSlot, headcount: 1, note: "", pay: p.pay[0], status: "pending" };
   });
   const set = (patch: Partial<Booking>) => setB((prev) => ({ ...prev, ...patch }));
   const { plan, total } = bookingTotal(b, p);

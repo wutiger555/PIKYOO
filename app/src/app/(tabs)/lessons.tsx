@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { bookingDays } from "@pikyoo/core/data/coaches";
 import { demoDate } from "@pikyoo/core/data/today";
 import { money } from "@pikyoo/core/format";
+import { bookingTotal } from "@/data/booking";
 import { isLive } from "@/data/catalog";
 import { useSession } from "@/data/session";
 import { Num } from "@/ui/badges";
@@ -23,11 +24,11 @@ export default function Lessons() {
   const [login, setLogin] = useState(false);
   return (
     <Page title="我的課">
-      <View style={s.seg}>
+      {(!isLive || signedIn) && <View style={s.seg}>
         {([["next", "即將上課"], ["done", "上過的"]] as const).map(([k, l]) => (
           <Pressable key={k} onPress={() => setTab(k)} style={[s.segOpt, tab === k && s.segOn]}><Text style={{ fontWeight: "700", fontSize: 15 }}>{l}</Text></Pressable>
         ))}
-      </View>
+      </View>}
       {isLive && !signedIn ? (
         <View style={s.empty}>
           <Text style={{ fontSize: 18, fontWeight: "800" }}>登入後就看得到你的課</Text>
@@ -55,7 +56,7 @@ export default function Lessons() {
                 <View style={{ width: 52 }}><Num style={{ fontSize: 20 }}>{d.date}</Num><Text style={s.muted}>週{d.weekday}</Text><Num style={{ fontSize: 16 }}>{b.slot}</Num></View>
                 <View style={{ flex: 1, gap: 4 }}>
                   <Text style={s.title}>{plan.name}</Text>
-                  <Text style={s.muted}>{c.name}・{c.profile.venues[0]?.name}・{money(plan.price)}</Text>
+                  <Text style={s.muted}>{c.name}・{c.profile.venues[0]?.name}・{money(bookingTotal(b, c.profile).total)}</Text>
                   <Status tone={BOOKING_STATE[b.status][1]}>{BOOKING_STATE[b.status][0]}</Status>
                 </View>
                 <Icon name="right" size={16} tint={color.muted} />

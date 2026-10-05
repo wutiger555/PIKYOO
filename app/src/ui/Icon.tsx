@@ -11,6 +11,7 @@ const MAP = {
   sprout: ["leaf", "eco"], lock: ["lock", "lock"], msg: ["bubble.left", "chat_bubble"], cols: ["rectangle.split.3x1", "view_column"],
   shield: ["checkmark.shield", "verified_user"], trophy: ["trophy", "emoji_events"], cap: ["graduationcap", "school"],
   cal: ["calendar", "calendar_month"], filter: ["line.3.horizontal.decrease", "filter_list"],
+  bell: ["bell", "notifications"], user: ["person", "person"], whistle: ["figure.pickleball", "sports_tennis"], logout: ["rectangle.portrait.and.arrow.right", "logout"],
 } as const;
 export type IconName = keyof typeof MAP;
 
