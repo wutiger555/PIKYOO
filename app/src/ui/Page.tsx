@@ -16,8 +16,8 @@ export function Page({ title, children }: { title?: string; children: React.Reac
       {title && <Text style={{ fontSize: 30, fontWeight: "800", marginTop: 8 }}>{title}</Text>}
       {children}
     </ScrollView>
-    {/* tab pages have no navigation bar: keep the status bar readable over scrolled content */}
-    <View pointerEvents="none" style={{ position: "absolute", top: 0, left: 0, right: 0, height: insets.top, backgroundColor: "rgba(242,243,239,.94)" }} />
+    {/* tab pages (the ones with a big title) have no navigation bar: keep the status bar readable over scrolled content */}
+    {title && <View pointerEvents="none" style={{ position: "absolute", top: 0, left: 0, right: 0, height: insets.top, backgroundColor: "rgba(242,243,239,.94)" }} />}
     </View>
   );
 }

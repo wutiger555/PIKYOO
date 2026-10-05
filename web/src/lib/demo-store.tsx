@@ -1,6 +1,7 @@
 "use client";
 
 import { emptyCoachFilters, type CoachFilters } from "@pikyoo/core/coach-filters";
+import { emptyGameFilters, type GameFilters } from "@pikyoo/core/game-filters";
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import { bookingDays, getCoach, initialGroups, initialPayments, initialRequests } from "@pikyoo/core/data/coaches";
 import { ME } from "@pikyoo/core/data/games";
@@ -9,26 +10,15 @@ import { demoNotices } from "@pikyoo/core/data/notifications";
 import { LEVELS } from "@pikyoo/core/format";
 import type { Me } from "@pikyoo/core/source/me";
 import type { Catalog } from "@pikyoo/core/source/types";
-import type { Booking, BookingRequest, Coach, Game, Group, Level, MyGameStatus, PaymentRow, Profile, Question } from "@pikyoo/core/types";
+import type { Booking, BookingRequest, Coach, Game, Group, MyGameStatus, PaymentRow, Profile, Question } from "@pikyoo/core/types";
 
 // In-memory demo state shared across screens (the MVP runs on mock data; Supabase replaces this).
 // Lives in the root layout so it survives client-side navigation; a full reload resets it.
 // Courts, coaches and games come from the data source (lib/source): mock in the demo, Supabase when live.
 
-export interface GameFilters {
-  day: "today" | "tomorrow" | "weekend" | null;
-  /** 自選日期: a dayGroups key (replaces `day`) */
-  date: string | null;
-  chips: ("eve" | "beg" | "open")[];
-  areas: string[];
-  time: "am" | "pm" | "eve" | null;
-  openOnly: boolean;
-  level: Level | null;
-}
 
 
-export { emptyCoachFilters, type CoachFilters };
-export const emptyGameFilters = (): GameFilters => ({ day: null, date: null, chips: [], areas: [], time: null, openOnly: false, level: null });
+export { emptyCoachFilters, emptyGameFilters, type CoachFilters, type GameFilters };
 export const newBooking = (coachId = "mia", planId = "trial"): Booking => ({
   coachId, planId, dayKey: "d5", slot: null, headcount: 1, note: "第一次打，之前打過羽球。", pay: "LINE Pay", status: "pending",
 });

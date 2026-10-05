@@ -224,10 +224,11 @@ function CoachPublicPage({ c }: { c: Coach }) {
           {shows("where") && (
             <Block {...at("where")} title={TITLES.where} last>
               {p.venues.map((v) => (
-                <View key={v.name} style={{ flexDirection: "row", gap: 10, alignItems: "center", paddingVertical: 6 }}>
+                <Pressable key={v.name} disabled={!v.courtId} onPress={() => router.push(`/courts/${v.courtId}`)} style={{ flexDirection: "row", gap: 10, alignItems: "center", paddingVertical: 6 }}>
                   <View style={s.tlIcon}><Icon name="pin" size={15} /></View>
                   <View style={{ flex: 1 }}><Text style={{ fontSize: 16, fontWeight: "700" }}>{v.name}</Text><Text style={{ fontSize: 14, color: color.muted }}>{v.sub}</Text></View>
-                </View>
+                  {v.courtId && <Icon name="right" size={14} tint={color.muted} />}
+                </Pressable>
               ))}
             </Block>
           )}
