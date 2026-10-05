@@ -26,7 +26,8 @@ export function Field({ label, value, onChange, multiline, keyboard, placeholder
 }
 
 /** 2–4 short options side by side (iOS segmented control). */
-export function Segmented<T extends string | number>({ label, value, options, onChange, format = String }: { label?: string; value: T; options: readonly T[]; onChange: (v: T) => void; format?: (v: T) => string }) {
+/** `tint` colours the chosen option (e.g. roll call: 到 lime, 遲到 amber). */
+export function Segmented<T extends string | number>({ label, value, options, onChange, format = String, tint }: { label?: string; value: T; options: readonly T[]; onChange: (v: T) => void; format?: (v: T) => string; tint?: (v: T) => string }) {
   return (
     <View style={{ gap: 6 }}>
       {label && <Text style={f.label}>{label}</Text>}
@@ -34,7 +35,7 @@ export function Segmented<T extends string | number>({ label, value, options, on
         {options.map((o) => {
           const on = o === value;
           return (
-            <Pressable key={String(o)} onPress={() => onChange(o)} accessibilityRole="radio" accessibilityState={{ checked: on }} style={[f.segOpt, on && f.segOn]}>
+            <Pressable key={String(o)} onPress={() => onChange(o)} accessibilityRole="radio" accessibilityState={{ checked: on }} style={[f.segOpt, on && f.segOn, on && tint && { backgroundColor: tint(o) }]}>
               <Text style={{ fontSize: 14, fontWeight: on ? "800" : "600", color: on ? color.text : color.n700 }}>{format(o)}</Text>
             </Pressable>
           );
@@ -148,10 +149,12 @@ export function LevelRange({ label, min, max, onChange }: { label: string; min: 
 /** An on / off row (iOS switch). */
 export function SwitchRow({ label, sub, value, onChange, first }: { label: string; sub?: string; value: boolean; onChange: (v: boolean) => void; first?: boolean }) {
   return (
-    <View style={[{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10 }, !first && { borderTopWidth: 1, borderTopColor: color.n100 }]}>
+    // the whole row toggles, not only the small switch
+    <Pressable onPress={() => onChange(!value)} accessibilityRole="switch" accessibilityState={{ checked: value }} accessibilityLabel={label}
+      style={[{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10 }, !first && { borderTopWidth: 1, borderTopColor: color.n100 }]}>
       <View style={{ flex: 1 }}><Text style={{ fontSize: 16, fontWeight: "700" }}>{label}</Text>{sub && <Text style={f.hint}>{sub}</Text>}</View>
       <Switch value={value} onValueChange={onChange} trackColor={{ true: color.accent700 }} />
-    </View>
+    </Pressable>
   );
 }
 
@@ -162,7 +165,7 @@ export function TimeSheet({ title, taken, onAdd, onClose }: { title: string; tak
   const dup = taken.includes(hhmm);
   return (
     <Sheet title={title} onClose={onClose}>
-      <DateTimePicker value={t} mode="time" display="spinner" minuteInterval={30} locale="zh-TW" onChange={(_, d) => d && setT(d)} style={{ alignSelf: "stretch" }} />
+      <DateTimePicker value={t} mode="time" display="spinner" minuteInterval={30} locale="zh-TW" onValueChange={(_, d) => setT(d)} style={{ alignSelf: "stretch" }} />
       <Btn kind="primary" label={dup ? `${hhmm} 已經開放了` : `開放 ${hhmm}`} disabled={dup} onPress={() => { onAdd(hhmm); onClose(); }} />
     </Sheet>
   );
