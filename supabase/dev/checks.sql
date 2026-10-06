@@ -409,23 +409,39 @@ do $$ begin perform test.login('葉子'); end $$;
 set role authenticated;
 do $$
 declare p uuid := (select id from public.payments where payer_id = test.uid('葉子') and status = 'waiting' limit 1);
+  shot text;
 begin
   perform set_config('test.pay', p::text, false);
-  perform public.report_payment(p, '11111');
+  -- 對帳截圖: only into your own folder, only for your own payment
+  shot := auth.uid()::text || '/' || p::text || '/shot.jpg';
+  insert into storage.objects (bucket_id, name) values ('payment-proofs', shot);
+  assert test.fails(format('insert into storage.objects (bucket_id, name) values (%L, %L)', 'payment-proofs', auth.uid()::text || '/' || gen_random_uuid()::text || '/x.jpg')) is not null,
+    'a screenshot only for your own payment';
+  assert test.fails(format('select public.report_payment(%L, %L, %L)', p, '', 'someone/else/x.jpg')) = 'proof path not allowed', 'the report points only at your own screenshot';
+  perform public.report_payment(p, '11111', shot);
+  assert (select proof_path = shot from public.payments where id = p), 'the screenshot is kept with the report';
 end $$;
 reset role;
 do $$ begin perform test.login('趙柏宇'); end $$;
 set role authenticated;
 do $$ begin
   assert test.fails(format('select public.reject_payment_report(%L)', current_setting('test.pay'))) = 'payment not found', 'another coach cannot send it back';
+  assert (select count(*) from storage.objects where bucket_id = 'payment-proofs') = 0, 'another coach cannot see the screenshot';
 end $$;
+reset role;
+do $$ begin perform test.login('小安'); end $$;
+set role authenticated;
+do $$ begin assert (select count(*) from storage.objects where bucket_id = 'payment-proofs') = 0, 'another student cannot see the screenshot'; end $$;
 reset role;
 do $$ begin perform test.login('Mia 林'); end $$;
 set role authenticated;
-do $$ begin perform public.reject_payment_report(current_setting('test.pay')::uuid); end $$;
+do $$ begin
+  assert (select count(*) from storage.objects where bucket_id = 'payment-proofs') = 1, 'the lesson''s coach sees the screenshot';
+  perform public.reject_payment_report(current_setting('test.pay')::uuid);
+end $$;
 reset role;
 do $$ begin
-  assert (select status = 'waiting' and ref_last5 is null from public.payments where id = current_setting('test.pay')::uuid), '還沒收到 puts it back to 待付款';
+  assert (select status = 'waiting' and ref_last5 is null and proof_path is null from public.payments where id = current_setting('test.pay')::uuid), '還沒收到 puts it back to 待付款 and clears the screenshot';
   assert exists (select 1 from public.notifications where user_id = test.uid('Mia 林') and kind = 'payment_reported'), 'the coach hears about the report';
   assert exists (select 1 from public.notifications where user_id = test.uid('葉子') and kind = 'payment_not_received'), 'the student hears it was not received';
 end $$;
