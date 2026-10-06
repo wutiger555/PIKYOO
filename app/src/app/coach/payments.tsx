@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { useState } from "react";
 import { Pressable, Switch, Text, View } from "react-native";
 import { PAYOUT_METHODS, RECEIVED_BEFORE } from "@pikyoo/core/data/coaches";
@@ -83,6 +84,7 @@ export default function CoachPayments() {
 function PayoutSheet({ onClose }: { onClose: () => void }) {
   const [on, setOn] = useState(() => Object.fromEntries(PAYOUT_METHODS.map((m) => [m.name, m.on])));
   const [remind, setRemind] = useState(true);
+  const { payout } = useSession();
   const row = (title: string, sub: string, value: boolean, set: (v: boolean) => void) => (
     <View key={title} style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: color.n100 }}>
       <View style={{ flex: 1 }}><Text style={{ fontSize: 16, fontWeight: "700" }}>{title}</Text><Text style={{ fontSize: 13, color: color.muted }}>{sub}</Text></View>
@@ -92,7 +94,12 @@ function PayoutSheet({ onClose }: { onClose: () => void }) {
   return (
     <Sheet title="收款方式" onClose={onClose}>
       <Text style={c.hint}>學生預約時會看到你開啟的方式，確認預約後自動傳付款資訊。</Text>
-      {PAYOUT_METHODS.map((m) => row(m.name, m.sub, on[m.name], (v) => setOn((p) => ({ ...p, [m.name]: v }))))}
+      {PAYOUT_METHODS.map((m) => row(m.name, m.name === "銀行轉帳" ? `${payout.bank}・尾號 ${payout.account.replace(/\D/g, "").slice(-4)}` : m.sub, on[m.name], (v) => setOn((p) => ({ ...p, [m.name]: v }))))}
+      <Pressable onPress={() => { onClose(); router.push("/coach-bank"); }} style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: color.n100 }}>
+        <Icon name="wallet" size={18} />
+        <View style={{ flex: 1 }}><Text style={{ fontSize: 16, fontWeight: "700" }}>收款帳戶</Text><Text style={{ fontSize: 13, color: color.muted }}>學生會用它產生轉帳 QR code</Text></View>
+        <Icon name="right" size={14} tint={color.muted} />
+      </Pressable>
       {row("自動提醒未付款", "上課前 24 小時用 LINE 提醒", remind, setRemind)}
       <Btn kind="primary" label="完成" onPress={onClose} />
     </Sheet>

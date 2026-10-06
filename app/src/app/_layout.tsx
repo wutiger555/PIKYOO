@@ -35,6 +35,7 @@ export default function RootLayout() {
           <Stack.Screen name="coach-inbox" options={{ title: "待處理" }} />
           <Stack.Screen name="coach-lesson/[id]" options={{ title: "課程" }} />
           <Stack.Screen name="coach-student/[id]" options={{ title: "學生" }} />
+          <Stack.Screen name="coach-bank" options={{ title: "收款帳戶" }} />
         </Stack>
         <ToastHost />
       </SessionProvider>

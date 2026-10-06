@@ -190,7 +190,7 @@ export const slotsFor = (c: Coach, day: BookingDay): Slot[] =>
 
 export const PAY_HINT: Record<string, string> = {
   "LINE Pay": "確認後打開教練的付款連結，付好按一下通知教練",
-  銀行轉帳: "確認後顯示帳號，回報末五碼",
+  銀行轉帳: "確認後給你轉帳 QR，銀行 App 一掃就帶入帳號",
   現場付現: "上課當天付給教練",
 };
 

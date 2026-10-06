@@ -1,5 +1,6 @@
 "use client";
 
+import { BANKS, bankCode, bankLabel } from "@pikyoo/core/twqr";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -422,7 +423,8 @@ function PayoutDetailsSheet({ onClose }: { onClose: () => void }) {
   const router = useRouter();
   const { myCoach: mine } = useCatalog();
   const [link, setLink] = useState(mine?.payout.line_pay?.link ?? "");
-  const [bank, setBank] = useState(mine?.payout.bank_transfer?.bank ?? "");
+  // stored as 「台新銀行 812」; older free-text entries are matched by their code
+  const [bank, setBank] = useState(() => { const c = bankCode(mine?.payout.bank_transfer?.bank ?? ""); return c ? bankLabel(c) : ""; });
   const [account, setAccount] = useState(mine?.payout.bank_transfer?.account ?? "");
   const [name, setName] = useState(mine?.payout.bank_transfer?.name ?? "");
   const [busy, setBusy] = useState(false);
@@ -445,8 +447,11 @@ function PayoutDetailsSheet({ onClose }: { onClose: () => void }) {
         <input id="pay-link" className="input" inputMode="url" placeholder="https://line.me/…" value={link} onChange={(e) => setLink(e.target.value)} />
       </div>
       <div className="field">
-        <label htmlFor="pay-bank">銀行（含代碼）</label>
-        <input id="pay-bank" className="input" placeholder="例：台新銀行 812" value={bank} onChange={(e) => setBank(e.target.value)} />
+        <label htmlFor="pay-bank">銀行</label>
+        <select id="pay-bank" className="input" value={bank} onChange={(e) => setBank(e.target.value)}>
+          <option value="">選擇銀行</option>
+          {BANKS.map(([c, n]) => <option key={c} value={bankLabel(c)}>{c} {n}</option>)}
+        </select>
       </div>
       <div className="field">
         <label htmlFor="pay-acct">帳號</label>
@@ -456,6 +461,7 @@ function PayoutDetailsSheet({ onClose }: { onClose: () => void }) {
         <label htmlFor="pay-name">戶名</label>
         <input id="pay-name" className="input" value={name} onChange={(e) => setName(e.target.value)} />
       </div>
+      <p className="fine" style={{ margin: "8px 0 0" }}>學生付款頁會用這個帳號產生轉帳 QR code，用銀行 App 一掃就帶入帳號和金額，錢直接進你的帳戶。</p>
       <button className="btn btn-primary btn-lg btn-block" style={{ marginTop: 12 }} disabled={busy} onClick={save}>{busy ? "儲存中…" : "儲存"}</button>
     </Sheet>
   );
