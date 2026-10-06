@@ -141,7 +141,7 @@ function useDemoValue(catalog: Catalog, me: Me | null | undefined) {
     setBooking: (u: Updater<Booking>) => set("booking", u),
     confirmRequest,
     markPaid: (id: string) => set("payments", (ps) => ps.map((x) => (x.id === id ? { ...x, status: "paid" as const } : x))),
-    unmarkReported: (id: string) => set("payments", (ps) => ps.map((x) => (x.id === id ? { ...x, status: "wait" as const, ref: undefined, at: "等學生重新確認" } : x))),
+    unmarkReported: (id: string) => set("payments", (ps) => ps.map((x) => (x.id === id ? { ...x, status: "wait" as const, ref: undefined, proof: undefined, at: "等學生重新確認" } : x))),
     resetConsole: () => setS((p) => ({ ...p, requests: initialRequests(), payments: initialPayments() })),
     setMyCoach: (u: Updater<Coach>) => set("myCoach", u),
     addGroup: (g: Group) => set("groups", (gs) => [g, ...gs.filter((x) => x.id !== g.id)]),

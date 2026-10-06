@@ -1,4 +1,6 @@
 import * as Clipboard from "expo-clipboard";
+import { Image } from "expo-image";
+import * as ImagePicker from "expo-image-picker";
 import * as MediaLibrary from "expo-media-library/legacy";
 import { useRef, useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
@@ -14,9 +16,15 @@ import { toast } from "./Toast";
 
 /** 銀行轉帳 in two steps (website: TransferPay, docs/PAYMENTS.md §1.5): ① transfer — save the TWQR code and scan it
  *  from the photo library in any bank app (the student can't scan their own screen), or by hand with copy buttons;
- *  ② report the last five digits. The money goes straight to the coach's account. */
-export function TransferPay({ bank, account, name, amount, onReport }: { bank: string; account: string; name: string; amount: number; onReport: (last5: string) => void }) {
+ *  ② report with the bank app's screenshot or the last five digits (either is enough). The money goes to the coach. */
+export function TransferPay({ bank, account, name, amount, onReport }: { bank: string; account: string; name: string; amount: number; onReport: (last5: string, proof: string | null) => void }) {
   const [last5, setLast5] = useState("");
+  const [proof, setProof] = useState<string | null>(null);
+  // the latest photo is usually the bank app's 轉帳成功 screen, so the library opens straight away
+  const pickProof = async () => {
+    const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.7 });
+    if (!r.canceled && r.assets[0]) setProof(r.assets[0].uri);
+  };
   const shot = useRef<View>(null);
   const code = twqrTransfer({ bank, account, amount });
   const copy = async (text: string, msg: string) => { await Clipboard.setStringAsync(text); toast(msg); };
@@ -59,9 +67,18 @@ export function TransferPay({ bank, account, name, amount, onReport }: { bank: s
       </View>
       <View style={[{ gap: 8 }, s.split]}>
         {step(2, "轉好了，回報給教練")}
-        <Text style={{ fontSize: 13, color: color.muted }}>你的轉出帳號末五碼</Text>
+        <Text style={{ fontSize: 13, color: color.muted }}>附上銀行 App 的轉帳成功畫面，或填轉出帳號末五碼，擇一就可以。</Text>
+        {proof ? (
+          <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 12 }}>
+            <Image source={{ uri: proof }} style={{ width: 90, height: 150, borderRadius: radius.md, borderWidth: 1, borderColor: color.line }} contentFit="cover" accessibilityLabel="轉帳截圖預覽" />
+            <Pressable onPress={pickProof} hitSlop={8}><Text style={{ fontSize: 14, fontWeight: "700", textDecorationLine: "underline" }}>換一張</Text></Pressable>
+          </View>
+        ) : (
+          <Btn icon="image" label="附上轉帳截圖" onPress={pickProof} />
+        )}
+        <Text style={{ fontSize: 13, color: color.muted }}>轉出帳號末五碼{proof ? "（選填）" : ""}</Text>
         <TextInput value={last5} onChangeText={(t) => setLast5(t.replace(/\D/g, "").slice(0, 5))} keyboardType="number-pad" style={s.input} placeholder="12345" placeholderTextColor={color.n500} />
-        <Btn kind="primary" label="我已轉帳" disabled={last5.length !== 5} onPress={() => onReport(last5)} />
+        <Btn kind="primary" label="我已轉帳" disabled={!(proof || last5.length === 5) || (last5.length > 0 && last5.length !== 5)} onPress={() => onReport(last5, proof)} />
       </View>
     </View>
   );

@@ -78,14 +78,14 @@ export default function BookingStatusPage() {
             </>
           )}
           {b.pay === "銀行轉帳" && (
-            <TransferPay {...payout} amount={total} onReport={(l5) => { setLast5(l5); reportPayment(l5); toast("已通知教練", "教練對帳後會通知你"); }} />
+            <TransferPay {...payout} amount={total} onReport={(l5, proof) => { setLast5(l5); reportPayment(l5, proof); toast("已通知教練", "教練對帳後會通知你"); }} />
           )}
           {b.pay === "現場付現" && <Text style={{ fontSize: 16 }}>上課當天付 <Text style={{ fontWeight: "800" }}>{money(total)}</Text> 給教練即可。</Text>}
         </View>
       </>
     );
   } else if (st === "reported") {
-    main = card("info", "等待教練對帳", "已回報付款", `${b.pay === "LINE Pay" ? "你回報已用 LINE Pay 付款" : `轉帳末五碼 ${last5}`}。教練確認收到後會通知你。`,
+    main = card("info", "等待教練對帳", "已回報付款", `${b.pay === "LINE Pay" ? "你回報已用 LINE Pay 付款" : last5 ? `轉帳末五碼 ${last5}` : "已附上轉帳截圖"}。教練確認收到後會通知你。`,
       <Pressable onPress={() => setStatus("paid")} style={s.demoBtn}><Text style={{ fontWeight: "700" }}>示範：模擬教練確認收到</Text></Pressable>);
   } else {
     main = card("open", "已付款", "準備好上課了！", "前一天 20:00 會用 LINE 提醒你，記得穿運動鞋。");

@@ -56,3 +56,12 @@ export async function uploadCredentialScan(file: File): Promise<string> {
   if (r.error) throw new Error(`證照上傳失敗：${r.error.message}`);
   return path;
 }
+
+/** 對帳截圖 for a payment (private bucket: only the student and that lesson's coach can open it). Returns its path. */
+export async function uploadPaymentProof(paymentId: string, file: File): Promise<string> {
+  const me = await myId();
+  const path = `${me}/${paymentId}/${stamp()}.jpg`;
+  const r = await sb().storage.from("payment-proofs").upload(path, await shrink(file, 1600), { contentType: "image/jpeg" });
+  if (r.error) throw new Error(`截圖上傳失敗：${r.error.message}`);
+  return path;
+}

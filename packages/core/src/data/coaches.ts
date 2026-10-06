@@ -205,10 +205,11 @@ export const initialRequests = (): BookingRequest[] => [
 ];
 
 export const initialPayments = (): PaymentRow[] => [
-  { id: "p1", initial: "葉", name: "葉子", what: `小班課・${demoDate(2)}`, amount: 800, via: "銀行轉帳", status: "reported", ref: "88120", at: "今天 09:12 回報" },
+  { id: "p1", initial: "葉", name: "葉子", what: `小班課・${demoDate(2)}`, amount: 800, via: "銀行轉帳", status: "reported", ref: "88120", proof: "/demo/transfer-proof.png", at: "今天 09:12 回報" },
   { id: "p2", initial: "何", name: "阿何", what: "小班課・今天 19:30", amount: 800, via: "LINE Pay", status: "wait", at: "已傳付款連結，尚未付" },
   { id: "p3", initial: "P", name: "Peggy", what: "一對一 10 堂（第 3/10 堂）", amount: 13500, via: "LINE Pay", status: "paid", at: "9/28" },
   { id: "p4", initial: "周", name: "小周", what: "小班課・今天 19:30", amount: 800, via: "現場付現", status: "paid", at: "9/29" },
+  { id: "p5", initial: "W", name: "Wendy", what: `一對一・${demoDate(3)}`, amount: 1500, via: "銀行轉帳", status: "reported", ref: "30417", at: "今天 08:40 回報" },
 ];
 
 /** Received earlier this month, outside the rows shown. */
