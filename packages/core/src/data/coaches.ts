@@ -189,7 +189,7 @@ export const slotsFor = (c: Coach, day: BookingDay): Slot[] =>
   (c.profile.availability[day.weekday] ?? []).map((t) => [t, SEATS_LEFT[`${c.id}:${day.key}-${t}`] ?? 4]);
 
 export const PAY_HINT: Record<string, string> = {
-  "LINE Pay": "確認後收到付款連結，一鍵完成",
+  "LINE Pay": "確認後打開教練的付款連結，付好按一下通知教練",
   銀行轉帳: "確認後顯示帳號，回報末五碼",
   現場付現: "上課當天付給教練",
 };

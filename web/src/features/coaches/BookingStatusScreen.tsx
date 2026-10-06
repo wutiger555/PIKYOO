@@ -107,16 +107,17 @@ export function BookingStatusScreen({ demo, live, payment }: { demo?: BookingSta
         <div className="state-card">
           <Status tone="open">教練已確認</Status>
           <h1>完成付款就搞定了</h1>
-          <p className="text-muted">上課前 24 小時可免費改期。</p>
+          <p className="text-muted">錢直接付給教練，付好後按一下，教練就知道了。上課前 24 小時可免費改期。</p>
         </div>
         <div className="paybox">
           <div className="paybox-h"><span>應付金額</span><b className="num">{money(total)}</b></div>
           {b.pay === "LINE Pay" && (
             <>
-              <button className="btn btn-primary btn-lg btn-block" onClick={() => { setStatus("paid"); toast("LINE Pay 付款完成"); }}>
-                <Icon name="wallet" size={20} />用 LINE Pay 付款
+              {/* PLAN D9: the coach's own LINE Pay link, so the student reports it and the coach confirms, like a transfer */}
+              <button className="btn btn-primary btn-lg btn-block" onClick={() => toast("Demo：這裡會打開教練的 LINE Pay 收款連結")}>
+                <Icon name="wallet" size={20} />打開 LINE Pay 付款
               </button>
-              <p className="fine" style={{ textAlign: "center", margin: "8px 0 0" }}>付款完成會自動回報給教練</p>
+              <button className="btn btn-secondary btn-block" style={{ marginTop: 8 }} onClick={() => { setLast5(""); setStatus("reported"); toast("已通知教練，確認收到後會通知你"); }}>付好了，通知教練</button>
             </>
           )}
           {b.pay === "銀行轉帳" && (
@@ -147,7 +148,12 @@ export function BookingStatusScreen({ demo, live, payment }: { demo?: BookingSta
       <div className="state-card">
         <Status tone="info">等待教練對帳</Status>
         <h1>已回報付款</h1>
-        <p className="text-muted">{realAuth ? (payment?.ref ? `末五碼 ${payment.ref}。` : "") : `末五碼 ${last5}。`}教練確認收到後會通知你。</p>
+        <p className="text-muted">{realAuth ? (payment?.ref ? `末五碼 ${payment.ref}。` : "") : last5 ? `末五碼 ${last5}。` : "你回報已用 LINE Pay 付款。"}教練確認收到後會通知你。</p>
+        {!realAuth && (
+          <button className="btn btn-ghost demo-btn" onClick={() => { setStatus("paid"); toast("教練確認收到付款"); }}>
+            <Icon name="info" size={16} />Demo：模擬教練確認收到
+          </button>
+        )}
       </div>
     );
   } else {
