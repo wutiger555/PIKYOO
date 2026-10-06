@@ -1,6 +1,5 @@
 "use client";
 
-import { BANKS, bankCode, bankLabel } from "@pikyoo/core/twqr";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -9,13 +8,15 @@ import { Icon, type IconName } from "@/components/pk/Icon";
 import { AppBar, Sheet, SoonButton } from "@/components/pk/Shell";
 import { TopNav } from "@/components/pk/TopNav";
 import { useToast } from "@/components/pk/Toast";
-import { PAYOUT_METHODS, RECEIVED_BEFORE, TODAY_AGENDA } from "@pikyoo/core/data/coaches";
+import { DEMO_PAYOUT, PAYOUT_METHODS, RECEIVED_BEFORE, TODAY_AGENDA } from "@pikyoo/core/data/coaches";
+import { BANKS, bankCode, bankLabel } from "@pikyoo/core/twqr";
 import { useCatalog, useDemo } from "@/lib/demo-store";
 import { money } from "@pikyoo/core/format";
 import { AnswerCard } from "@/features/coaches/QuestionBoard";
 import { CoachGate } from "./CoachAccount";
 import { decideBookingAction } from "@/lib/bookings";
-import { markPaidAction, rejectReportAction, savePayoutAction } from "@/lib/payments";
+import { markPaidAction, rejectReportAction, remindPaymentAction, savePayoutAction } from "@/lib/payments";
+import { CollectQRSheet } from "./CollectQR";
 import { realAuth } from "@/lib/env";
 import type { BookingRequest, PaymentRow } from "@pikyoo/core/types";
 
@@ -244,11 +245,22 @@ const PAY_LABEL: Record<PaymentRow["status"], [string, "almost" | "info" | "open
   paid: ["已收款", "open"],
 };
 
-/** 收款對帳: received vs due, filter by state, confirm transfers by last-5, LINE reminders. */
+/** 收款對帳: received vs due, filter by state, confirm transfers by last-5, LINE reminders that link to the student's
+ *  transfer QR, and 現場收款 QR for taking payment on court (docs/PAYMENTS.md §1.5). */
 export function CoachPaymentsScreen() {
   const toast = useToast();
   const router = useRouter();
   const { payments, markPaid, unmarkReported } = useDemo();
+  const { myCoach } = useCatalog();
+  const [collect, setCollect] = useState<PaymentRow | null>(null);
+  // 提醒: real sign-in queues a LINE message that opens the student's 我的預約 with the transfer QR (remind_payment)
+  const remind = async (p: PaymentRow) => {
+    if (realAuth) {
+      const r = await remindPaymentAction(p.id);
+      if (r.error) return toast(r.error);
+    }
+    toast(`已用 LINE 提醒 ${p.name}，點開就是付款頁`);
+  };
   // real sign-in: mark_payment_paid first (also for cash taken on the day); the row updates only if it went through
   const received = async (p: PaymentRow) => {
     if (realAuth) {
@@ -322,11 +334,11 @@ export function CoachPaymentsScreen() {
                       <button className="btn btn-primary" onClick={() => received(p)}>確認收到</button>
                     </div>
                   )}
-                  {p.status === "wait" && realAuth && <div className="con-acts"><button className="btn btn-secondary" onClick={() => received(p)}>已收到</button></div>}
-                  {p.status === "wait" && !realAuth && (
+                  {p.status === "wait" && (
                     <div className="con-acts">
-                      <button className="btn btn-secondary" onClick={() => toast("已改為現場收款")}>改現場收</button>
-                      <button className="btn btn-secondary" onClick={() => toast(`已用 LINE 傳付款提醒給 ${p.name}`)}><Icon name="bell" size={16} />提醒</button>
+                      <button className="btn btn-secondary" onClick={() => setCollect(p)}><Icon name="qr" size={16} />收款 QR</button>
+                      <button className="btn btn-secondary" onClick={() => remind(p)}><Icon name="bell" size={16} />提醒</button>
+                      <button className="btn btn-secondary" onClick={() => received(p)}>已收到</button>
                     </div>
                   )}
                 </td>
@@ -364,12 +376,14 @@ export function CoachPaymentsScreen() {
                   <button className="btn btn-primary" onClick={() => received(p)}>確認收到</button>
                 </div>
               )}
-              {p.status === "wait" && realAuth && <div className="btnrow btnrow-tight"><button className="btn btn-secondary" onClick={() => received(p)}>已收到（例如現場收現金）</button></div>}
-              {p.status === "wait" && !realAuth && (
-                <div className="btnrow btnrow-tight">
-                  <button className="btn btn-secondary" onClick={() => toast("已改為現場收款")}>改現場收</button>
-                  <button className="btn btn-secondary" onClick={() => toast(`已用 LINE 傳付款提醒給 ${p.name}`)}><Icon name="bell" size={16} />LINE 提醒</button>
-                </div>
+              {p.status === "wait" && (
+                <>
+                  <div className="btnrow btnrow-tight">
+                    <button className="btn btn-primary" onClick={() => setCollect(p)}><Icon name="qr" size={16} />現場收款 QR</button>
+                    <button className="btn btn-secondary" onClick={() => remind(p)}><Icon name="bell" size={16} />LINE 提醒</button>
+                  </div>
+                  <div style={{ marginTop: 10 }}><button className="linkbtn" onClick={() => received(p)}>已收到（例如現場收現金）</button></div>
+                </>
               )}
             </article>
           ))}
@@ -378,6 +392,10 @@ export function CoachPaymentsScreen() {
         <p className="fine pad" style={{ marginTop: 12 }}>錢直接進你自己的帳戶，PIKYOO 幫你把付款資訊給學生、記錄對帳。之後會接上線上刷卡。</p>
       </ConsoleFrame>
       <CoachTabs active="pay" />
+      {collect && (
+        <CollectQRSheet who={collect.name} amount={collect.amount} bank={realAuth ? myCoach?.payout.bank_transfer : DEMO_PAYOUT}
+          onReceived={() => { received(collect); setCollect(null); }} onSetup={() => { setCollect(null); setSettings(true); }} onClose={() => setCollect(null)} />
+      )}
       {settings && (realAuth ? <PayoutDetailsSheet onClose={() => setSettings(false)} /> : <PayoutSettingsSheet onClose={() => setSettings(false)} />)}
     </>
   );
@@ -408,7 +426,7 @@ function PayoutSettingsSheet({ onClose }: { onClose: () => void }) {
         </div>
       ))}
       <div className="row-item">
-        <div style={{ flex: 1 }}><b>自動提醒未付款</b><div className="text-muted" style={{ fontSize: 13 }}>上課前 24 小時用 LINE 提醒</div></div>
+        <div style={{ flex: 1 }}><b>自動提醒未付款</b><div className="text-muted" style={{ fontSize: 13 }}>上課前一晚 20:00 用 LINE 提醒，附轉帳 QR</div></div>
         <button className="switch" role="switch" aria-checked={remind} aria-label="自動提醒" onClick={() => setRemind((v) => !v)} />
       </div>
       <button className="btn btn-primary btn-lg btn-block" style={{ marginTop: 12 }} onClick={onClose}>完成</button>

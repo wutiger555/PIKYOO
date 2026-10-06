@@ -85,7 +85,7 @@ export const FLOWS: Flow[] = [
       {
         title: "收款設定", href: "/coach/payments", hint: "點右上角設定", prd: ["新增", "F5-3"],
         why: "教練決定學生能用哪些方式付款。",
-        features: ["LINE Pay 收款連結、銀行轉帳、街口、現場付現，可以各自開關", "自動提醒未付款：上課前 24 小時用 LINE 提醒", "MVP 不代收，Phase 3 接藍新金流"],
+        features: ["LINE Pay 收款連結、銀行轉帳、街口、現場付現，可以各自開關", "自動提醒未付款：上課前一晚 20:00 用 LINE 提醒，附轉帳 QR；教練也能手動提醒、現場出示收款 QR", "MVP 不代收，Phase 3 接藍新金流"],
       },
       {
         title: "課程與時段", href: "/coach/lessons", prd: ["F5-3", "F5-4", "F3-10"],

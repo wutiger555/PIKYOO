@@ -464,3 +464,39 @@ do $$ begin
   assert test.fails('select public.remind_tomorrow()') like 'permission denied%', 'only pg_cron sends reminders';
 end $$;
 reset role;
+
+-- Payment reminders with the transfer QR: the 20:00 reminder says 還沒付款 when the reader's payment waits (not cash),
+-- and the coach's 提醒 button nudges once per 12 hours, only for their own waiting payments
+do $$
+declare b uuid := (select b.id from public.lesson_bookings b join public.coaches c on c.id = b.coach_id
+                   where b.student_id = test.uid('小安') and b.status = 'confirmed' and c.slug = 'mia' limit 1);
+  tomorrow timestamptz := ((now() at time zone 'Asia/Taipei')::date + 1 + time '19:30') at time zone 'Asia/Taipei';
+  pay uuid;
+begin
+  assert b is not null, 'the check needs 小安 to have a confirmed lesson with Mia';
+  update public.lesson_bookings set starts_at = tomorrow where id = b;
+  insert into public.payments (booking_id, payer_id, amount, method) values (b, test.uid('小安'), 600, 'bank_transfer')
+  on conflict (booking_id, payer_id) do update set status = 'waiting', method = 'bank_transfer', reported_at = null, paid_at = null, ref_last5 = null
+  returning id into pay;
+  perform set_config('test.duepay', pay::text, false);
+  delete from public.notifications where kind = 'lesson_reminder' and payload ->> 'booking_id' = b::text;
+  perform public.remind_tomorrow();
+  assert (select (payload ->> 'unpaid')::boolean and payload ->> 'method' = 'bank_transfer' from public.notifications where user_id = test.uid('小安') and kind = 'lesson_reminder' and payload ->> 'booking_id' = b::text), 'an unpaid transfer is flagged in the reminder, with its method';
+end $$;
+do $$ begin perform test.login('趙柏宇'); end $$;
+set role authenticated;
+do $$ begin
+  assert test.fails(format('select public.remind_payment(%L)', current_setting('test.duepay'))) = 'payment not found', 'another coach cannot nudge the student';
+end $$;
+reset role;
+do $$ begin perform test.login('Mia 林'); end $$;
+set role authenticated;
+do $$ begin
+  perform public.remind_payment(current_setting('test.duepay')::uuid);
+  assert test.fails(format('select public.remind_payment(%L)', current_setting('test.duepay'))) = '12 小時內已經提醒過這位學生', 'one nudge per 12 hours';
+end $$;
+reset role;
+do $$ begin
+  assert exists (select 1 from public.notifications where user_id = test.uid('小安') and kind = 'payment_due' and payload ->> 'payment_id' = current_setting('test.duepay')), 'the student gets the nudge';
+  update public.payments set status = 'paid', paid_at = now() where id = current_setting('test.duepay')::uuid;
+end $$;

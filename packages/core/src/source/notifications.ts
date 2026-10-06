@@ -8,10 +8,11 @@ type Sb = SupabaseClient<Database>;
 
 export interface Notice { id: string; title: string; body?: string; href?: string; at: string; read: boolean }
 
-type Payload = { booking_id?: string; game_id?: string; question_id?: string; group_id?: string; note?: string; verified?: boolean; changed?: string[]; at?: string };
+type Payload = { booking_id?: string; game_id?: string; question_id?: string; group_id?: string; note?: string; verified?: boolean; changed?: string[]; at?: string; unpaid?: boolean; amount?: number; method?: string };
 
 /** Copy and link per kind (the kinds notify() is called with in supabase/migrations). Unknown kinds get a generic line. */
 export function describe(kind: string, p: Payload): Pick<Notice, "title" | "body" | "href"> {
+  const pay = p.method === "bank_transfer" ? "點開掃 QR 轉帳，付好按一下通知教練" : "點開付款，付好按一下通知教練";
   const booking = p.booking_id ? `/me/booking?id=${p.booking_id}` : "/me/lessons";
   const game = p.game_id ? `/games/${p.game_id}` : "/me";
   switch (kind) {
@@ -35,7 +36,11 @@ export function describe(kind: string, p: Payload): Pick<Notice, "title" | "body
     case "credential_reviewed": return { title: p.verified ? "證照已查驗" : "證照未通過查驗", href: "/coach/profile" };
     case "group_joined": return { title: "有朋友加入你的揪團", href: "/me/lessons" };
     case "group_expired": return { title: "揪團人數不足，已取消", href: "/me/lessons" };
-    case "lesson_reminder": return { title: `明天 ${p.at ?? ""} 有課`, body: "記得帶球拍、提早 10 分鐘到", href: "/me/lessons" };
+    // unpaid: the student's transfer still waits, so the link opens 我的預約 with the transfer QR (docs/PAYMENTS.md §1.5)
+    case "lesson_reminder": return p.unpaid
+      ? { title: `明天 ${p.at ?? ""} 有課，還沒付款`, body: pay, href: booking }
+      : { title: `明天 ${p.at ?? ""} 有課`, body: "記得帶球拍、提早 10 分鐘到", href: "/me/lessons" };
+    case "payment_due": return { title: `教練提醒你付款${p.amount ? ` ${p.amount} 元` : ""}`, body: `${p.at ? `${p.at} 的課，` : ""}${pay}`, href: booking };
     case "game_reminder": return { title: `明天 ${p.at ?? ""} 有球局`, body: "不能去請盡早取消，讓候補的人遞補", href: game };
     case "line_test": return { title: "LINE 通知測試", body: "收到這則就代表 PIKYOO 的 LINE 通知設定好了", href: "/me/notifications" };
     default: return { title: "PIKYOO 有新消息" };
@@ -45,7 +50,7 @@ export function describe(kind: string, p: Payload): Pick<Notice, "title" | "body
 /** Kinds also pushed over LINE (PRD F6 plus D9's payment round trip). LINE bills per message, so the rest stay in-app. */
 export const LINE_KINDS = new Set([
   "booking_requested", "booking_confirmed", "booking_declined", "booking_cancelled", "booking_expired",
-  "payment_reported", "payment_received", "payment_not_received",
+  "payment_reported", "payment_received", "payment_not_received", "payment_due",
   "game_promoted", "game_changed", "game_cancelled", "game_removed",
   "coach_approved", "coach_returned", "coach_suspended", "lesson_reminder", "game_reminder",
   "line_test", // queued by hand (select public.notify(<user>, 'line_test', '{}')) to check the LINE setup

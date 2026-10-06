@@ -5,7 +5,7 @@ import { color } from "./theme";
 // The website's icon names (web/src/components/pk/Icon.tsx) drawn with SF Symbols on iOS and Material Symbols on Android.
 const MAP = {
   left: ["chevron.left", "arrow_back"], right: ["chevron.right", "chevron_right"], down: ["chevron.down", "expand_more"],
-  heart: ["heart", "favorite"], heartOn: ["heart.fill", "favorite"], copy: ["doc.on.doc", "content_copy"], share: ["square.and.arrow.up", "share"], star: ["star.fill", "star"],
+  heart: ["heart", "favorite"], heartOn: ["heart.fill", "favorite"], copy: ["doc.on.doc", "content_copy"], qr: ["qrcode", "qr_code"], share: ["square.and.arrow.up", "share"], star: ["star.fill", "star"],
   check: ["checkmark", "check"], plus: ["plus", "add"], minus: ["minus", "remove"], x: ["xmark", "close"],
   clock: ["clock", "schedule"], pin: ["mappin.and.ellipse", "location_on"], users: ["person.2", "group"],
   sprout: ["leaf", "eco"], lock: ["lock", "lock"], msg: ["bubble.left", "chat_bubble"], cols: ["rectangle.split.3x1", "view_column"],
