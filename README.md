@@ -26,6 +26,7 @@ A pickleball platform for Taiwan to find courts, coaches, classes, and games.
 
 | 日期 | PR | 內容 |
 |---|---|---|
+| 2026-10-06 | [#55](https://github.com/wutiger555/PIKYOO/pull/55) | **收款研究第二輪**（`docs/PAYMENTS.md` §1.6）：銀行 API、個人收款產品、電子支付、財金與政府管道、同類平台做法；結論是免費又能自動確認的管道目前沒有，TWQR 在 2026 年學生轉帳免手續費 |
 | 2026-10-06 | [#54](https://github.com/wutiger555/PIKYOO/pull/54) | **銀行轉帳改成掃 QR 付款**：學生付款頁產生台灣Pay 共通轉帳 QR（任何銀行 App 掃描就帶入教練帳號和金額，手機上一鍵存到相簿），不能掃就一鍵複製帳號、金額，轉好填末五碼回報，兩步完成；教練收款設定改成從清單選銀行。網站與 App 都有，不用申請任何服務 |
 | 2026-10-06 | [#53](https://github.com/wutiger555/PIKYOO/pull/53) | **收款研究：不需公司就能讓轉帳更好付**（`docs/PAYMENTS.md` §1.5）：TWQR 轉帳 QR code、銀行 App 收款連結、手機門號轉帳、教練自己的金流帳戶、開放銀行的可行性與費用 |
 | 2026-10-06 | [#52](https://github.com/wutiger555/PIKYOO/pull/52) | **網站示範版 LINE Pay 改成三步**：打開教練的收款連結 → 「付好了，通知教練」→ 教練確認收到（與 App 一致，不串金流）；說明文字不再寫「一鍵完成、自動回報」 |
