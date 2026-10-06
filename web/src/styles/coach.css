@@ -239,3 +239,5 @@
 .pay-qr small { display: block; margin-top: 6px; color: var(--color-muted); font-size: 12px; }
 @media (pointer: coarse) { .fine-only { display: none !important; } }
 @media not (pointer: coarse) { .touch-only { display: none !important; } }
+/* 現場收款 QR (CollectQRSheet): big enough to scan from across the net post */
+.collect-qr { display: block; width: min(280px, 78vw); height: auto; margin: 0 auto 8px; border: 1px solid var(--color-line); border-radius: var(--radius-md); padding: 8px; background: #fff; }

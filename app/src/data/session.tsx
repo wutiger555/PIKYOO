@@ -1,7 +1,7 @@
 import { createContext, useContext, useMemo, useState } from "react";
 import { emptyCoachFilters, type CoachFilters } from "@pikyoo/core/coach-filters";
 import { emptyGameFilters, type GameFilters } from "@pikyoo/core/game-filters";
-import { bookingDays, getCoach, initialPayments, initialRequests } from "@pikyoo/core/data/coaches";
+import { bookingDays, DEMO_PAYOUT, getCoach, initialPayments, initialRequests } from "@pikyoo/core/data/coaches";
 import { ME } from "@pikyoo/core/data/games";
 import { demoNotices } from "@pikyoo/core/data/notifications";
 import type { Notice } from "@pikyoo/core/source/notifications";
@@ -70,6 +70,8 @@ interface Session {
   payments: PaymentRow[];
   markPaid: (id: string) => void;
   rejectReport: (id: string) => void;
+  /** LINE 提醒: in the demo the student's own booking gets the notice, which opens 我的預約 with the transfer QR */
+  remindPayment: (id: string) => void;
   /** every question the reader may see, with this session's own questions and the coach's replies applied */
   questions: Question[];
   answer: (id: string, text: string) => void;
@@ -91,6 +93,8 @@ interface Session {
   /** a seat's payment, read from the 收款 row when the seat has one */
   seatPay: (lessonId: string, sid: string) => "paid" | "wait" | "reported";
   markSeatPaid: (lessonId: string, sid: string) => void;
+  /** what one seat owes: its 收款 row, else the plan's price */
+  seatAmount: (lessonId: string, sid: string) => number;
   addNote: (sid: string, text: string) => void;
 }
 
@@ -101,7 +105,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [signedIn, setSignedIn] = useState(!isLive);
   const [profile, setProfile] = useState<Profile>({ name: ME.name, level: ME.level, areas: ["大安區", "信義區", "中山區"] });
   const [favs, setFavs] = useState<string[]>([]);
-  const [payout, setPayout] = useState<Payout>({ bank: "台新銀行 812", account: "2888 1001 234 567", name: "林＊亞" });
+  const [payout, setPayout] = useState<Payout>(DEMO_PAYOUT);
   // n1 is the website's sample 教練確認了你的預約; here that notice arrives when the demo booking is really confirmed
   const [notices, setNotices] = useState<Notice[]>(() => demoNotices().filter((n) => n.id !== "n1"));
   const notify = (title: string, body: string, href: string) => setNotices((ns) => [{ id: "n" + Date.now().toString(36), title, body, href, at: "剛剛", read: false }, ...ns]);
@@ -252,6 +256,10 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     payments,
     markPaid: (id) => { patchPayment(id, { status: "paid", at: "剛剛" }); if (id === "n" + MINE) patchBooking("paid"); },
     rejectReport: (id) => { patchPayment(id, { status: "wait", ref: undefined, at: "等學生重新確認" }); if (id === "n" + MINE) { setBooking((b) => (b ? { ...b, status: "confirmed" } : b)); notify("教練還沒收到你的款項", "請再確認一次付款", "/me/booking"); } },
+    remindPayment: (id) => {
+      const p = payments.find((x) => x.id === id);
+      if (id === "n" + MINE && p) notify(`教練提醒你付款 ${p.amount} 元`, p.via === "銀行轉帳" ? "點開掃 QR 轉帳，付好按一下通知教練" : "點開付款，付好按一下通知教練", "/me/booking");
+    },
     questions,
     answer: (id, text) => setAnswers((a) => ({ ...a, [id]: text })),
     coaches,
@@ -282,6 +290,14 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         if (seat.paymentId === "n" + MINE) patchBooking("paid");
       }
       setLessons((ls) => ls.map((l) => (l.id === lid ? { ...l, seats: l.seats.map((x) => (x.sid === sid ? { ...x, pay: "paid" } : x)) } : l)));
+    },
+    seatAmount: (lid, sid) => {
+      const l = lessons.find((x) => x.id === lid);
+      const seat = l?.seats.find((x) => x.sid === sid);
+      const row = seat?.paymentId ? payments.find((p) => p.id === seat.paymentId) : undefined;
+      if (row) return row.amount;
+      const plan = myCoach?.profile.plans.find((p) => p.name === l?.plan);
+      return plan ? (plan.unit === "/10 堂" ? Math.round(plan.price / 10) : plan.price) : 0;
     },
     addNote: (sid, text) => setStudents((xs) => xs.map((x) => (x.id === sid ? { ...x, notes: [{ offset: 0, text }, ...x.notes] } : x))),
   }), [payout, profile, favs, notices, lessons, pendingSlots, students, blocks, attendance, signedIn, filters, compare, asked, booking, gameFilters, mine, myCoach, requests, payments, questions, coaches]);

@@ -9,7 +9,7 @@ import { Crumbs } from "@/components/pk/Crumbs";
 import { AppBar, SoonButton } from "@/components/pk/Shell";
 import { useToast } from "@/components/pk/Toast";
 import { TopNav } from "@/components/pk/TopNav";
-import { bookingDays } from "@pikyoo/core/data/coaches";
+import { bookingDays, DEMO_PAYOUT } from "@pikyoo/core/data/coaches";
 import type { MyBooking } from "@pikyoo/core/source/bookings";
 import type { MyPayment } from "@pikyoo/core/source/payments";
 import { reportPaymentAction } from "@/lib/payments";
@@ -123,7 +123,7 @@ export function BookingStatusScreen({ demo, live, payment }: { demo?: BookingSta
           )}
           {b.pay === "銀行轉帳" && (
             <>
-              <TransferPay bank="台新銀行 812" account="2888 1001 234 567" name="林＊亞" amount={total}
+              <TransferPay {...DEMO_PAYOUT} amount={total}
                 onReport={(l5) => { setLast5(l5); setStatus("reported"); toast("已通知教練，對帳後會通知你"); }} />
             </>
           )}

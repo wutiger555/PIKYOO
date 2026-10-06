@@ -188,6 +188,9 @@ const SEATS_LEFT: Record<string, number> = {
 export const slotsFor = (c: Coach, day: BookingDay): Slot[] =>
   (c.profile.availability[day.weekday] ?? []).map((t) => [t, SEATS_LEFT[`${c.id}:${day.key}-${t}`] ?? 4]);
 
+/** Mia's bank account in the demo (live: coach_pay_details.bank_transfer); the transfer QR is made from it. */
+export const DEMO_PAYOUT = { bank: "台新銀行 812", account: "2888 1001 234 567", name: "林＊亞" };
+
 export const PAY_HINT: Record<string, string> = {
   "LINE Pay": "確認後打開教練的付款連結，付好按一下通知教練",
   銀行轉帳: "確認後給你轉帳 QR，銀行 App 一掃就帶入帳號",

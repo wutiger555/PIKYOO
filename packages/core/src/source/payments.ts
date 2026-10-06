@@ -50,6 +50,12 @@ export const rejectReport = async (sb: Sb, paymentId: string) => {
   if (r.error) throw explain(r.error.message);
 };
 
+/** 提醒付款: a LINE nudge linking to the student's transfer QR (once per 12 hours per payment). */
+export const remindPayment = async (sb: Sb, paymentId: string) => {
+  const r = await sb.rpc("remind_payment", { p_payment: paymentId });
+  if (r.error) throw explain(r.error.message);
+};
+
 /** 我已付款: last5 for a bank transfer, empty otherwise. */
 export const reportPayment = async (sb: Sb, paymentId: string, last5: string) => {
   const r = await sb.rpc("report_payment", { p_payment: paymentId, p_last5: last5 });

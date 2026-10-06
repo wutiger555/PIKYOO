@@ -7,6 +7,7 @@ import { addLessonToCalendar, nowHHMM } from "@/data/phone";
 import { useSession } from "@/data/session";
 import { Num } from "@/ui/badges";
 import { Btn } from "@/ui/Btn";
+import { CollectQRSheet } from "@/ui/CollectQR";
 import { KIND } from "@/ui/calendar";
 import { Avatar, c, SecHead } from "@/ui/console";
 import { Field, Segmented } from "@/ui/form";
@@ -22,9 +23,10 @@ const ATT: [Attendance, string][] = [["present", "到"], ["late", "遲到"], ["a
  *  and the two things that happen at short notice (move indoors, cancel). */
 export default function LessonDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { lessons, students, attendance, setAttendance, setLesson, seatPay, markSeatPaid, addNote } = useSession();
+  const { lessons, students, attendance, setAttendance, setLesson, seatPay, markSeatPaid, addNote, seatAmount, remindPayment } = useSession();
   const l = lessons.find((x) => x.id === id);
   const [noteFor, setNoteFor] = useState<string | null>(null);
+  const [collect, setCollect] = useState<string | null>(null);
   if (!l) return <Text style={{ padding: 16 }}>找不到這堂課</Text>;
   const d = demoDay(l.offset);
   const seats = l.seats.map((x) => ({ ...x, st: students.find((y) => y.id === x.sid) }));
@@ -86,8 +88,12 @@ export default function LessonDetail() {
               {x?.notes[0] && <Text style={st.lastNote} numberOfLines={2}>上次：{x.notes[0].text}</Text>}
               {pay !== "paid" && !off && (
                 <View style={{ flexDirection: "row", gap: 8 }}>
-                  <Btn label="已收到" lg={false} style={{ flex: 1, borderRadius: 999 }} onPress={() => { markSeatPaid(l.id, sid); toast(`已記錄 ${x?.name} 付款`); }} />
-                  <Btn label="LINE 提醒付款" icon="bell" lg={false} style={{ flex: 1, borderRadius: 999 }} onPress={() => toast(`已用 LINE 提醒 ${x?.name} 付款`)} />
+                  <Btn kind="primary" label="現場收款 QR" icon="qr" lg={false} style={{ flex: 1, borderRadius: 999 }} onPress={() => setCollect(sid)} />
+                  <Btn label="LINE 提醒" icon="bell" lg={false} style={{ flex: 1, borderRadius: 999 }} onPress={() => {
+                    const pid = l.seats.find((z) => z.sid === sid)?.paymentId;
+                    if (pid) remindPayment(pid);
+                    toast(`已用 LINE 提醒 ${x?.name} 付款`, "點開就是付款頁");
+                  }} />
                 </View>
               )}
               {!off && (
@@ -122,6 +128,10 @@ export default function LessonDetail() {
           </>
         )}
       </ScrollView>
+      {collect && (
+        <CollectQRSheet who={students.find((y) => y.id === collect)?.name ?? ""} amount={seatAmount(l.id, collect)} onClose={() => setCollect(null)}
+          onReceived={() => { markSeatPaid(l.id, collect); toast(`已記錄 ${students.find((y) => y.id === collect)?.name} 付款`); setCollect(null); }} />
+      )}
       {noteFor && <NoteSheet sid={noteFor} onSave={(t) => { addNote(noteFor, t); setNoteFor(null); toast("已存到學生紀錄", "下次上課前會看到"); }} onClose={() => setNoteFor(null)} />}
     </View>
   );

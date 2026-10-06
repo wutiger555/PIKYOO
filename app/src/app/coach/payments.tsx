@@ -7,6 +7,7 @@ import type { PaymentRow } from "@pikyoo/core/types";
 import { useSession } from "@/data/session";
 import { Num, Tag } from "@/ui/badges";
 import { Btn } from "@/ui/Btn";
+import { CollectQRSheet } from "@/ui/CollectQR";
 import { Avatar, c, ConsolePage } from "@/ui/console";
 import { Icon } from "@/ui/Icon";
 import { Sheet } from "@/ui/Sheet";
@@ -18,7 +19,8 @@ const PAY_LABEL: Record<PaymentRow["status"], [string, "almost" | "info" | "open
 
 /** 收款對帳 (website: CoachPaymentsScreen): received vs due, filter by state, confirm transfers by last five digits. */
 export default function CoachPayments() {
-  const { payments, markPaid, rejectReport } = useSession();
+  const { payments, markPaid, rejectReport, remindPayment } = useSession();
+  const [collect, setCollect] = useState<PaymentRow | null>(null);
   const [filter, setFilter] = useState<"all" | PaymentRow["status"]>("all");
   const [settings, setSettings] = useState(false);
   const list = payments.filter((p) => filter === "all" || p.status === filter);
@@ -66,16 +68,20 @@ export default function CoachPayments() {
             </View>
           )}
           {p.status === "wait" && (
-            <View style={{ flexDirection: "row", gap: 8 }}>
-              <Btn label="已收到（現場收）" lg={false} style={{ flex: 1, borderRadius: 999 }} onPress={() => { markPaid(p.id); toast("已記錄收款"); }} />
-              <Btn label="LINE 提醒" icon="bell" lg={false} style={{ flex: 1, borderRadius: 999 }} onPress={() => toast(`已用 LINE 提醒 ${p.name} 付款`)} />
-            </View>
+            <>
+              <View style={{ flexDirection: "row", gap: 8 }}>
+                <Btn kind="primary" label="現場收款 QR" icon="qr" lg={false} style={{ flex: 1, borderRadius: 999 }} onPress={() => setCollect(p)} />
+                <Btn label="LINE 提醒" icon="bell" lg={false} style={{ flex: 1, borderRadius: 999 }} onPress={() => { remindPayment(p.id); toast(`已用 LINE 提醒 ${p.name} 付款`, "點開就是付款頁"); }} />
+              </View>
+              <Pressable onPress={() => { markPaid(p.id); toast("已記錄收款"); }} hitSlop={6}><Text style={{ fontSize: 13, fontWeight: "700", textDecorationLine: "underline" }}>已收到（例如現場收現金）</Text></Pressable>
+            </>
           )}
         </View>
       ))}
       {!list.length && <Text style={c.hint}>這個分類沒有款項。</Text>}
       <Text style={c.hint}>錢直接進你自己的帳戶，PIKYOO 幫你把付款資訊給學生、記錄對帳。</Text>
       {settings && <PayoutSheet onClose={() => setSettings(false)} />}
+      {collect && <CollectQRSheet who={collect.name} amount={collect.amount} onClose={() => setCollect(null)} onReceived={() => { markPaid(collect.id); toast(`已記錄 ${collect.name} 付款`); setCollect(null); }} />}
     </ConsolePage>
   );
 }
@@ -100,7 +106,7 @@ function PayoutSheet({ onClose }: { onClose: () => void }) {
         <View style={{ flex: 1 }}><Text style={{ fontSize: 16, fontWeight: "700" }}>收款帳戶</Text><Text style={{ fontSize: 13, color: color.muted }}>學生會用它產生轉帳 QR code</Text></View>
         <Icon name="right" size={14} tint={color.muted} />
       </Pressable>
-      {row("自動提醒未付款", "上課前 24 小時用 LINE 提醒", remind, setRemind)}
+      {row("自動提醒未付款", "上課前一晚 20:00 用 LINE 提醒，附轉帳 QR", remind, setRemind)}
       <Btn kind="primary" label="完成" onPress={onClose} />
     </Sheet>
   );
