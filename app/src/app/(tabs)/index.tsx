@@ -5,10 +5,11 @@ import * as WebBrowser from "expo-web-browser";
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { bookingDays, slotsFor } from "@pikyoo/core/data/coaches";
-import { ME } from "@pikyoo/core/data/games";
+import { shortAreas } from "@pikyoo/core/data/courts";
 import { LEVELS, money } from "@pikyoo/core/format";
 import type { Catalog } from "@pikyoo/core/source/types";
 import type { LessonType } from "@pikyoo/core/types";
+import { bookingTotal } from "@/data/booking";
 import { useCatalog } from "@/data/catalog";
 import { useSession } from "@/data/session";
 import { Num } from "@/ui/badges";
@@ -21,7 +22,6 @@ import { WithCatalog } from "@/ui/Page";
 import { color, radius } from "@/ui/theme";
 
 const TYPES: [LessonType, IconName][] = [["體驗課", "sprout"], ["一對一", "user"], ["小班", "users"], ["團體", "users"]];
-const MY_AREAS = "大安・信義・中山";
 
 /** 首頁 (website: HomeScreen): a visitor gets the PIKYOO landing that asks them to sign up; a signed-in student gets
  *  their own home, courses first (docs memory: course-first), games and courts below. */
@@ -43,7 +43,10 @@ export default function Home() {
 }
 
 function MemberHome({ cat, top }: { cat: Catalog; top: number }) {
-  const { setFilters, booking, coaches } = useSession();
+  const { setFilters, booking, coaches, profile: ME } = useSession();
+  const bc = booking?.slot ? coaches.find((c) => c.id === booking.coachId) : null;
+  const bd = booking && bookingDays().find((d) => d.key === booking.dayKey);
+  const NEXT = { pending: "等教練確認", confirmed: "教練已確認，記得付款", reported: "已回報付款，等教練對帳", paid: "已付款，準備上課" } as const;
   const fit = coaches.filter((c) => ME.level >= c.levelMin && ME.level <= c.levelMax);
   const rail = [...fit, ...coaches.filter((c) => !fit.includes(c))];
   // the soonest open sessions across coaches whose level range fits me
@@ -54,7 +57,7 @@ function MemberHome({ cat, top }: { cat: Catalog; top: number }) {
       <View style={[s.hero, { paddingTop: top + 12 }]}>
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
           <PkMark />
-          <View style={s.loc}><Icon name="pin" size={13} tint="#fff" /><Text style={{ color: "#fff", fontSize: 13, fontWeight: "600" }}>{MY_AREAS}</Text></View>
+          <Pressable onPress={() => router.push("/me/profile")} accessibilityLabel="修改常打的區域" style={s.loc}><Icon name="pin" size={13} tint="#fff" /><Text style={{ color: "#fff", fontSize: 13, fontWeight: "600" }}>{shortAreas(ME.areas)}</Text><Icon name="down" size={11} tint="#fff" /></Pressable>
         </View>
         <Text style={{ color: "#fff", fontSize: 30, fontWeight: "800", marginTop: 24 }}>嗨，{ME.name}</Text>
         <View style={{ flexDirection: "row", alignItems: "center", marginTop: 4 }}><Text style={{ color: color.onCarbonMuted, fontSize: 15 }}>你是 </Text><Num style={s.hl}>{LEVELS[ME.level]}</Num><Text style={{ color: color.onCarbonMuted, fontSize: 15 }}>，想上什麼課？</Text></View>
@@ -68,11 +71,15 @@ function MemberHome({ cat, top }: { cat: Catalog; top: number }) {
       </View>
 
       <View style={{ padding: 16, gap: 24 }}>
-        {booking?.slot && (
+        {booking?.slot && bc && (
           <Link href="/me/booking" asChild>
             <Pressable style={s.next}>
-              <Icon name="cal" size={22} />
-              <View style={{ flex: 1 }}><Text style={{ fontSize: 16, fontWeight: "800" }}>你的下一堂課</Text><Text style={{ fontSize: 13, color: color.muted }}>點進去看進度</Text></View>
+              <View style={{ width: 56 }}><Num style={{ fontSize: 20 }}>{bd?.date}</Num><Num style={{ fontSize: 16, color: color.muted }}>{booking.slot}</Num></View>
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text style={{ fontSize: 12, color: color.muted, fontWeight: "700" }}>你的下一堂課</Text>
+                <Text style={{ fontSize: 16, fontWeight: "800" }} numberOfLines={1}>{bookingTotal(booking, bc.profile).plan.name}・{bc.name}</Text>
+                <Text style={{ fontSize: 13, color: booking.status === "confirmed" ? color.warning : color.n700, fontWeight: "700" }}>{NEXT[booking.status]}</Text>
+              </View>
               <Icon name="right" size={16} tint={color.muted} />
             </Pressable>
           </Link>

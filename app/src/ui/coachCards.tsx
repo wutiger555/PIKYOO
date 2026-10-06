@@ -10,6 +10,7 @@ import { Avatar, c } from "./console";
 import { Icon } from "./Icon";
 import { Status } from "./Status";
 import { color } from "./theme";
+import { toast } from "./Toast";
 
 // The coach's inbox cards (website: RequestCard, AnswerCard), used on 待處理 and the calendar.
 
@@ -33,7 +34,7 @@ export function RequestCard({ r }: { r: BookingRequest }) {
         <>
           <View style={{ flexDirection: "row", gap: 8 }}>
             <Btn label="婉拒" lg={false} style={{ flex: 1, borderRadius: 999 }} onPress={() => Alert.alert(`婉拒 ${r.name} 的預約？`, "會通知學生並推薦其他時段", [{ text: "先不要", style: "cancel" }, { text: "婉拒", style: "destructive", onPress: () => decide(r.id, false) }])} />
-            <Btn kind="primary" label="確認預約" lg={false} style={{ flex: 2, borderRadius: 999 }} onPress={() => { decide(r.id, true); Alert.alert("已確認", `已用 LINE 傳 ${r.pay} 付款資訊給 ${r.name}`); }} />
+            <Btn kind="primary" label="確認預約" lg={false} style={{ flex: 2, borderRadius: 999 }} onPress={() => { decide(r.id, true); toast("已確認預約", `已用 LINE 傳${r.pay}付款資訊給 ${r.name}`); }} />
           </View>
           <Text style={c.hint}>{r.expiresIn}內未處理會自動取消</Text>
         </>
@@ -61,7 +62,7 @@ export function AnswerCard({ q }: { q: Question }) {
       <TextInput value={text} onChangeText={setText} multiline placeholder="回覆會公開在你的教練頁" placeholderTextColor={color.n500} style={[c.input, { minHeight: 80, textAlignVertical: "top" }, !!hit && { borderColor: "#B3261E" }]} />
       {hit && <Text style={{ color: "#B3261E", fontSize: 13 }}>{contactHint(hit)}</Text>}
       <Btn kind="primary" label="公開回覆" lg={false} disabled={text.trim().length < 2 || !!hit} style={{ alignSelf: "flex-end", borderRadius: 999 }}
-        onPress={() => { answer(q.id, text.trim()); Alert.alert("已回覆", `會公開在你的教練頁並通知 ${q.name}`); }} />
+        onPress={() => { answer(q.id, text.trim()); toast("已回覆", `會公開在你的教練頁並通知 ${q.name}`); }} />
     </View>
   );
 }

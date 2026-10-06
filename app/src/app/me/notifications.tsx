@@ -1,15 +1,18 @@
 import { router } from "expo-router";
+import { useEffect } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { demoNotices } from "@pikyoo/core/data/notifications";
+import { useSession } from "@/data/session";
 import { Icon } from "@/ui/Icon";
 import { color, radius } from "@/ui/theme";
 
 /** Website links to the app's routes: 我的課 is a tab here; query strings are the website's demo switches. */
 const appPath = (href: string) => href.replace(/\?.*$/, "").replace(/^\/me\/lessons$/, "/lessons");
 
-/** 通知 (website: NotificationsScreen): newest first; live notifications come with sign-in (they already reach LINE). */
+/** 通知 (website: NotificationsScreen): newest first, unread in bold until you leave the page; the demo booking's steps
+ *  arrive here as they happen. Live notifications come with sign-in (they already reach LINE). */
 export default function Notifications() {
-  const list = demoNotices();
+  const { notices: list, readNotices } = useSession();
+  useEffect(() => () => readNotices(), []); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <ScrollView contentContainerStyle={{ padding: 16 }}>
       <View style={s.card}>

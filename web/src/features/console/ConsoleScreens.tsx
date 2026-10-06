@@ -311,7 +311,7 @@ export function CoachPaymentsScreen() {
               <tr key={p.id}>
                 <td><div className="con-who"><span className="avatar">{p.initial}</span><b>{p.name}</b></div></td>
                 <td>{p.what}</td>
-                <td><span className="tag tag-neutral">{p.via}</span>{p.status === "reported" && <small>末五碼 <b className="num">{p.ref}</b></small>}</td>
+                <td><span className="tag tag-neutral">{p.via}</span>{p.status === "reported" && p.ref && <small>末五碼 <b className="num">{p.ref}</b></small>}</td>
                 <td><Status tone={PAY_LABEL[p.status][1]}>{PAY_LABEL[p.status][0]}</Status><small>{p.status === "paid" ? `${p.at} 入帳` : p.at}</small></td>
                 <td className="r num con-amt">{money(p.amount)}</td>
                 <td>
@@ -350,7 +350,7 @@ export function CoachPaymentsScreen() {
               <div className="payrow-m">
                 <span className="tag tag-neutral">{p.via}</span>
                 {p.status === "reported" ? (
-                  <span>末五碼 <b className="num">{p.ref}</b>・{p.at}</span>
+                  <span>{p.ref ? <>末五碼 <b className="num">{p.ref}</b>・</> : null}{p.at}</span>
                 ) : p.status === "paid" ? (
                   <span>{p.at} 入帳</span>
                 ) : (

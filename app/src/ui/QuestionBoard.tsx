@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { contactHint, findContact } from "@pikyoo/core/contact";
 import { QUESTION_STARTERS } from "@pikyoo/core/data/questions";
 import type { Coach, Question } from "@pikyoo/core/types";
@@ -10,6 +10,7 @@ import { Btn } from "./Btn";
 import { Icon } from "./Icon";
 import { Sheet } from "./Sheet";
 import { color, radius } from "./theme";
+import { toast } from "./Toast";
 
 const SHOWN = 3;
 
@@ -58,9 +59,9 @@ export function AskSheet({ coach: c, onClose }: { coach: Coach; onClose: () => v
   const hit = findContact(text);
   const ok = text.trim().length >= 4 && !hit;
   const send = () => {
-    if (isLive) return Alert.alert("App 登入即將推出", "現在可以先在網站登入後發問。");
+    if (isLive) return toast("App 登入即將推出", "現在可以先在網站登入後發問");
     ask(c.id, text.trim());
-    Alert.alert(`已送出，${c.name} 回覆後會通知你`);
+    toast("已送出提問", `${c.name} 回覆後會通知你`);
     onClose();
   };
   return (

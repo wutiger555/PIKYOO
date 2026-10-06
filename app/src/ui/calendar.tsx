@@ -2,6 +2,7 @@ import { router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { demoDay } from "@pikyoo/core/data/today";
 import type { CoachLesson, LessonKind, TimeBlock } from "@pikyoo/core/data/schedule";
+import { nowHHMM } from "@/data/phone";
 import { useSession } from "@/data/session";
 import { Num } from "./badges";
 import { Icon } from "./Icon";
@@ -45,10 +46,13 @@ export function WeekStrip({ monday, selected, onSelect, counts }: { monday: numb
 
 /** One day: lessons in time order with pending requests (dashed) and blocked time (grey) in between. */
 export function DayAgenda({ offset, compact }: { offset: number; compact?: boolean }) {
-  const { lessons, pendingSlots, blocks, students, seatPay } = useSession();
+  const { lessons, pendingSlots, blocks, students, seatPay, attendance } = useSession();
+  const now = nowHHMM();
+  /** finished today or yesterday, but someone has no roll call yet: the coach's after-class to-do */
+  const todo = (l: CoachLesson) => l.status === "confirmed" && (l.offset === -1 || (l.offset === 0 && l.end <= now)) && l.seats.some((x) => !attendance[`${l.id}:${x.sid}`]);
   type Item = { at: string; el: React.ReactNode };
   const items: Item[] = [
-    ...lessons.filter((l) => l.offset === offset).map((l) => ({ at: l.start, el: <LessonCard key={l.id} l={l} compact={compact} names={l.seats.map((x) => students.find((y) => y.id === x.sid)?.name ?? "").join("、")} unpaid={l.seats.filter((x) => seatPay(l.id, x.sid) !== "paid").length} /> })),
+    ...lessons.filter((l) => l.offset === offset).map((l) => ({ at: l.start, el: <LessonCard key={l.id} l={l} compact={compact} names={l.seats.map((x) => students.find((y) => y.id === x.sid)?.name ?? "").join("、")} unpaid={l.seats.filter((x) => seatPay(l.id, x.sid) !== "paid").length} todo={todo(l)} /> })),
     ...pendingSlots.filter((p) => p.offset === offset).map((p) => ({ at: p.start, el: (
       <Pressable key={p.id} onPress={() => router.push("/coach-inbox")} style={[s.card, s.pending]}>
         <Num style={s.time}>{p.start}</Num>
@@ -62,7 +66,7 @@ export function DayAgenda({ offset, compact }: { offset: number; compact?: boole
   return <View style={{ gap: 8 }}>{items.map((x) => x.el)}</View>;
 }
 
-function LessonCard({ l, names, unpaid, compact }: { l: CoachLesson; names: string; unpaid: number; compact?: boolean }) {
+function LessonCard({ l, names, unpaid, compact, todo }: { l: CoachLesson; names: string; unpaid: number; compact?: boolean; todo?: boolean }) {
   const k = KIND[l.kind];
   const off = l.status === "cancelled";
   return (
@@ -73,6 +77,7 @@ function LessonCard({ l, names, unpaid, compact }: { l: CoachLesson; names: stri
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
           <Text style={{ fontWeight: "800", fontSize: 15 }} numberOfLines={1}>{l.plan}</Text>
           {off && <Text style={[s.badge, { backgroundColor: color.n100, color: color.n700 }]}>已取消</Text>}
+          {todo && <Text style={[s.badge, { backgroundColor: color.text, color: color.accent }]}>待點名</Text>}
           {!off && unpaid > 0 && <Text style={[s.badge, { backgroundColor: color.warningBg, color: color.warning }]}>{unpaid} 人未付</Text>}
         </View>
         <Text style={s.sub} numberOfLines={1}>{names}</Text>

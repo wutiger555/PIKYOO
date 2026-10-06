@@ -1,8 +1,7 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
-import { Alert, Linking, Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
+import { Linking, Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ME } from "@pikyoo/core/data/games";
 import { LEVELS, levelText } from "@pikyoo/core/format";
 import type { Game } from "@pikyoo/core/types";
 import { isLive, useCatalog } from "@/data/catalog";
@@ -15,6 +14,7 @@ import { Page, WithCatalog } from "@/ui/Page";
 import { Sheet } from "@/ui/Sheet";
 import { GameTicket, Seats } from "@/ui/Ticket";
 import { color, radius } from "@/ui/theme";
+import { toast } from "@/ui/Toast";
 
 /** F2 球局詳情 (website: GameDetailScreen): big ticket, seats, fee / cancel / level, location, host, roster, sticky CTA
  *  (join / waitlist / cancel). Hosting tools stay on the website (docs/APP.md §4). */
@@ -27,7 +27,7 @@ export default function GamePage() {
 
 function GameDetail({ g }: { g: Game }) {
   const insets = useSafeAreaInsets();
-  const { signedIn, join, leave } = useSession();
+  const { signedIn, join, leave, profile: ME } = useSession();
   const { my, count, spots, waitN } = useGameView(g);
   const [sheet, setSheet] = useState<"confirm" | "cancel" | "login" | null>(null);
   const cancelHours = g.cancelHours ?? 12;
@@ -113,7 +113,7 @@ function GameDetail({ g }: { g: Game }) {
           <Text style={{ fontSize: 14, color: color.muted, lineHeight: 21 }}>
             {spots <= 0 ? `你會是第 ${g.waitlist + 1} 位候補。有人取消時自動遞補，並用 LINE 通知你。` : `開始前 ${cancelHours} 小時可免責取消，之後取消會記一次晚取消。`}
           </Text>
-          <Btn kind="primary" label={spots <= 0 ? "確認候補" : "確認報名"} onPress={() => { join(g.id, spots <= 0); setSheet(null); Alert.alert(spots <= 0 ? "已加入候補" : "報名成功！", spots <= 0 ? "有人取消會自動遞補" : `${g.dayLabel} ${g.startsAt} 見`); }} />
+          <Btn kind="primary" label={spots <= 0 ? "確認候補" : "確認報名"} onPress={() => { join(g.id, spots <= 0); setSheet(null); toast(spots <= 0 ? "已加入候補" : "報名成功！", spots <= 0 ? "有人取消會自動遞補" : `${g.dayLabel} ${g.startsAt} 見`); }} />
         </Sheet>
       )}
       {sheet === "cancel" && (
@@ -122,7 +122,7 @@ function GameDetail({ g }: { g: Game }) {
           <Text style={{ fontSize: 14, color: color.muted, lineHeight: 21 }}>
             {my === "wait" ? "取消後會失去目前的候補順位，之後再候補要重新排。" : `位子會讓給候補的人。開始前 ${cancelHours} 小時內取消會記一次晚取消，團主看得到。`}
           </Text>
-          <Btn label={my === "wait" ? "確定取消候補" : "確定取消報名"} onPress={() => { leave(g.id); setSheet(null); Alert.alert(my === "wait" ? "已取消候補" : "已取消報名", my === "wait" ? undefined : "位子會釋出給候補的人"); }} />
+          <Btn label={my === "wait" ? "確定取消候補" : "確定取消報名"} onPress={() => { leave(g.id); setSheet(null); toast(my === "wait" ? "已取消候補" : "已取消報名", my === "wait" ? undefined : "位子會釋出給候補的人"); }} />
           <Btn kind="ghost" label={my === "wait" ? "繼續候補" : "保留報名"} onPress={() => setSheet(null)} />
         </Sheet>
       )}

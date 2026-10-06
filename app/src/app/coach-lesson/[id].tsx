@@ -14,6 +14,7 @@ import { Icon } from "@/ui/Icon";
 import { Sheet } from "@/ui/Sheet";
 import { Status } from "@/ui/Status";
 import { color, radius } from "@/ui/theme";
+import { toast } from "@/ui/Toast";
 
 const ATT: [Attendance, string][] = [["present", "到"], ["late", "遲到"], ["absent", "未到"]];
 
@@ -31,6 +32,15 @@ export default function LessonDetail() {
   const past = l.offset < 0 || (l.offset === 0 && l.end <= nowHHMM());
   const off = l.status === "cancelled";
   const maps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(l.venue)}`;
+  // before class the prep note comes first; after class roll call and notes do, and the prep note moves below
+  const prep = (
+    <View style={c.card}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}><Icon name="msg" size={15} tint={color.olive} /><Text style={{ fontWeight: "800", fontSize: 16 }}>課前備註</Text><Text style={c.hint}>只有你看得到</Text></View>
+      <TextInput value={l.prep} onChangeText={(prep) => setLesson(l.id, { prep })} multiline placeholder="例：帶練習球 20 顆、這堂要錄影、場地 3 號場" placeholderTextColor={color.n500}
+        style={[c.input, { minHeight: 70, textAlignVertical: "top" }]} />
+      <Text style={c.hint}>上課前的提醒通知會帶上這段備註。</Text>
+    </View>
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: color.bg }}>
@@ -46,19 +56,18 @@ export default function LessonDetail() {
           <Text style={{ color: color.onCarbonMuted, fontSize: 14 }}>{[l.venue, l.court].filter(Boolean).join("・")}</Text>
           {off && <View style={{ marginTop: 6 }}><Status tone="ended">已取消，已通知學生</Status></View>}
           {l.notice && <Text style={{ color: color.accent, fontSize: 14, marginTop: 4 }}>已通知學生：{l.notice}</Text>}
-          <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
-            <Btn kind="onCarbon" lg={false} icon="cal" label="加入手機行事曆" style={{ flex: 1, borderRadius: 999 }}
-              onPress={async () => { if (await addLessonToCalendar(l, names)) Alert.alert("已加入手機行事曆"); }} />
-            <Btn kind="onCarbon" lg={false} icon="pin" label="導航" style={{ borderRadius: 999 }} onPress={() => Linking.openURL(maps)} />
-          </View>
+          {past ? (
+            !off && <Text style={{ color: color.accent, fontSize: 14, marginTop: 6, lineHeight: 20 }}>這堂課上完了：點名、確認收款，再幫每位學生寫幾句課後筆記，下次上課前就看得到。</Text>
+          ) : (
+            <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
+              <Btn kind="onCarbon" lg={false} icon="cal" label="加入手機行事曆" style={{ flex: 1, borderRadius: 999 }}
+                onPress={async () => { if (await addLessonToCalendar(l, names)) toast("已加入手機行事曆"); }} />
+              <Btn kind="onCarbon" lg={false} icon="pin" label="導航" style={{ borderRadius: 999 }} onPress={() => Linking.openURL(maps)} />
+            </View>
+          )}
         </View>
 
-        <View style={c.card}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}><Icon name="msg" size={15} tint={color.olive} /><Text style={{ fontWeight: "800", fontSize: 16 }}>課前備註</Text><Text style={c.hint}>只有你看得到</Text></View>
-          <TextInput value={l.prep} onChangeText={(prep) => setLesson(l.id, { prep })} multiline placeholder="例：帶練習球 20 顆、這堂要錄影、場地 3 號場" placeholderTextColor={color.n500}
-            style={[c.input, { minHeight: 70, textAlignVertical: "top" }]} />
-          <Text style={c.hint}>上課前的提醒通知會帶上這段備註。</Text>
-        </View>
+        {!past && prep}
 
         <SecHead en="Roster" title={past ? "點名與付款" : "學生與付款"} right={<Text style={c.hint}>點名字看學生紀錄</Text>} />
         {seats.map(({ sid, st: x }) => {
@@ -70,15 +79,15 @@ export default function LessonDetail() {
                 <Avatar t={x?.initial ?? "?"} />
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 16, fontWeight: "800" }}>{x?.name}</Text>
-                  <Text style={c.hint}>{x?.level}・{x?.times ? `上過 ${x.times} 堂` : "第一次上課"}{x?.pack ? `・套票 ${x.pack.used}/${x.pack.total}` : ""}</Text>
+                  <Text style={c.hint}>{x?.level}・{x?.times ? `上過 ${x.times} 堂` : "第一次上課"}{x?.pack ? `・套票剩 ${x.pack.total - x.pack.used} 堂` : ""}</Text>
                 </View>
                 <Status tone={pay === "paid" ? "open" : pay === "reported" ? "info" : "almost"}>{pay === "paid" ? "已付款" : pay === "reported" ? "已回報" : "未付款"}</Status>
               </Pressable>
               {x?.notes[0] && <Text style={st.lastNote} numberOfLines={2}>上次：{x.notes[0].text}</Text>}
               {pay !== "paid" && !off && (
                 <View style={{ flexDirection: "row", gap: 8 }}>
-                  <Btn label="已收到" lg={false} style={{ flex: 1, borderRadius: 999 }} onPress={() => markSeatPaid(l.id, sid)} />
-                  <Btn label="LINE 提醒付款" icon="bell" lg={false} style={{ flex: 1, borderRadius: 999 }} onPress={() => Alert.alert(`已用 LINE 傳付款提醒給 ${x?.name}`)} />
+                  <Btn label="已收到" lg={false} style={{ flex: 1, borderRadius: 999 }} onPress={() => { markSeatPaid(l.id, sid); toast(`已記錄 ${x?.name} 付款`); }} />
+                  <Btn label="LINE 提醒付款" icon="bell" lg={false} style={{ flex: 1, borderRadius: 999 }} onPress={() => toast(`已用 LINE 提醒 ${x?.name} 付款`)} />
                 </View>
               )}
               {!off && (
@@ -87,6 +96,7 @@ export default function LessonDetail() {
                   <View style={{ flex: 1 }}><Segmented value={a ?? ("" as Attendance)} options={ATT.map((z) => z[0])} format={(v) => ATT.find((z) => z[0] === v)![1]} tint={(v) => (v === "present" ? color.accent : v === "late" ? color.warningBg : color.n200)} onChange={(v) => setAttendance(l.id, sid, v)} /></View>
                 </View>
               )}
+              {!off && x?.pack && <Text style={c.hint}>{a === "present" || a === "late" ? `已扣 1 堂套票（${x.pack.used}/${x.pack.total}）` : "點「到」或「遲到」會自動扣 1 堂套票。"}</Text>}
               <Pressable onPress={() => setNoteFor(sid)} style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                 <Icon name="plus" size={13} tint={color.olive} /><Text style={{ fontSize: 14, fontWeight: "700", color: color.olive }}>寫課後筆記</Text>
               </Pressable>
@@ -94,23 +104,25 @@ export default function LessonDetail() {
           );
         })}
 
+        {past && prep}
+
         {!off && !past && (
           <>
             <SecHead en="Changes" title="臨時狀況" />
             <View style={{ flexDirection: "row", gap: 8 }}>
               <Btn label="下雨改室內" lg={false} style={{ flex: 1, borderRadius: 999 }} onPress={() => Alert.alert("通知學生改到室內？", `會用 LINE 通知 ${names}`, [
                 { text: "先不要", style: "cancel" },
-                { text: "通知", onPress: () => { setLesson(l.id, { notice: "下雨改到室內場，時間不變" }); Alert.alert(`已通知 ${seats.length} 位學生`); } },
+                { text: "通知", onPress: () => { setLesson(l.id, { notice: "下雨改到室內場，時間不變" }); toast(`已通知 ${seats.length} 位學生`, "改到室內場，時間不變"); } },
               ])} />
               <Btn label="取消這堂課" lg={false} style={{ flex: 1, borderRadius: 999 }} onPress={() => Alert.alert("取消這堂課？", `會通知 ${names}，已付款的學生之後退款或改期。`, [
                 { text: "先不要", style: "cancel" },
-                { text: "取消並通知", style: "destructive", onPress: () => setLesson(l.id, { status: "cancelled" }) },
+                { text: "取消並通知", style: "destructive", onPress: () => { setLesson(l.id, { status: "cancelled" }); toast("已取消這堂課", `已通知 ${names}`); } },
               ])} />
             </View>
           </>
         )}
       </ScrollView>
-      {noteFor && <NoteSheet sid={noteFor} onSave={(t) => { addNote(noteFor, t); setNoteFor(null); Alert.alert("已存到學生紀錄"); }} onClose={() => setNoteFor(null)} />}
+      {noteFor && <NoteSheet sid={noteFor} onSave={(t) => { addNote(noteFor, t); setNoteFor(null); toast("已存到學生紀錄", "下次上課前會看到"); }} onClose={() => setNoteFor(null)} />}
     </View>
   );
 }
