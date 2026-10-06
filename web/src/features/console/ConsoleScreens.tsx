@@ -262,13 +262,26 @@ export function CoachPaymentsScreen() {
     toast(`已用 LINE 提醒 ${p.name}，點開就是付款頁`);
   };
   // real sign-in: mark_payment_paid first (also for cash taken on the day); the row updates only if it went through
-  const received = async (p: PaymentRow) => {
+  const received = async (p: PaymentRow, quiet?: boolean) => {
     if (realAuth) {
       const r = await markPaidAction(p.id);
-      if (r.error) return toast(r.error);
+      if (r.error) { toast(`${p.name}：${r.error}`); return false; }
     }
     markPaid(p.id);
-    toast(realAuth ? `已確認收到 ${p.name} 的款項` : "已確認收款，學生會收到通知");
+    if (!quiet) toast(realAuth ? `已確認收到 ${p.name} 的款項` : "已確認收款，學生會收到通知");
+    if (realAuth && !quiet) router.refresh();
+    return true;
+  };
+  // 一次確認多筆: tick the reports that match the bank app, then confirm them together
+  const [picked, setPicked] = useState<string[]>([]);
+  const togglePick = (id: string) => setPicked((xs) => (xs.includes(id) ? xs.filter((x) => x !== id) : [...xs, id]));
+  const reported = payments.filter((p) => p.status === "reported");
+  const pickedRows = reported.filter((p) => picked.includes(p.id));
+  const confirmPicked = async () => {
+    let ok = 0;
+    for (const p of pickedRows) if (await received(p, true)) ok++;
+    setPicked([]);
+    toast(`已確認收到 ${ok} 筆，學生都會收到通知`);
     if (realAuth) router.refresh();
   };
   // 還沒收到: real sign-in sends the report back to 待付款 (reject_payment_report) and tells the student
@@ -317,14 +330,31 @@ export function CoachPaymentsScreen() {
             ))}
           </div>
         </div>
+        {reported.length > 1 && (
+          <div className="pad pay-batch">
+            {pickedRows.length ? (
+              <>
+                <span>已選 <b className="num">{pickedRows.length}</b> 筆・<b className="num">{money(pickedRows.reduce((a, p) => a + p.amount, 0))}</b></span>
+                <button className="linkbtn" onClick={() => setPicked([])}>取消</button>
+                <button className="btn btn-primary" onClick={confirmPicked}>確認收到 {pickedRows.length} 筆</button>
+              </>
+            ) : (
+              <>
+                <span className="text-muted">{reported.length} 筆學生已回報，對過銀行入帳後可以一次確認</span>
+                <button className="btn btn-secondary" onClick={() => setPicked(reported.map((p) => p.id))}>全選已回報</button>
+              </>
+            )}
+          </div>
+        )}
         <table className="con-table dk-only">
-          <thead><tr><th>學生</th><th>項目</th><th>方式</th><th>狀態</th><th className="r">金額</th><th>處理</th></tr></thead>
+          <thead><tr><th aria-label="選取" /><th>學生</th><th>項目</th><th>方式</th><th>狀態</th><th className="r">金額</th><th>處理</th></tr></thead>
           <tbody>
             {list.map((p) => (
               <tr key={p.id}>
+                <td>{p.status === "reported" && <input type="checkbox" className="pay-pick" aria-label={`選取 ${p.name}`} checked={picked.includes(p.id)} onChange={() => togglePick(p.id)} />}</td>
                 <td><div className="con-who"><span className="avatar">{p.initial}</span><b>{p.name}</b></div></td>
                 <td>{p.what}</td>
-                <td><span className="tag tag-neutral">{p.via}</span>{p.status === "reported" && p.ref && <small>末五碼 <b className="num">{p.ref}</b></small>}</td>
+                <td><span className="tag tag-neutral">{p.via}</span>{p.status === "reported" && p.ref && <small>末五碼 <b className="num">{p.ref}</b></small>}{p.status === "reported" && p.proof && <ProofThumb src={p.proof} name={p.name} />}</td>
                 <td><Status tone={PAY_LABEL[p.status][1]}>{PAY_LABEL[p.status][0]}</Status><small>{p.status === "paid" ? `${p.at} 入帳` : p.at}</small></td>
                 <td className="r num con-amt">{money(p.amount)}</td>
                 <td>
@@ -350,6 +380,7 @@ export function CoachPaymentsScreen() {
           {list.map((p) => (
             <article key={p.id} className="payrow">
               <div className="payrow-top">
+                {p.status === "reported" && <input type="checkbox" className="pay-pick" aria-label={`選取 ${p.name}`} checked={picked.includes(p.id)} onChange={() => togglePick(p.id)} />}
                 <span className="avatar">{p.initial}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <b>{p.name}</b>
@@ -370,6 +401,7 @@ export function CoachPaymentsScreen() {
                   <span>{p.at}</span>
                 )}
               </div>
+              {p.status === "reported" && p.proof && <ProofThumb src={p.proof} name={p.name} />}
               {p.status === "reported" && (
                 <div className="btnrow btnrow-tight">
                   <button className="btn btn-secondary" onClick={() => notReceived(p)}>還沒收到</button>
@@ -496,5 +528,16 @@ function PayoutDetailsSheet({ onClose }: { onClose: () => void }) {
       <p className="fine" style={{ margin: "8px 0 0" }}>學生付款頁會用這個帳號產生轉帳 QR code，用銀行 App 一掃就帶入帳號和金額，錢直接進你的帳戶。</p>
       <button className="btn btn-primary btn-lg btn-block" style={{ marginTop: 12 }} disabled={busy} onClick={save}>{busy ? "儲存中…" : "儲存"}</button>
     </Sheet>
+  );
+}
+
+/** 對帳截圖: a small preview; tapping opens the full screenshot in a new tab (signed link, expires in an hour). */
+function ProofThumb({ src, name }: { src: string; name: string }) {
+  return (
+    <a className="proof-thumb" href={src} target="_blank" rel="noopener noreferrer" aria-label={`看 ${name} 的轉帳截圖`}>
+      {/* eslint-disable-next-line @next/next/no-img-element -- signed storage link, not an optimisable asset */}
+      <img src={src} alt="" />
+      <span>轉帳截圖</span>
+    </a>
   );
 }

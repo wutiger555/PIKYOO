@@ -54,8 +54,8 @@ interface Session {
   leave: (gameId: string) => void;
   // booking round trip (student side)
   submitBooking: (b: Booking) => void;
-  /** 我已轉帳 with the last five digits, or "" for LINE Pay */
-  reportPayment: (ref: string) => void;
+  /** 我已轉帳 with the last five digits ("" for LINE Pay or a screenshot only), and the 對帳截圖's local uri if attached */
+  reportPayment: (ref: string, proof?: string | null) => void;
   /** the demo buttons on 我的預約 standing in for the coach */
   setBookingStatus: (st: BookingStatus) => void;
   /** the student cancels: the request, lesson and payment row go from Mia's side too */
@@ -220,9 +220,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       setRequests((rs) => [req, ...rs.filter((x) => x.id !== MINE)]);
     },
     // LINE Pay goes to the coach's own link (PLAN D9), so it is reported like a transfer and the coach confirms it
-    reportPayment: (ref) => {
+    reportPayment: (ref, proof) => {
       patchBooking("reported");
-      patchPayment("n" + MINE, { status: "reported", ref: ref || undefined, at: ref ? "剛剛回報" : "剛剛回報（LINE Pay）" });
+      patchPayment("n" + MINE, { status: "reported", ref: ref || undefined, proof: proof || undefined, at: ref || proof ? "剛剛回報" : "剛剛回報（LINE Pay）" });
     },
     setBookingStatus: (st) => {
       patchBooking(st);
@@ -261,7 +261,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     },
     payments,
     markPaid: (id) => { patchPayment(id, { status: "paid", at: "剛剛" }); if (id === "n" + MINE) patchBooking("paid"); },
-    rejectReport: (id) => { patchPayment(id, { status: "wait", ref: undefined, at: "等學生重新確認" }); if (id === "n" + MINE) { setBooking((b) => (b ? { ...b, status: "confirmed" } : b)); notify("教練還沒收到你的款項", "請再確認一次付款", "/me/booking"); } },
+    rejectReport: (id) => { patchPayment(id, { status: "wait", ref: undefined, proof: undefined, at: "等學生重新確認" }); if (id === "n" + MINE) { setBooking((b) => (b ? { ...b, status: "confirmed" } : b)); notify("教練還沒收到你的款項", "請再確認一次付款", "/me/booking"); } },
     remindPayment: (id) => {
       const p = payments.find((x) => x.id === id);
       if (id === "n" + MINE && p) notify(`教練提醒你付款 ${p.amount} 元`, p.via === "銀行轉帳" ? "點開掃 QR 轉帳，付好按一下通知教練" : "點開付款，付好按一下通知教練", "/me/booking");

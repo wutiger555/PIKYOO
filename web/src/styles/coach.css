@@ -241,3 +241,13 @@
 @media not (pointer: coarse) { .touch-only { display: none !important; } }
 /* 現場收款 QR (CollectQRSheet): big enough to scan from across the net post */
 .collect-qr { display: block; width: min(280px, 78vw); height: auto; margin: 0 auto 8px; border: 1px solid var(--color-line); border-radius: var(--radius-md); padding: 8px; background: #fff; }
+/* 對帳截圖 and 一次確認多筆 (收款) */
+.proof-add { cursor: pointer; }
+.proof-pick { display: flex; align-items: flex-end; gap: 12px; }
+.proof-pick img { width: 96px; height: 150px; object-fit: cover; border-radius: var(--radius-md); border: 1px solid var(--color-line); }
+.proof-thumb { display: inline-flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 13px; font-weight: 700; color: var(--color-text); text-decoration: underline; text-decoration-color: var(--color-accent-700); }
+.proof-thumb img { width: 40px; height: 64px; object-fit: cover; border-radius: 6px; border: 1px solid var(--color-line); }
+.con-table .proof-thumb { display: flex; margin-top: 6px; }
+.pay-pick { width: 22px; height: 22px; accent-color: var(--color-text); flex: none; }
+.pay-batch { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding-top: 12px; font-size: 14px; }
+.pay-batch > span { flex: 1; min-width: 180px; }
