@@ -62,10 +62,17 @@ export const reportPayment = async (sb: Sb, paymentId: string, last5: string) =>
   if (r.error) throw explain(r.error.message);
 };
 
-export async function readPayout(sb: Sb, coachId: string): Promise<PayoutDetails> {
-  const r = await sb.from("coach_pay_details").select("details").eq("coach_id", coachId).maybeSingle();
+/** The coach's payout details and the 自動提醒未付款 switch (on when never set). */
+export async function readPayout(sb: Sb, coachId: string): Promise<{ payout: PayoutDetails; remindUnpaid: boolean }> {
+  const r = await sb.from("coach_pay_details").select("details, remind_unpaid").eq("coach_id", coachId).maybeSingle();
   if (r.error) throw explain(r.error.message);
-  return (r.data?.details ?? {}) as PayoutDetails;
+  return { payout: (r.data?.details ?? {}) as PayoutDetails, remindUnpaid: r.data?.remind_unpaid ?? true };
+}
+
+/** 自動提醒未付款: whether the 20:00 reminder tells unpaid students 還沒付款 (remind_tomorrow reads it). */
+export async function setRemindUnpaid(sb: Sb, coachId: string, on: boolean): Promise<void> {
+  const r = await sb.from("coach_pay_details").upsert({ coach_id: coachId, remind_unpaid: on, updated_at: new Date().toISOString() });
+  if (r.error) throw explain(r.error.message);
 }
 
 export async function savePayout(sb: Sb, coachId: string, d: PayoutDetails): Promise<void> {

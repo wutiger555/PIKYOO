@@ -1,12 +1,13 @@
 import { router } from "expo-router";
 import { useState } from "react";
-import { Pressable, Switch, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { PAYOUT_METHODS, RECEIVED_BEFORE } from "@pikyoo/core/data/coaches";
 import { money } from "@pikyoo/core/format";
 import type { PaymentRow } from "@pikyoo/core/types";
 import { useSession } from "@/data/session";
 import { Num, Tag } from "@/ui/badges";
 import { Btn } from "@/ui/Btn";
+import { SwitchRow } from "@/ui/form";
 import { CollectQRSheet } from "@/ui/CollectQR";
 import { Avatar, c, ConsolePage } from "@/ui/console";
 import { Icon } from "@/ui/Icon";
@@ -89,14 +90,9 @@ export default function CoachPayments() {
 /** 收款設定 (website: PayoutSettingsSheet): each method on / off, an automatic reminder before class. */
 function PayoutSheet({ onClose }: { onClose: () => void }) {
   const [on, setOn] = useState(() => Object.fromEntries(PAYOUT_METHODS.map((m) => [m.name, m.on])));
-  const [remind, setRemind] = useState(true);
-  const { payout } = useSession();
-  const row = (title: string, sub: string, value: boolean, set: (v: boolean) => void) => (
-    <View key={title} style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: color.n100 }}>
-      <View style={{ flex: 1 }}><Text style={{ fontSize: 16, fontWeight: "700" }}>{title}</Text><Text style={{ fontSize: 13, color: color.muted }}>{sub}</Text></View>
-      <Switch value={value} onValueChange={set} trackColor={{ true: color.accent700 }} />
-    </View>
-  );
+  const { payout, remindUnpaid, setRemindUnpaid } = useSession();
+  // the whole row toggles (form.tsx SwitchRow): a tap on the bare native switch was easy to miss
+  const row = (title: string, sub: string, value: boolean, set: (v: boolean) => void) => <SwitchRow key={title} label={title} sub={sub} value={value} onChange={set} />;
   return (
     <Sheet title="收款方式" onClose={onClose}>
       <Text style={c.hint}>學生預約時會看到你開啟的方式，確認預約後自動傳付款資訊。</Text>
@@ -106,7 +102,7 @@ function PayoutSheet({ onClose }: { onClose: () => void }) {
         <View style={{ flex: 1 }}><Text style={{ fontSize: 16, fontWeight: "700" }}>收款帳戶</Text><Text style={{ fontSize: 13, color: color.muted }}>學生會用它產生轉帳 QR code</Text></View>
         <Icon name="right" size={14} tint={color.muted} />
       </Pressable>
-      {row("自動提醒未付款", "上課前一晚 20:00 用 LINE 提醒，附轉帳 QR", remind, setRemind)}
+      {row("自動提醒未付款", "上課前一晚 20:00 用 LINE 提醒，附轉帳 QR", remindUnpaid, (v) => { setRemindUnpaid(v); toast(v ? "已開啟自動提醒未付款" : "已關閉自動提醒未付款"); })}
       <Btn kind="primary" label="完成" onPress={onClose} />
     </Sheet>
   );
