@@ -36,7 +36,15 @@
           "calendarPermission": "把課程加入你的行事曆，並在上課前提醒你。"
         }
       ],
-      "expo-notifications"
+      "expo-notifications",
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "把轉帳 QR code 存到相簿。",
+          "savePhotosPermission": "把轉帳 QR code 存到相簿，方便用銀行 App 掃描付款。",
+          "isAccessMediaLocationEnabled": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

@@ -20,6 +20,7 @@ import type { BookingStatus } from "@pikyoo/core/types";
 import { money } from "@pikyoo/core/format";
 import { Photo } from "./CoachCard";
 import { bookingTotal } from "./BookScreen";
+import { TransferPay } from "./TransferPay";
 
 const STEPS = ["送出申請", "教練確認", "付款", "上課"];
 
@@ -122,17 +123,8 @@ export function BookingStatusScreen({ demo, live, payment }: { demo?: BookingSta
           )}
           {b.pay === "銀行轉帳" && (
             <>
-              <dl className="bank">
-                <dt>銀行</dt><dd>台新銀行（812）</dd>
-                <dt>帳號</dt>
-                <dd className="num">2888 1001 234 567 <SoonButton className="copy" msg="已複製帳號"><Icon name="copy" size={15} />複製</SoonButton></dd>
-                <dt>戶名</dt><dd>林＊亞</dd>
-              </dl>
-              <div className="field">
-                <label htmlFor="last5">轉帳帳號末五碼</label>
-                <input id="last5" className="input num" inputMode="numeric" maxLength={5} value={last5} onChange={(e) => setLast5(e.target.value.replace(/\D/g, ""))} />
-              </div>
-              <button className="btn btn-primary btn-lg btn-block" style={{ marginTop: 12 }} disabled={last5.length !== 5} onClick={() => setStatus("reported")}>我已轉帳</button>
+              <TransferPay bank="台新銀行 812" account="2888 1001 234 567" name="林＊亞" amount={total}
+                onReport={(l5) => { setLast5(l5); setStatus("reported"); toast("已通知教練，對帳後會通知你"); }} />
             </>
           )}
           {b.pay === "現場付現" && <p style={{ margin: 0 }}>上課當天付 <b>{money(total)}</b> 給教練即可。</p>}
@@ -220,7 +212,6 @@ export function BookingStatusScreen({ demo, live, payment }: { demo?: BookingSta
 function LivePayBox({ payment, pay }: { payment: MyPayment | null; pay: string }) {
   const toast = useToast();
   const router = useRouter();
-  const [last5, setLast5] = useState("");
   const [busy, setBusy] = useState(false);
   const report = async (ref: string) => {
     if (!payment) return;
@@ -231,7 +222,6 @@ function LivePayBox({ payment, pay }: { payment: MyPayment | null; pay: string }
     toast("已通知教練，確認收到後會通知你");
     router.refresh();
   };
-  const copy = (text: string) => navigator.clipboard.writeText(text).then(() => toast("已複製"), () => toast(text));
   const d = payment?.details as { link?: string; bank?: string; account?: string; name?: string } | null | undefined;
   return (
     <>
@@ -254,19 +244,7 @@ function LivePayBox({ payment, pay }: { payment: MyPayment | null; pay: string }
             <button className="btn btn-secondary btn-block" style={{ marginTop: 8 }} disabled={busy} onClick={() => report("")}>付好了，通知教練</button>
           </>
         ) : (
-          <>
-            <dl className="bank">
-              <dt>銀行</dt><dd>{d.bank}</dd>
-              <dt>帳號</dt>
-              <dd className="num">{d.account} <button className="copy" onClick={() => copy(d.account ?? "")}><Icon name="copy" size={15} />複製</button></dd>
-              <dt>戶名</dt><dd>{d.name}</dd>
-            </dl>
-            <div className="field">
-              <label htmlFor="last5">轉帳帳號末五碼</label>
-              <input id="last5" className="input num" inputMode="numeric" maxLength={5} value={last5} onChange={(e) => setLast5(e.target.value.replace(/\D/g, ""))} />
-            </div>
-            <button className="btn btn-primary btn-lg btn-block" style={{ marginTop: 12 }} disabled={last5.length !== 5 || busy} onClick={() => report(last5)}>我已轉帳</button>
-          </>
+          <TransferPay bank={d.bank ?? ""} account={d.account ?? ""} name={d.name ?? ""} amount={payment.amount} busy={busy} onReport={report} />
         )}
       </div>
     </>

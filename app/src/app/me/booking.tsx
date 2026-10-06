@@ -1,7 +1,6 @@
-import * as Clipboard from "expo-clipboard";
 import { Link, router } from "expo-router";
 import { useState } from "react";
-import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { bookingDays } from "@pikyoo/core/data/coaches";
 import { money } from "@pikyoo/core/format";
 import type { BookingStatus } from "@pikyoo/core/types";
@@ -16,13 +15,14 @@ import { Sheet } from "@/ui/Sheet";
 import { Status, type StatusTone } from "@/ui/Status";
 import { color, radius } from "@/ui/theme";
 import { toast } from "@/ui/Toast";
+import { TransferPay } from "@/ui/TransferPay";
 
 const STEPS = ["送出申請", "教練確認", "付款", "上課"];
 
 /** 我的預約 (website: BookingStatusScreen, docs/PRD.md §6.3): 送出申請 → 教練確認 → 付款 → 上課; payment only after the coach confirms.
  *  The app's demo booking for now; live bookings, with the coach's real payment details, come with sign-in (step 17). */
 export default function BookingStatusPage() {
-  const { booking: b, setBookingStatus, reportPayment, cancelBooking, coaches } = useSession();
+  const { booking: b, setBookingStatus, reportPayment, cancelBooking, coaches, payout } = useSession();
   const c = coaches.find((x) => x.id === b?.coachId);
   const [last5, setLast5] = useState("");
   const [change, setChange] = useState(false);
@@ -48,7 +48,6 @@ export default function BookingStatusPage() {
     const ok = await addEventToCalendar({ title: `PIKYOO｜${plan.name}・${c.name}`, start, end: new Date(start.getTime() + plan.durationMin * 60e3), location: venue, notes: "記得帶球拍、穿運動鞋，提早 10 分鐘到。" });
     if (ok) toast("已加入手機行事曆");
   };
-  const ACCOUNT = "2888 1001 234 567";
 
   const card = (tone: StatusTone, label: string, title: string, text: string, extra?: React.ReactNode, tip?: string) => (
     <View style={s.state}>
@@ -79,21 +78,7 @@ export default function BookingStatusPage() {
             </>
           )}
           {b.pay === "銀行轉帳" && (
-            <>
-              <View style={{ gap: 4 }}>
-                <Text style={s.kv}>銀行　台新銀行（812）</Text>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                  <Text style={s.kv}>帳號　<Num style={{ fontSize: 17 }}>{ACCOUNT}</Num></Text>
-                  <Pressable onPress={async () => { await Clipboard.setStringAsync(ACCOUNT.replace(/ /g, "")); toast("已複製帳號"); }} hitSlop={8} style={s.copy}>
-                    <Icon name="copy" size={13} /><Text style={{ fontSize: 13, fontWeight: "700" }}>複製</Text>
-                  </Pressable>
-                </View>
-                <Text style={s.kv}>戶名　林＊亞</Text>
-              </View>
-              <Text style={{ fontWeight: "700" }}>轉帳帳號末五碼</Text>
-              <TextInput value={last5} onChangeText={(t) => setLast5(t.replace(/\D/g, "").slice(0, 5))} keyboardType="number-pad" style={s.input} placeholder="12345" placeholderTextColor={color.n500} />
-              <Btn kind="primary" label="我已轉帳" disabled={last5.length !== 5} onPress={() => { reportPayment(last5); toast("已通知教練", "教練對帳後會通知你"); }} />
-            </>
+            <TransferPay {...payout} amount={total} onReport={(l5) => { setLast5(l5); reportPayment(l5); toast("已通知教練", "教練對帳後會通知你"); }} />
           )}
           {b.pay === "現場付現" && <Text style={{ fontSize: 16 }}>上課當天付 <Text style={{ fontWeight: "800" }}>{money(total)}</Text> 給教練即可。</Text>}
         </View>
@@ -163,9 +148,6 @@ const s = StyleSheet.create({
   state: { backgroundColor: color.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: color.line, padding: 18, gap: 8 },
   demoBtn: { marginTop: 6, alignSelf: "flex-start", borderWidth: 1.5, borderStyle: "dashed", borderColor: color.n500, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8 },
   paybox: { backgroundColor: color.surface, borderRadius: radius.lg, borderWidth: 1.5, borderColor: color.text, padding: 18, gap: 12 },
-  kv: { fontSize: 15, color: color.text },
-  copy: { flexDirection: "row", alignItems: "center", gap: 4, borderWidth: 1, borderColor: color.n300, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
-  input: { borderWidth: 1, borderColor: color.n300, borderRadius: radius.md, padding: 12, fontSize: 20, letterSpacing: 4, color: color.text },
   sum: { borderRadius: radius.lg, overflow: "hidden", backgroundColor: color.surface, borderWidth: 1, borderColor: color.line },
   sumTop: { backgroundColor: color.carbon, padding: 16, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   sumRow: { flexDirection: "row", alignItems: "center", gap: 10, padding: 14, borderBottomWidth: 1, borderBottomColor: color.n100 },

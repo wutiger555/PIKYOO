@@ -226,3 +226,16 @@
 .checklist i { width: 20px; height: 20px; flex: none; border-radius: 50%; border: 1.5px dashed var(--color-neutral-400); display: grid; place-items: center; }
 .checklist li.ok i { background: var(--color-text); border: 0; color: var(--color-accent); }
 }
+/* 銀行轉帳 steps (TransferPay): scan the TWQR code, or transfer by hand, then report */
+.pay-steps { list-style: none; margin: 0; padding: 0; counter-reset: pay; display: flex; flex-direction: column; gap: 16px; }
+.pay-steps > li { counter-increment: pay; display: flex; flex-direction: column; gap: 10px; }
+.pay-steps > li + li { border-top: 1px solid var(--color-line); padding-top: 14px; }
+.pay-steps > li > b { display: flex; align-items: center; gap: 8px; font-size: 16px; }
+.pay-steps > li > b::before { content: counter(pay); width: 22px; height: 22px; border-radius: 50%; background: var(--color-accent); display: inline-flex; align-items: center; justify-content: center; font-size: 13px; flex: none; }
+.pay-qr { display: flex; gap: 14px; align-items: center; }
+.pay-qr img { width: 140px; height: 140px; flex: none; border: 1px solid var(--color-line); border-radius: var(--radius-md); padding: 6px; background: #fff; }
+.pay-qr p { margin: 0; font-size: 14px; line-height: 1.55; }
+.pay-alt { font-size: 13px; font-weight: 700; color: var(--color-muted); margin-top: 4px; }
+.pay-qr small { display: block; margin-top: 6px; color: var(--color-muted); font-size: 12px; }
+@media (pointer: coarse) { .fine-only { display: none !important; } }
+@media not (pointer: coarse) { .touch-only { display: none !important; } }
