@@ -3,10 +3,9 @@ import { setStatusBarStyle } from "expo-status-bar";
 import * as WebBrowser from "expo-web-browser";
 import Constants from "expo-constants";
 import { useCallback, useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ME } from "@pikyoo/core/data/games";
-import { demoNotices } from "@pikyoo/core/data/notifications";
+import { shortAreas } from "@pikyoo/core/data/courts";
 import { useCatalog } from "@/data/catalog";
 import { useSession } from "@/data/session";
 import { LevelChip, Num } from "@/ui/badges";
@@ -24,13 +23,13 @@ const web = (path: string) => WebBrowser.openBrowserAsync(`https://pikyoo.vercel
 /** 我的 (website: MeScreen): profile and attendance, my lessons, my games, settings. A visitor gets a sign-in card. */
 export default function Me() {
   const insets = useSafeAreaInsets();
-  const { signedIn, signOut, mine } = useSession();
+  const { signedIn, signOut, mine, profile: me, notices, favs } = useSession();
   const { catalog } = useCatalog();
   const [login, setLogin] = useState(false);
   const [tab, setTab] = useState<"joined" | "history">("joined");
   useFocusEffect(useCallback(() => { setStatusBarStyle("light"); return () => setStatusBarStyle("dark"); }, []));
   const joined = (catalog?.games ?? []).filter((g) => mine[g.id]);
-  const unread = demoNotices().filter((n) => !n.read).length;
+  const unread = notices.filter((n) => !n.read).length;
   const rate = Math.round((RECORD.attended / RECORD.played) * 100);
 
   return (
@@ -40,15 +39,15 @@ export default function Me() {
           {signedIn ? (
             <>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-                <View style={s.avatar}><Text style={{ fontSize: 22, fontWeight: "800" }}>{ME.name.slice(0, 1)}</Text></View>
+                <View style={s.avatar}><Text style={{ fontSize: 22, fontWeight: "800" }}>{me.name.slice(0, 1)}</Text></View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: "#fff", fontSize: 24, fontWeight: "800" }}>{ME.name}</Text>
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}><Icon name="pin" size={13} tint={color.onCarbonMuted} /><Text style={{ color: color.onCarbonMuted, fontSize: 14 }}>大安・信義・中山</Text></View>
+                  <Text style={{ color: "#fff", fontSize: 24, fontWeight: "800" }}>{me.name}</Text>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}><Icon name="pin" size={13} tint={color.onCarbonMuted} /><Text style={{ color: color.onCarbonMuted, fontSize: 14 }}>{shortAreas(me.areas)}</Text></View>
                 </View>
-                <Btn kind="onCarbon" label="編輯" lg={false} onPress={() => web("/welcome")} style={{ borderRadius: 999 }} />
+                <Btn kind="onCarbon" label="編輯" lg={false} onPress={() => router.push("/me/profile")} style={{ borderRadius: 999 }} />
               </View>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginTop: 14 }}>
-                <LevelChip min={ME.level} lg />
+                <LevelChip min={me.level} lg />
                 <Pressable onPress={() => web("/learn/level-check")}><Text style={{ color: "#fff", textDecorationLine: "underline", fontSize: 14 }}>重新自評</Text></Pressable>
               </View>
               <View style={s.stats}>
@@ -110,7 +109,7 @@ export default function Me() {
             <View><Text style={s.en}>SETTINGS</Text><Text style={{ fontSize: 24, fontWeight: "800" }}>設定</Text></View>
             <View style={s.card}>
               {signedIn && <Row icon="bell" label="通知" sub={unread ? `${unread} 則未讀` : undefined} onPress={() => router.push("/me/notifications")} />}
-              <Row icon="heart" label="收藏的球場與教練" sub="下一輪推出" onPress={() => Alert.alert("收藏", "收藏功能下一輪推出")} />
+              {signedIn && <Row icon="heart" label="收藏的教練" sub={favs.length ? `${favs.length} 位` : "在教練頁按愛心收藏"} onPress={() => router.push("/me/saved")} />}
               <Row icon="whistle" label="我是教練：教練後台" sub={signedIn ? "示範：以 Mia 教練的身分" : "登入後使用"} onPress={() => (signedIn ? router.push("/coach") : setLogin(true))} />
               <Row icon="sprout" label="第一次打匹克球？" sub="規則與程度自評（網站）" onPress={() => web("/learn")} />
               {signedIn

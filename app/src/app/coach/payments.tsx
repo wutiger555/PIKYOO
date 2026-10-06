@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Alert, Pressable, Switch, Text, View } from "react-native";
+import { Pressable, Switch, Text, View } from "react-native";
 import { PAYOUT_METHODS, RECEIVED_BEFORE } from "@pikyoo/core/data/coaches";
 import { money } from "@pikyoo/core/format";
 import type { PaymentRow } from "@pikyoo/core/types";
@@ -11,6 +11,7 @@ import { Icon } from "@/ui/Icon";
 import { Sheet } from "@/ui/Sheet";
 import { Status } from "@/ui/Status";
 import { color, radius } from "@/ui/theme";
+import { toast } from "@/ui/Toast";
 
 const PAY_LABEL: Record<PaymentRow["status"], [string, "almost" | "info" | "open"]> = { wait: ["待付款", "almost"], reported: ["學生已回報", "info"], paid: ["已收款", "open"] };
 
@@ -55,18 +56,18 @@ export default function CoachPayments() {
           </View>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
             <Tag>{p.via}</Tag>
-            <Text style={{ fontSize: 13, color: color.muted }}>{p.status === "reported" ? <>末五碼 <Num style={{ fontSize: 15 }}>{p.ref}</Num>・{p.at}</> : p.status === "paid" ? `${p.at} 入帳` : p.at}</Text>
+            <Text style={{ fontSize: 13, color: color.muted }}>{p.status === "reported" ? (p.ref ? <>末五碼 <Num style={{ fontSize: 15 }}>{p.ref}</Num>・{p.at}</> : p.at) : p.status === "paid" ? `${p.at} 入帳` : p.at}</Text>
           </View>
           {p.status === "reported" && (
             <View style={{ flexDirection: "row", gap: 8 }}>
-              <Btn label="還沒收到" lg={false} style={{ flex: 1, borderRadius: 999 }} onPress={() => { rejectReport(p.id); Alert.alert("已請學生重新確認", `${p.name} 會收到通知`); }} />
-              <Btn kind="primary" label="確認收到" lg={false} style={{ flex: 1, borderRadius: 999 }} onPress={() => { markPaid(p.id); Alert.alert("已確認收款", "學生會收到通知"); }} />
+              <Btn label="還沒收到" lg={false} style={{ flex: 1, borderRadius: 999 }} onPress={() => { rejectReport(p.id); toast("已請學生重新確認", `${p.name} 會收到通知`); }} />
+              <Btn kind="primary" label="確認收到" lg={false} style={{ flex: 1, borderRadius: 999 }} onPress={() => { markPaid(p.id); toast("已確認收款", "學生會收到通知"); }} />
             </View>
           )}
           {p.status === "wait" && (
             <View style={{ flexDirection: "row", gap: 8 }}>
-              <Btn label="已收到（現場收）" lg={false} style={{ flex: 1, borderRadius: 999 }} onPress={() => { markPaid(p.id); Alert.alert("已記錄收款"); }} />
-              <Btn label="LINE 提醒" icon="bell" lg={false} style={{ flex: 1, borderRadius: 999 }} onPress={() => Alert.alert(`已用 LINE 傳付款提醒給 ${p.name}`)} />
+              <Btn label="已收到（現場收）" lg={false} style={{ flex: 1, borderRadius: 999 }} onPress={() => { markPaid(p.id); toast("已記錄收款"); }} />
+              <Btn label="LINE 提醒" icon="bell" lg={false} style={{ flex: 1, borderRadius: 999 }} onPress={() => toast(`已用 LINE 提醒 ${p.name} 付款`)} />
             </View>
           )}
         </View>

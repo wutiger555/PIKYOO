@@ -5,6 +5,7 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { CatalogProvider } from "@/data/catalog";
 import { SessionProvider } from "@/data/session";
+import { ToastHost } from "@/ui/Toast";
 import { color } from "@/ui/theme";
 
 SplashScreen.preventAutoHideAsync();
@@ -29,10 +30,13 @@ export default function RootLayout() {
           <Stack.Screen name="courts/[id]" options={{ title: "球場" }} />
           <Stack.Screen name="me/booking" options={{ title: "我的預約" }} />
           <Stack.Screen name="me/notifications" options={{ title: "通知" }} />
+          <Stack.Screen name="me/saved" options={{ title: "收藏的教練" }} />
+          <Stack.Screen name="me/profile" options={{ title: "編輯個人資料" }} />
           <Stack.Screen name="coach-inbox" options={{ title: "待處理" }} />
           <Stack.Screen name="coach-lesson/[id]" options={{ title: "課程" }} />
           <Stack.Screen name="coach-student/[id]" options={{ title: "學生" }} />
         </Stack>
+        <ToastHost />
       </SessionProvider>
     </CatalogProvider>
   );

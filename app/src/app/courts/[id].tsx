@@ -12,6 +12,7 @@ import { Icon } from "@/ui/Icon";
 import { Page, WithCatalog } from "@/ui/Page";
 import { GameTicket } from "@/ui/Ticket";
 import { color } from "@/ui/theme";
+import { toast } from "@/ui/Toast";
 
 const BOOK_CTA: Record<Court["booking"], string> = {
   公立預約系統: "前往預約系統", 官網預約: "前往官網預約", "LINE 預約": "用 LINE 預約", 電話預約: "打電話預約", 免預約: "直接去打",
@@ -69,7 +70,7 @@ export default function CourtPage() {
               ))}
             </Block>
           )}
-          <Pressable onPress={() => Alert.alert("謝謝回報！", "我們會再確認這個球場的資料")} style={{ paddingVertical: 16 }}>
+          <Pressable onPress={() => toast("謝謝回報！", "我們會再確認這個球場的資料")} style={{ paddingVertical: 16 }}>
             <Text style={{ color: color.muted, textDecorationLine: "underline" }}>資料有誤？回報給我們</Text>
           </Pressable>
         </View>

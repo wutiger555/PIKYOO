@@ -14,7 +14,9 @@ import { Field, Segmented, SwitchRow } from "@/ui/form";
 import { Icon, type IconName } from "@/ui/Icon";
 import { Sheet } from "@/ui/Sheet";
 import { color, radius } from "@/ui/theme";
+import { toast } from "@/ui/Toast";
 
+const greet = (hm: string) => (hm < "11:00" ? "早安" : hm < "18:00" ? "午安" : "晚安");
 const label = (n: number) => `${demoDay(n).date}（${demoDay(n).weekday}）${n === 0 ? "今天" : n === 1 ? "明天" : ""}`;
 
 /** 行事曆: the coach's home. Every lesson by day or week, pending requests and blocked time on the same calendar,
@@ -41,7 +43,8 @@ export default function CoachCalendar() {
   const go = (w: number) => { setWeek(w); setDay(w === 0 ? 0 : mondayOf(w)); };
   const addAll = async () => {
     const n = await addAllToCalendar(upcoming);
-    Alert.alert(n < 0 ? "需要行事曆權限" : `已加入 ${n} 堂課`, n < 0 ? "請到 iPhone 設定 → Expo Go → 行事曆 打開權限" : "未來兩週的課都在手機行事曆裡了，每堂課前 1 小時會提醒。");
+    if (n < 0) Alert.alert("需要行事曆權限", "請到 iPhone 設定 → Expo Go → 行事曆 打開權限");
+    else toast(`已加入 ${n} 堂課`, "每堂課前 1 小時，手機行事曆會提醒你");
   };
 
   return (
@@ -51,10 +54,10 @@ export default function CoachCalendar() {
           <RolePill />
           <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
             <ToStudent />
-            <Pressable onPress={() => router.push("/me/notifications")} accessibilityLabel="通知"><Icon name="bell" size={20} tint="#fff" /></Pressable>
+            <Pressable onPress={() => router.push("/coach-inbox")} accessibilityLabel="待處理"><Icon name="bell" size={20} tint="#fff" /></Pressable>
           </View>
         </View>
-        <Text style={{ color: "#fff", fontSize: 26, fontWeight: "800", marginTop: 16 }}>早安，{myCoach?.name.split(" ")[0]}</Text>
+        <Text style={{ color: "#fff", fontSize: 26, fontWeight: "800", marginTop: 16 }}>{greet(nowHM)}，{myCoach?.name.split(" ")[0]}</Text>
         <Text style={{ color: color.onCarbonMuted, fontSize: 15, marginTop: 2 }}>
           今天 {today.length} 堂課{next ? `，下一堂 ${next.start} ${next.plan}（${next.venue.replace("運動中心", "")}）` : "，都上完了"}
         </Text>
@@ -171,7 +174,7 @@ function BlockSheet({ day, onClose }: { day: number; onClose: () => void }) {
       )}
       <Field label="原因（只有你看得到）" value={reason} onChange={setReason} placeholder="例：比賽、出國、看牙醫" />
       {clash.length > 0 && <Text style={{ color: color.warning, fontSize: 13 }}>這段時間已經有 {clash.length} 堂課，擋掉不會取消它們；要取消請點進那堂課。</Text>}
-      <Btn kind="primary" label="擋掉這段時間" disabled={!all && start >= end} onPress={() => { addBlock({ offset, start, end, reason }); onClose(); Alert.alert("已擋掉", "學生預約頁不會再出現這段時間。"); }} />
+      <Btn kind="primary" label="擋掉這段時間" disabled={!all && start >= end} onPress={() => { addBlock({ offset, start, end, reason }); onClose(); toast("已擋掉這段時間", "學生預約頁不會再出現"); }} />
     </Sheet>
   );
 }
@@ -182,7 +185,8 @@ function RemindSheet({ upcoming, onClose }: { upcoming: Parameters<typeof schedu
   const save = async () => {
     const ok = await scheduleReminders(p, upcoming);
     onClose();
-    Alert.alert(ok ? "提醒已設定" : "需要通知權限", ok ? "會用手機通知提醒你。" : "請到 iPhone 設定 → Expo Go → 通知 打開權限");
+    if (ok) toast("提醒已設定", "會用手機通知提醒你");
+    else Alert.alert("需要通知權限", "請到 iPhone 設定 → Expo Go → 通知 打開權限");
   };
   return (
     <Sheet title="提醒設定" onClose={onClose}>
@@ -192,7 +196,7 @@ function RemindSheet({ upcoming, onClose }: { upcoming: Parameters<typeof schedu
         <SwitchRow label="每週一 00:00 訂場提醒" sub="公立球場開放預約時提醒你搶場地" value={p.courtBooking} onChange={(courtBooking) => setP({ ...p, courtBooking })} />
       </View>
       <Btn kind="primary" label="儲存" onPress={save} />
-      <Pressable onPress={async () => { const ok = await sendTestReminder(upcoming[0]?.lesson, upcoming[0]?.names ?? ""); if (ok) Alert.alert("5 秒後會收到一則測試提醒", "可以先回到桌面看看"); }}>
+      <Pressable onPress={async () => { const ok = await sendTestReminder(upcoming[0]?.lesson, upcoming[0]?.names ?? ""); if (ok) toast("5 秒後會收到測試提醒", "可以先回到桌面看看"); }}>
         <Text style={[c.hint, { textAlign: "center", textDecorationLine: "underline" }]}>傳一則測試提醒給自己</Text>
       </Pressable>
     </Sheet>

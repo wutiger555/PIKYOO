@@ -2,7 +2,7 @@ import * as Calendar from "expo-calendar/legacy";
 import * as Notifications from "expo-notifications";
 import type { CoachLesson } from "@pikyoo/core/data/schedule";
 
-// The coach's phone: lessons into the phone's calendar, and local reminders (docs/APP.md §4, coach calendar).
+// The phone's calendar and local reminders: the coach's lessons (docs/APP.md §4, coach calendar), and a student's booked lesson.
 // Live lessons later come from the database; a subscribable calendar link (ICS) is the second batch.
 
 Notifications.setNotificationHandler({
@@ -27,12 +27,14 @@ export function lessonDates(l: Pick<CoachLesson, "offset" | "start" | "end">) {
 const title = (l: CoachLesson, names: string) => `PIKYOO｜${l.plan}・${names}`;
 const place = (l: CoachLesson) => [l.venue, l.court].filter(Boolean).join(" ");
 
-/** One lesson: the system's own add-event sheet, so no permission prompt is needed. */
-export async function addLessonToCalendar(l: CoachLesson, names: string) {
-  const { start, end } = lessonDates(l);
-  const r = await Calendar.createEventInCalendarAsync({ title: title(l, names), startDate: start, endDate: end, location: place(l), notes: l.prep || undefined });
+/** One event through the system's own add-event sheet, so no permission prompt is needed. */
+export async function addEventToCalendar(e: { title: string; start: Date; end: Date; location: string; notes?: string }) {
+  const r = await Calendar.createEventInCalendarAsync({ title: e.title, startDate: e.start, endDate: e.end, location: e.location, notes: e.notes || undefined });
   return r.action === "saved";
 }
+
+/** One lesson, for the coach. */
+export const addLessonToCalendar = (l: CoachLesson, names: string) => addEventToCalendar({ title: title(l, names), ...lessonDates(l), location: place(l), notes: l.prep });
 
 /** Every upcoming lesson straight into the default calendar, each with a 1-hour alarm. */
 export async function addAllToCalendar(ls: { lesson: CoachLesson; names: string }[]) {

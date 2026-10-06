@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useRef, useState } from "react";
-import { Alert, Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { bookingDays, slotsFor } from "@pikyoo/core/data/coaches";
 import { levelText, money } from "@pikyoo/core/format";
@@ -14,6 +14,7 @@ import { LoginSheet } from "@/ui/LoginSheet";
 import { Page, WithCatalog } from "@/ui/Page";
 import { AskSheet, QuestionBoard } from "@/ui/QuestionBoard";
 import { color, radius } from "@/ui/theme";
+import { toast } from "@/ui/Toast";
 
 // F3-4 教練頁 (website: CoachPageScreen / CoachPublicPage), section for section.
 
@@ -37,7 +38,9 @@ export default function CoachPage() {
 function CoachPublicPage({ c }: { c: Coach }) {
   const p = c.profile;
   const insets = useSafeAreaInsets();
-  const { signedIn, isBlocked, myCoach } = useSession();
+  const { signedIn, isBlocked, myCoach, favs, toggleFav, booking } = useSession();
+  const mine = booking?.slot && booking.coachId === c.id ? booking : null;
+  const mineDay = mine ? bookingDays().find((d) => d.key === mine.dayKey) : null;
   const scroller = useRef<ScrollView>(null);
   const ys = useRef<Partial<Record<SectionKey | "locked", number>>>({});
   // sections report y inside the body container; the container's own y turns that into a scroll offset
@@ -77,7 +80,8 @@ function CoachPublicPage({ c }: { c: Coach }) {
           <View style={[s.coverBar, { top: insets.top + 6 }]}>
             <RoundBtn icon="left" label="返回" onPress={() => (router.canGoBack() ? router.back() : router.replace("/coaches"))} />
             <View style={{ flex: 1 }} />
-            <RoundBtn icon="heart" label="收藏" onPress={() => Alert.alert("已收藏")} />
+            <RoundBtn icon={favs.includes(c.id) ? "heartOn" : "heart"} label={favs.includes(c.id) ? "取消收藏" : "收藏"}
+              onPress={() => (locked ? setLogin(`登入後可以收藏 ${c.name}`) : toast(toggleFav(c.id) ? "已收藏" : "已取消收藏", "在「我的 → 收藏的教練」找得到"))} />
             <RoundBtn icon="share" label="分享" onPress={share} />
           </View>
         </View>
@@ -257,11 +261,23 @@ function CoachPublicPage({ c }: { c: Coach }) {
       )}
 
       <View style={[s.cta, { paddingBottom: insets.bottom + 10 }]}>
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: color.onCarbonMuted, fontSize: 13 }}>{p.plans.length} 種課程</Text>
-          <Text><Num style={{ fontSize: 26, color: "#fff" }}>{money(c.priceFrom)}</Num><Text style={{ color: color.onCarbonMuted, fontSize: 14 }}> 起</Text></Text>
-        </View>
-        {p.plans[0] && <Btn kind="primary" label={locked ? "登入後預約" : "選時段預約"} onPress={() => book(p.plans[0].id)} />}
+        {mine ? (
+          <>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: color.onCarbonMuted, fontSize: 13 }}>你已預約</Text>
+              <Num style={{ fontSize: 22, color: "#fff" }}>{mineDay ? `${mineDay.date}（${mineDay.weekday}）` : ""}{mine.slot}</Num>
+            </View>
+            <Btn kind="primary" label="看預約進度" onPress={() => router.push("/me/booking")} />
+          </>
+        ) : (
+          <>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: color.onCarbonMuted, fontSize: 13 }}>{p.plans.length} 種課程</Text>
+              <Text><Num style={{ fontSize: 26, color: "#fff" }}>{money(c.priceFrom)}</Num><Text style={{ color: color.onCarbonMuted, fontSize: 14 }}> 起</Text></Text>
+            </View>
+            {p.plans[0] && <Btn kind="primary" label={locked ? "登入後預約" : "選時段預約"} onPress={() => book(p.plans[0].id)} />}
+          </>
+        )}
       </View>
 
       {asking && <AskSheet coach={c} onClose={() => setAsking(false)} />}

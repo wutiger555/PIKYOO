@@ -2,24 +2,38 @@ import { createContext, useContext, useMemo, useState } from "react";
 import { emptyCoachFilters, type CoachFilters } from "@pikyoo/core/coach-filters";
 import { emptyGameFilters, type GameFilters } from "@pikyoo/core/game-filters";
 import { bookingDays, getCoach, initialPayments, initialRequests } from "@pikyoo/core/data/coaches";
-import type { Booking, BookingRequest, BookingStatus, Coach, Game, MyGameStatus, PaymentRow, Question } from "@pikyoo/core/types";
+import { ME } from "@pikyoo/core/data/games";
+import { demoNotices } from "@pikyoo/core/data/notifications";
+import type { Notice } from "@pikyoo/core/source/notifications";
+import type { Booking, BookingRequest, BookingStatus, Coach, Game, Level, MyGameStatus, PaymentRow, Question } from "@pikyoo/core/types";
 import { demoBlocks, demoLessons, REQUEST_SLOTS, ROSTER, type Attendance, type CoachLesson, type RosterStudent, type TimeBlock } from "@pikyoo/core/data/schedule";
 import { bookingTotal } from "./booking";
 import { isLive, useCatalog } from "./catalog";
 
 // What the website keeps in lib/demo-store.tsx, for the app: sign-in, 找教練 filters, the compare tray, questions asked here,
 // and the coach console (Mia's requests, payments and page). In the demo the two sides are wired together, so one phone
-// shows the whole round trip: a booking with Mia lands in her 今天, her 確認 moves the student on to 付款, the student's
-// report shows up in her 收款, and her 確認收到 marks the lesson paid.
+// shows the whole round trip: a booking with Mia lands in her 行事曆 (待處理), her 確認 moves the student on to 付款, the
+// student's report shows up in her 收款, and her 確認收到 marks the lesson paid. Each step also lands in the student's 通知.
 // Sign-in: the demo starts signed in (like the demo website); live waits for LINE / Apple sign-in (docs/APP.md §8 step 17).
 
 export const MAX_COMPARE = 3;
+
+export type Profile = { name: string; level: Level; areas: string[] };
 
 interface Session {
   signedIn: boolean;
   signIn: () => void;
   /** demo: back to the visitor view (website: 登出（Demo：看訪客畫面）) */
   signOut: () => void;
+  /** the student's own name, level and areas (website: onboarding / 編輯個人資料) */
+  profile: Profile;
+  setProfile: (p: Profile) => void;
+  /** 收藏的教練 */
+  favs: string[];
+  /** true when the coach is now saved */
+  toggleFav: (coachId: string) => boolean;
+  notices: Notice[];
+  readNotices: () => void;
   filters: CoachFilters;
   setFilters: (f: (p: CoachFilters) => CoachFilters) => void;
   compare: string[];
@@ -42,6 +56,8 @@ interface Session {
   reportPayment: (ref: string) => void;
   /** the demo buttons on 我的預約 standing in for the coach */
   setBookingStatus: (st: BookingStatus) => void;
+  /** the student cancels: the request, lesson and payment row go from Mia's side too */
+  cancelBooking: () => void;
   // coach console (Mia in the demo)
   myCoach: Coach | null;
   setMyCoach: (f: (c: Coach) => Coach) => void;
@@ -79,6 +95,11 @@ const Ctx = createContext<Session | null>(null);
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [signedIn, setSignedIn] = useState(!isLive);
+  const [profile, setProfile] = useState<Profile>({ name: ME.name, level: ME.level, areas: ["大安區", "信義區", "中山區"] });
+  const [favs, setFavs] = useState<string[]>([]);
+  // n1 is the website's sample 教練確認了你的預約; here that notice arrives when the demo booking is really confirmed
+  const [notices, setNotices] = useState<Notice[]>(() => demoNotices().filter((n) => n.id !== "n1"));
+  const notify = (title: string, body: string, href: string) => setNotices((ns) => [{ id: "n" + Date.now().toString(36), title, body, href, at: "剛剛", read: false }, ...ns]);
   const [filters, setF] = useState(emptyCoachFilters);
   const [compare, setCompare] = useState<string[]>([]);
   const [asked, setAsked] = useState<Question[]>([]);
@@ -133,12 +154,26 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     }]);
   };
 
-  const patchBooking = (st: BookingStatus) => setBooking((b) => (b ? { ...b, status: st } : b));
+  const patchBooking = (st: BookingStatus) => {
+    setBooking((b) => (b ? { ...b, status: st } : b));
+    if (st === "confirmed") notify("教練確認了你的預約", "照付款資訊付款就完成了", "/me/booking");
+    if (st === "paid") notify("教練確認收到付款", "準備好上課了，前一天會再提醒你", "/me/booking");
+  };
+  /** 到 / 遲到 counts the lesson (上過幾堂) and uses one of the student's pack; changing to 未到 gives it back */
+  const countLesson = (sid: string, d: number) => setStudents((xs) => xs.map((x) => (x.id !== sid ? x : {
+    ...x, times: Math.max(0, x.times + d), pack: x.pack && { ...x.pack, used: Math.min(x.pack.total, Math.max(0, x.pack.used + d)) },
+  })));
 
   const value = useMemo<Session>(() => ({
     signedIn,
     signIn: () => { if (!isLive) setSignedIn(true); },
     signOut: () => setSignedIn(false),
+    profile,
+    setProfile,
+    favs,
+    toggleFav: (id) => { const on = !favs.includes(id); setFavs(on ? [...favs, id] : favs.filter((x) => x !== id)); return on; },
+    notices,
+    readNotices: () => setNotices((ns) => (ns.some((n) => !n.read) ? ns.map((n) => ({ ...n, read: true })) : ns)),
     filters,
     setFilters: (f) => setF(f),
     compare,
@@ -171,9 +206,10 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       };
       setRequests((rs) => [req, ...rs.filter((x) => x.id !== MINE)]);
     },
+    // LINE Pay goes to the coach's own link (PLAN D9), so it is reported like a transfer and the coach confirms it
     reportPayment: (ref) => {
-      patchBooking(ref ? "reported" : "paid");
-      patchPayment("n" + MINE, ref ? { status: "reported", ref, at: "剛剛回報" } : { status: "paid", at: "剛剛" });
+      patchBooking("reported");
+      patchPayment("n" + MINE, { status: "reported", ref: ref || undefined, at: ref ? "剛剛回報" : "剛剛回報（LINE Pay）" });
     },
     setBookingStatus: (st) => {
       patchBooking(st);
@@ -187,6 +223,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       }
       if (st === "paid") patchPayment("n" + MINE, { status: "paid", at: "剛剛" });
     },
+    cancelBooking: () => {
+      setBooking(null);
+      setRequests((rs) => rs.filter((x) => x.id !== MINE));
+      setPayments((ps) => ps.filter((x) => x.id !== "n" + MINE));
+      setLessons((ls) => ls.filter((l) => l.id !== "R" + MINE));
+    },
 
     myCoach,
     setMyCoach: (f) => { if (myCoach) setEdited(f(myCoach)); },
@@ -197,11 +239,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       setRequests((rs) => rs.map((x) => (x.id === id ? { ...x, status: ok ? "ok" : "no" } : x)));
       if (ok) toLesson(r);
       if (ok) setPayments((ps) => [{ id: "n" + id, initial: r.initial, name: r.name, what: `${r.plan}・${r.when}`, amount: r.amount, via: r.pay, status: "wait", at: "剛剛已傳付款資訊" }, ...ps.filter((x) => x.id !== "n" + id)]);
-      if (id === MINE) setBooking((b) => (ok && b ? { ...b, status: "confirmed" } : null));
+      if (id === MINE && ok) patchBooking("confirmed");
+      if (id === MINE && !ok) { setBooking(null); notify("教練這次沒辦法接", "看看其他時段或其他教練", "/coaches"); }
     },
     payments,
     markPaid: (id) => { patchPayment(id, { status: "paid", at: "剛剛" }); if (id === "n" + MINE) patchBooking("paid"); },
-    rejectReport: (id) => { patchPayment(id, { status: "wait", ref: undefined, at: "等學生重新確認" }); if (id === "n" + MINE) patchBooking("confirmed"); },
+    rejectReport: (id) => { patchPayment(id, { status: "wait", ref: undefined, at: "等學生重新確認" }); if (id === "n" + MINE) { setBooking((b) => (b ? { ...b, status: "confirmed" } : b)); notify("教練還沒收到你的款項", "請再確認一次付款", "/me/booking"); } },
     questions,
     answer: (id, text) => setAnswers((a) => ({ ...a, [id]: text })),
     coaches,
@@ -213,7 +256,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     removeBlock: (id) => setBlocks((bs) => bs.filter((b) => b.id !== id)),
     isBlocked: (offset, hhmm) => blocks.some((b) => b.offset === offset && hhmm >= b.start && hhmm < b.end),
     attendance,
-    setAttendance: (lid, sid, a) => setAtt((x) => ({ ...x, [`${lid}:${sid}`]: a })),
+    setAttendance: (lid, sid, a) => {
+      const before = attendance[`${lid}:${sid}`];
+      const counts = (v?: Attendance) => v === "present" || v === "late";
+      if (counts(a) !== counts(before)) countLesson(sid, counts(a) ? 1 : -1);
+      setAtt((x) => ({ ...x, [`${lid}:${sid}`]: a }));
+    },
     setLesson: (id, patch) => setLessons((ls) => ls.map((l) => (l.id === id ? { ...l, ...patch } : l))),
     seatPay: (lid, sid) => {
       const seat = lessons.find((l) => l.id === lid)?.seats.find((x) => x.sid === sid);
@@ -229,7 +277,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       setLessons((ls) => ls.map((l) => (l.id === lid ? { ...l, seats: l.seats.map((x) => (x.sid === sid ? { ...x, pay: "paid" } : x)) } : l)));
     },
     addNote: (sid, text) => setStudents((xs) => xs.map((x) => (x.id === sid ? { ...x, notes: [{ offset: 0, text }, ...x.notes] } : x))),
-  }), [lessons, pendingSlots, students, blocks, attendance, signedIn, filters, compare, asked, booking, gameFilters, mine, myCoach, requests, payments, questions, coaches]);
+  }), [profile, favs, notices, lessons, pendingSlots, students, blocks, attendance, signedIn, filters, compare, asked, booking, gameFilters, mine, myCoach, requests, payments, questions, coaches]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
