@@ -18,16 +18,19 @@ export type Database = {
         Row: {
           coach_id: string
           details: Json
+          remind_unpaid: boolean
           updated_at: string
         }
         Insert: {
           coach_id: string
           details?: Json
+          remind_unpaid?: boolean
           updated_at?: string
         }
         Update: {
           coach_id?: string
           details?: Json
+          remind_unpaid?: boolean
           updated_at?: string
         }
         Relationships: [

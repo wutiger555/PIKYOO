@@ -15,7 +15,7 @@ import { money } from "@pikyoo/core/format";
 import { AnswerCard } from "@/features/coaches/QuestionBoard";
 import { CoachGate } from "./CoachAccount";
 import { decideBookingAction } from "@/lib/bookings";
-import { markPaidAction, rejectReportAction, remindPaymentAction, savePayoutAction } from "@/lib/payments";
+import { markPaidAction, rejectReportAction, remindPaymentAction, savePayoutAction, setRemindUnpaidAction } from "@/lib/payments";
 import { CollectQRSheet } from "./CollectQR";
 import { realAuth } from "@/lib/env";
 import type { BookingRequest, PaymentRow } from "@pikyoo/core/types";
@@ -446,7 +446,17 @@ function PayoutDetailsSheet({ onClose }: { onClose: () => void }) {
   const [account, setAccount] = useState(mine?.payout.bank_transfer?.account ?? "");
   const [name, setName] = useState(mine?.payout.bank_transfer?.name ?? "");
   const [busy, setBusy] = useState(false);
+  const [remind, setRemind] = useState(mine?.remindUnpaid ?? true);
   if (!mine) return null;
+  // saved on the spot, like a phone setting: remind_tomorrow reads it at 20:00
+  const toggleRemind = async () => {
+    const on = !remind;
+    setRemind(on);
+    const r = await setRemindUnpaidAction(mine.id, on);
+    if (r.error) { setRemind(!on); return toast(r.error); }
+    toast(on ? "已開啟自動提醒未付款" : "已關閉自動提醒未付款");
+    router.refresh();
+  };
   const save = async () => {
     setBusy(true);
     const r = await savePayoutAction(mine.id, { line_pay: { link }, bank_transfer: { bank, account, name } });
@@ -459,6 +469,10 @@ function PayoutDetailsSheet({ onClose }: { onClose: () => void }) {
   return (
     <Sheet className="sheet-coach" onClose={onClose}>
       <h2>收款資訊</h2>
+      <div className="row-item">
+        <div style={{ flex: 1 }}><b>自動提醒未付款</b><div className="text-muted" style={{ fontSize: 13 }}>上課前一晚 20:00 用 LINE 提醒，附轉帳 QR。關掉的話，學生只會收到一般的上課提醒。</div></div>
+        <button className="switch" role="switch" aria-checked={remind} aria-label="自動提醒未付款" onClick={toggleRemind} />
+      </div>
       <p className="text-muted" style={{ fontSize: 14 }}>你確認預約後，學生才看得到這些資訊，而且只看得到他選的那一種。要開啟或關閉付款方式，到「教練頁 → 付款方式」。</p>
       <div className="field">
         <label htmlFor="pay-link">LINE Pay 收款連結</label>

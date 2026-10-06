@@ -482,6 +482,13 @@ begin
   delete from public.notifications where kind = 'lesson_reminder' and payload ->> 'booking_id' = b::text;
   perform public.remind_tomorrow();
   assert (select (payload ->> 'unpaid')::boolean and payload ->> 'method' = 'bank_transfer' from public.notifications where user_id = test.uid('小安') and kind = 'lesson_reminder' and payload ->> 'booking_id' = b::text), 'an unpaid transfer is flagged in the reminder, with its method';
+  -- the coach turned 自動提醒未付款 off: the reminder goes out plain
+  insert into public.coach_pay_details (coach_id, remind_unpaid) select coach_id, false from public.lesson_bookings where id = b
+  on conflict (coach_id) do update set remind_unpaid = false;
+  delete from public.notifications where kind = 'lesson_reminder' and payload ->> 'booking_id' = b::text;
+  perform public.remind_tomorrow();
+  assert (select not (payload ->> 'unpaid')::boolean from public.notifications where user_id = test.uid('小安') and kind = 'lesson_reminder' and payload ->> 'booking_id' = b::text), 'with the switch off the reminder does not say 還沒付款';
+  update public.coach_pay_details set remind_unpaid = true where coach_id = (select coach_id from public.lesson_bookings where id = b);
 end $$;
 do $$ begin perform test.login('趙柏宇'); end $$;
 set role authenticated;

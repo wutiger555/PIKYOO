@@ -14,7 +14,7 @@ export type CoachStatus = Enums<"coach_status">;
 export interface MyCredential { id: string; type: Enums<"credential_type">; issuer: string; level: string; status: Enums<"verify_status"> }
 /** id: the coaches row (uuid); coach.id is the slug, as everywhere on screen */
 export interface MyCoach { id: string; status: CoachStatus; coach: Coach; credentials: MyCredential[]; /** 今天: requests waiting for a decision */ requests: BookingRequest[];
-  /** 收款 */ payments: PaymentRow[]; payout: PayoutDetails }
+  /** 收款 */ payments: PaymentRow[]; payout: PayoutDetails; /** 自動提醒未付款 */ remindUnpaid: boolean }
 
 const MESSAGES: [RegExp, string][] = [
   [/coaches_slug_key|duplicate key.*slug/, "這個網址已經有人用了，換一個試試"],
@@ -35,7 +35,7 @@ async function readCoach(sb: SupabaseClient<Database>, url: string, column: "pro
   if (card.error) throw explain(card.error.message);
   if (!card.data) return null;
   const id = card.data.id!;
-  const [creds, plans, requests, payments, payout] = await Promise.all([
+  const [creds, plans, requests, payments, { payout, remindUnpaid }] = await Promise.all([
     sb.from("credentials").select("*").eq("coach_id", id).order("created_at"),
     sb.from("coach_plans").select("*").eq("coach_id", id).is("archived_at", null).order("sort"),
     coachRequests(sb, id),
@@ -47,7 +47,7 @@ async function readCoach(sb: SupabaseClient<Database>, url: string, column: "pro
   return {
     id, status: card.data.status!, coach: coachFromRows(url, card.data as CoachCard, creds.data, plans.data),
     credentials: creds.data.map((x) => ({ id: x.id, type: x.type, issuer: x.issuer, level: x.level, status: x.status })),
-    requests, payments, payout,
+    requests, payments, payout, remindUnpaid,
   };
 }
 

@@ -64,6 +64,9 @@ interface Session {
   myCoach: Coach | null;
   payout: Payout;
   setPayout: (p: Payout) => void;
+  /** 自動提醒未付款 (website: coach_pay_details.remind_unpaid) */
+  remindUnpaid: boolean;
+  setRemindUnpaid: (on: boolean) => void;
   setMyCoach: (f: (c: Coach) => Coach) => void;
   requests: BookingRequest[];
   decide: (id: string, ok: boolean) => void;
@@ -106,6 +109,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile>({ name: ME.name, level: ME.level, areas: ["大安區", "信義區", "中山區"] });
   const [favs, setFavs] = useState<string[]>([]);
   const [payout, setPayout] = useState<Payout>(DEMO_PAYOUT);
+  const [remindUnpaid, setRemindUnpaid] = useState(true);
   // n1 is the website's sample 教練確認了你的預約; here that notice arrives when the demo booking is really confirmed
   const [notices, setNotices] = useState<Notice[]>(() => demoNotices().filter((n) => n.id !== "n1"));
   const notify = (title: string, body: string, href: string) => setNotices((ns) => [{ id: "n" + Date.now().toString(36), title, body, href, at: "剛剛", read: false }, ...ns]);
@@ -242,6 +246,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     myCoach,
     payout,
     setPayout,
+    remindUnpaid,
+    setRemindUnpaid,
     setMyCoach: (f) => { if (myCoach) setEdited(f(myCoach)); },
     requests,
     decide: (id, ok) => {
@@ -300,7 +306,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       return plan ? (plan.unit === "/10 堂" ? Math.round(plan.price / 10) : plan.price) : 0;
     },
     addNote: (sid, text) => setStudents((xs) => xs.map((x) => (x.id === sid ? { ...x, notes: [{ offset: 0, text }, ...x.notes] } : x))),
-  }), [payout, profile, favs, notices, lessons, pendingSlots, students, blocks, attendance, signedIn, filters, compare, asked, booking, gameFilters, mine, myCoach, requests, payments, questions, coaches]);
+  }), [remindUnpaid, payout, profile, favs, notices, lessons, pendingSlots, students, blocks, attendance, signedIn, filters, compare, asked, booking, gameFilters, mine, myCoach, requests, payments, questions, coaches]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
