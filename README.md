@@ -26,6 +26,7 @@ A pickleball platform for Taiwan to find courts, coaches, classes, and games.
 
 | 日期 | PR | 內容 |
 |---|---|---|
+| 2026-10-10 | [#59](https://github.com/wutiger555/PIKYOO/pull/59) | **教練示範網站**（`docs/demo/PIKYOO-教練示範網站.html`，單一檔案可離線開）：給教練訪談用的捲動式 demo，一支手機釘在畫面中央、捲動換畫面，從「掃 QR 收到錢」開始走完學生與教練兩條流程；27 張 2026-10-10 模擬器實機截圖，QR 由真實 TWQR 字串即時產生。另新增 `PRODUCT.md`（產品事實，給設計工具用）與根目錄 `DESIGN.md` |
 | 2026-10-06 | [#57](https://github.com/wutiger555/PIKYOO/pull/57) | **「自動提醒未付款」開關可以真的關**：教練在收款設定關掉後，前一晚的上課提醒不會再寫「還沒付款」（學生仍收到一般上課提醒）；網站存在資料庫、立即生效。App 收款設定的開關改成整列可點（原本點不太到） |
 | 2026-10-06 | [#56](https://github.com/wutiger555/PIKYOO/pull/56) | **現場收款 QR＋催款附 QR**：教練在課程頁或收款頁按「現場收款 QR」，手機出示這位學生金額的轉帳 QR，學生用銀行 App 一掃就付；前一晚 20:00 的「明天有課」提醒，沒付款的會改成「還沒付款」並直接開付款頁；教練的「LINE 提醒」按鈕改成真的會傳（12 小時內一次） |
 | 2026-10-06 | [#55](https://github.com/wutiger555/PIKYOO/pull/55) | **收款研究第二輪**（`docs/PAYMENTS.md` §1.6）：銀行 API、個人收款產品、電子支付、財金與政府管道、同類平台做法；結論是免費又能自動確認的管道目前沒有，TWQR 在 2026 年學生轉帳免手續費 |

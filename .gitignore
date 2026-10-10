@@ -1,1 +1,8 @@
 node_modules
+
+# Impeccable working files (captures, build state, comps); PRODUCT.md and .impeccable/surfaces are kept
+.impeccable/review/
+.impeccable/questions/
+.impeccable/build/
+.impeccable/mocks/
+.impeccable/config.local.json
