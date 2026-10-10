@@ -11,18 +11,16 @@ Scope: one standalone HTML page shown to pickleball coaches during interviews an
 
 ## Direction contract
 
-THESIS: One phone, pinned at the exact center of the viewport the whole way down; the page scrolls, the phone never does. It refuses the catalog of phone-in-card sections the previous version shipped and the stacked-feature-grid every coaching-tool page uses.
+THESIS: A feature tour a coach can actually read: each feature gets its own section with a phone that plays that feature's screens like a short video, beside a numbered step list and the details. It refuses the previous version's scroll-hijacked pinned stage (rejected 2026-10-10: 太浮誇、不容易真正看到功能) and the card-grid brochure before it.
 
-OWN-WORLD: Carbon ground (#0F110F / #1A1D1B with the weave), 螢光球 #D4EE3A only where money moves or an action lands (≤8% of any frame), 霧白 #F2F3EF reserved for the phone screen itself. Barlow Condensed 600/700 for every number and the display line; Noto Sans TC 400/700 for Chinese body. Ball-hole dots as progress markers; the carbon ticket stub (`.ticket`) as the coach's account; one court-rule hairline per chapter break. Recognizable with all copy removed: a dark stage, one white phone, lime in motion.
+OWN-WORLD: Carbon stage (#0F110F; #1A1D1B + weave for active steps, the QR panel and the account stub), lime only on money and on the live step/tab (≤8% of a frame), #F2F3EF only on the phone screens. Barlow Condensed for display and every figure, Noto Sans TC for body. Ball-hole dots as tab and detail markers; story-style progress bars over each phone.
 
-STORY: A coach lands mid-scan: a student's bank app is reading the QR on the phone and NT$600 is leaving the student for the coach's own account. They understand in three seconds that money skips the platform. Scrolling, they see how the student got there (found the coach, booked a slot), then live the coach's own day on the same phone (calendar, roster, roll call, on-court QR, reconciliation). They end at a lime invitation to be in the first batch.
+STORY: The hero states the offer and shows the QR payment with NT$600 landing in the coach's account. Sticky tabs (找到你・預約・收款・行事曆・上課・學生・你的頁面) let the coach jump to any feature; each section plays on its own and can be paused, stepped or clicked into. Ends at the lime first-batch invitation.
 
-FIRST VIEWPORT: No nav, no title bar. The phone (390×844 aspect, ~44vh tall on desktop) centered; its screen shows the real payment page (09-pay-qr). A lime scan line sweeps the QR region once on load. Left of the phone, Barlow Condensed display 「錢直接進你的帳戶」 at ~clamp(44px,6vw,88px), two lines. Right of the phone, a carbon ticket stub reading 「台新 812 ・ 林＊亞」 with a lime 「+NT$600」 that animates in as the scan completes (counter 0→600 over 900ms, ease-out expo). Below the fold edge, a single ball-hole dot row (one dot per chapter) and the word 往下.
+FIRST VIEWPORT: Brand top left; headline 「學生自己來預約，錢直接進你帳戶，你只管教球。」 left at clamp(40px,4.6vw,66px); two actions (看收款怎麼運作 primary, 從頭看每個功能); the payment-page phone right with one scan sweep and the carbon stub counting to +NT$600; the feature tab row at the fold.
 
-FORM: 中央那支手機, candidate 3 of my 7 ranked structures; seed key 1485ab4e; code-led. Raises: live-generated QR from the real TWQR string, modules drawn one by one (Jacquard); the whole page radiates from the single scan event (particle detector); phone width collapses the pinned phone into a sticky top strip with vertical reading order (tensegrity).
+FORM: Feature tour with per-section players; replaces 中央那支手機 (seed key 1485ab4e) at the owner's direction; code-led.
 
-SIGNATURE INTERACTION: Scroll position drives the phone's screen (a crossfade with 1px blur between captured screens) and the chapter copy; the three full-bleed moments (the QR assembling itself to fill the viewport, 「已收到 NT$600」 flooding lime, the week calendar) take over the stage while the phone recedes to 60% and dims. Tapping or pressing → advances one beat without scrolling.
-
-MOTION GRAMMAR: ease-out expo cubic-bezier(.16,1,.3,1); 240ms for screen swaps, 600–900ms for the three authored beats; reduced-motion keeps crossfades and counters, removes sweeps and parallax.
+SIGNATURE INTERACTION: Each player autoplays only while on screen (3.6s per screen, progress bar fills), pauses for good once the viewer clicks a step or pause; step list and bars stay in sync; the real TWQR code fills in module by module when the payment section's QR panel comes into view. Reduced motion: no autoplay, crossfades only.
 
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance.
