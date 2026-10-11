@@ -1,11 +1,62 @@
 #!/usr/bin/env python3
-"""PIKYOO coach demo, feature tour: a short hero, then one section per feature. Each section has a phone that plays
-its screens like a short video (pause, step, click a step) beside a numbered step list and the details."""
+"""PIKYOO coach demo, feature tour. A short hero, the recorded flow, sticky feature tabs, then one section per feature
+whose phone plays its screens like a short video beside the numbered steps and details.
+
+Provenance for docs/demo/PIKYOO-教練示範網站.html. Inputs (not committed): img/<shot>.png are iPhone 17 simulator
+screenshots of the app in demo mode (EXPO_PUBLIC_DATA_SOURCE=demo) taken 2026-10-10, shrunk to 720 px wide with sips;
+qr.json is the TWQR transfer string for the demo account rendered to modules with the `qrcode` package (see
+packages/core/src/twqr.ts); flow.mp4 is one take on the same simulator on 2026-10-11 (demo data), recorded with
+`xcrun simctl io booted recordVideo`, re-timed to 30 fps, dead time cut and sped up with ffmpeg; poster.jpg is its
+first frame. Run from a folder holding them; the output is wrapped in a doctype/head skeleton before use."""
 import base64, json, pathlib
 
 ROOT = pathlib.Path(__file__).parent
 def img(name): return "data:image/png;base64," + base64.b64encode((ROOT / "img" / f"{name}.png").read_bytes()).decode()
 qr = json.loads((ROOT / "qr.json").read_text())
+
+# The recorded run (2026-10-11, iPhone 17 simulator, demo data): booking to paid in one take, dead time cut and sped up.
+FLOW_CHAPTERS = [
+  (0, "學生找到 Mia 教練", "從首頁點進教練頁，看課程與價目。"),
+  (7.2, "選課程、選時段", "新手體驗課，10/13（二）19:30。"),
+  (11.3, "選銀行轉帳，送出申請", "這一步不扣款，送出的是申請。"),
+  (16.4, "首頁顯示「等教練確認」", "學生隨時看得到進度。"),
+  (19.6, "切到教練：待處理", "新的申請排在最上面，標「剛剛」。"),
+  (25.2, "教練按「確認預約」", "付款資訊自動傳給學生；待收款加上 NT$600。"),
+  (32.6, "學生拿到轉帳 QR", "我的課顯示「待付款」，點進去就是 QR。"),
+  (36.5, "存 QR 到相簿", "用銀行 App 從相簿掃，帳號和金額自動帶入。"),
+  (41.4, "轉好了，填末五碼", "按「我已轉帳」，教練那邊立刻收到。"),
+  (49.8, "教練到收款頁", "學生的回報排在最上面，附末五碼。"),
+  (55.1, "教練確認收到 NT$600", "已收從 NT$30,700 變 NT$31,300。"),
+  (62.6, "學生：已付款，準備上課", "進度條走到「上課」，前一晚 20:00 再提醒。"),
+]
+FLOW_LEN = 68.0
+
+def b64(path, mime): return f"data:{mime};base64," + base64.b64encode((ROOT / path).read_bytes()).decode()
+
+def flow_html():
+    chaps = "".join(f'''<li><button type="button" data-t="{t}"{' aria-current="step"' if i == 0 else ''}><span class="n">{i+1}</span><span class="t"><b>{title}</b><span>{body}</span></span><time>{int(t)//60}:{int(t)%60:02d}</time></button></li>'''
+                    for i, (t, title, body) in enumerate(FLOW_CHAPTERS))
+    return f'''
+<section class="feat flow" id="flow" aria-labelledby="h-flow">
+  <div class="player">
+    <div class="vbar" role="slider" tabindex="0" aria-label="影片進度" aria-valuemin="0" aria-valuemax="{int(FLOW_LEN)}" aria-valuenow="0"><i></i></div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="scr"><video id="flowv" muted playsinline preload="auto" poster="{b64('poster.jpg', 'image/jpeg')}" src="{b64('flow.mp4', 'video/mp4')}" aria-label="實機錄影：從預約到收款"></video></div>
+    </div>
+    <div class="ctl">
+      <button type="button" class="replay" aria-label="從頭播放"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.3-5.6M4 4v4h4"/></svg></button>
+      <button type="button" class="play" aria-label="播放"><svg class="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg><svg class="i-play" viewBox="0 0 24 24"><path d="M7 4.5l12 7.5-12 7.5z"/></svg></button>
+      <span class="cnt" aria-live="off"><b id="flowt">0:00</b> / 1:08</span>
+    </div>
+  </div>
+  <div class="txt">
+    <p class="tag">實機錄影・68 秒</p>
+    <h2 id="h-flow">從預約到收到錢，一次看完</h2>
+    <p class="lead">同一支手機上，學生和教練輪流操作：學生預約、教練確認、學生掃 QR 轉帳、教練確認收到。點右邊任一步，影片就跳過去。</p>
+    <ol class="steps chapters">{chaps}</ol>
+  </div>
+</section>'''
 
 SECTIONS = [
   dict(id="find", tab="找到你", title="學生怎麼找到你",
@@ -242,6 +293,19 @@ button {{ font:inherit; color:inherit; background:none; border:0; padding:0; cur
 .qrfig figcaption {{ font-size:15px; min-width:0 }}
 .qrfig code {{ display:block; margin-top:6px; font-family:var(--disp); font-size:13px; letter-spacing:.04em; color:var(--muted); word-break:break-all }}
 
+/* the recorded flow: one scrub bar, chapters with timestamps */
+.flow .phone .scr video {{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:top; display:block; background:var(--screen) }}
+.vbar {{ height:6px; border-radius:3px; background:var(--line); margin-bottom:14px; cursor:pointer; position:relative; touch-action:none }}
+.vbar i {{ position:absolute; inset:0; background:var(--lime); border-radius:3px; transform:scaleX(0); transform-origin:left }}
+.ctl .replay {{ border-color:var(--line) }}
+.flow .ctl .play .i-pause {{ display:none }}
+.flow .ctl .play .i-play {{ display:block }}
+.flow.playing .ctl .play .i-pause {{ display:block }}
+.flow.playing .ctl .play .i-play {{ display:none }}
+.tag {{ display:inline-block; font-size:13px; font-weight:700; color:var(--lime-ink); background:var(--lime); border-radius:6px; padding:2px 10px; margin:0 0 14px }}
+.chapters time {{ margin-left:auto; flex:none; font-family:var(--disp); font-size:16px; color:var(--muted); font-variant-numeric:tabular-nums; padding-top:3px }}
+.chapters button {{ align-items:flex-start }}
+
 /* close */
 .join {{ margin-block:88px 40px; background:var(--lime); color:var(--lime-ink); border-radius:20px; padding:clamp(28px,5vw,56px); display:grid; grid-template-columns:1.3fr .7fr; gap:32px; align-items:end }}
 .join h2 {{ font-family:var(--disp); font-weight:700; font-size:clamp(40px,5vw,68px); line-height:1; margin:0 0 14px }}
@@ -280,7 +344,7 @@ footer {{ display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; 
   <div>
     <h1>學生自己來預約，<br>錢直接進你帳戶，<br><em>你只管教球。</em></h1>
     <p>PIKYOO 是雙北匹克球教練的接案工具：一個頁面讓學生找到你、自己選時段、掃 QR 轉帳；一支手機管行事曆、點名、收款和學生紀錄。</p>
-    <div class="cta"><a class="btn primary" href="#pay">看收款怎麼運作</a><a class="btn" href="#find">從頭看每個功能</a></div>
+    <div class="cta"><a class="btn primary" href="#flow">看 68 秒實機錄影</a><a class="btn" href="#find">逐一看每個功能</a></div>
   </div>
   <div class="hero-stage">
     <div class="phone"><div class="notch"></div><div class="scr"><img class="a" src="{img('09-pay-qr')}" alt="學生的付款頁：轉帳 QR" width="390" height="844"></div><div class="scan" aria-hidden="true"></div></div>
@@ -289,9 +353,10 @@ footer {{ display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; 
 </header>
 </div>
 
-<nav class="tabs" aria-label="功能"><ol>{"".join(f'<li><a href="#{s["id"]}"><i></i>{s["tab"]}</a></li>' for s in SECTIONS)}</ol></nav>
+<nav class="tabs" aria-label="功能"><ol><li><a href="#flow"><i></i>完整流程</a></li>{"".join(f'<li><a href="#{s["id"]}"><i></i>{s["tab"]}</a></li>' for s in SECTIONS)}</ol></nav>
 
 <main class="wrap">
+{flow_html()}
 {"".join(section_html(s) for s in SECTIONS)}
 <section class="join" id="join" aria-labelledby="h-join">
   <div><h2 id="h-join">成為第一批教練</h2><p>我們正在找雙北第一批進駐的匹克球教練。現在免費、不抽成；前期由我們協助建頁、拍照、搬學生，你只要照常上課。</p></div>
@@ -313,7 +378,7 @@ footer {{ display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; 
     (function f(now){{ var p = Math.min(1, (now - t0) / 900), e = 1 - Math.pow(1 - p, 4); plus.textContent = '+NT$' + Math.round(600 * e); if (p < 1) requestAnimationFrame(f); }})(t0); }}, 1700); }}
 
   // each feature section is a little player: it runs only while on screen, and stops for good once the viewer takes over
-  document.querySelectorAll('.feat').forEach(function(sec){{
+  document.querySelectorAll('.feat[data-frames]').forEach(function(sec){{
     var frames = JSON.parse(sec.dataset.frames), n = frames.length, i = 0;
     var front = sec.querySelector('img.a'), back = sec.querySelector('img.b');
     var bars = [].slice.call(sec.querySelectorAll('.bars i')), steps = [].slice.call(sec.querySelectorAll('.steps button'));
@@ -340,6 +405,31 @@ footer {{ display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; 
     new IntersectionObserver(function(es){{ visible = es[0].isIntersecting; sync(); }}, {{ threshold: .45 }}).observe(sec.querySelector('.player'));
     show(0); sync();
   }});
+
+  // the recorded flow: plays muted when on screen; chapters seek and follow playback
+  var fsec = document.getElementById('flow'), v = document.getElementById('flowv');
+  if (fsec && v) {{
+    var bar = fsec.querySelector('.vbar'), fill = bar.querySelector('i'), tlabel = document.getElementById('flowt');
+    var chs = [].slice.call(fsec.querySelectorAll('.chapters button')), fplay = fsec.querySelector('.play'), held = calm;
+    var fmt = function(x){{ x = Math.floor(x); return Math.floor(x / 60) + ':' + String(x % 60).padStart(2, '0'); }};
+    function paint(){{
+      var d = v.duration || {FLOW_LEN}, t = v.currentTime;
+      fill.style.transform = 'scaleX(' + Math.min(1, t / d) + ')'; tlabel.textContent = fmt(t); bar.setAttribute('aria-valuenow', Math.floor(t));
+      var k = 0; chs.forEach(function(c, j){{ if (t + .05 >= +c.dataset.t) k = j; }});
+      chs.forEach(function(c, j){{ if (j === k) c.setAttribute('aria-current', 'step'); else c.removeAttribute('aria-current'); }});
+    }}
+    v.addEventListener('timeupdate', paint);
+    v.addEventListener('play', function(){{ fsec.classList.add('playing'); fplay.setAttribute('aria-label', '暫停'); }});
+    v.addEventListener('pause', function(){{ fsec.classList.remove('playing'); fplay.setAttribute('aria-label', '播放'); }});
+    fplay.addEventListener('click', function(){{ held = !v.paused; if (v.paused) {{ if (v.ended) v.currentTime = 0; v.play().catch(function(){{}}); }} else v.pause(); }});
+    fsec.querySelector('.replay').addEventListener('click', function(){{ held = false; v.currentTime = 0; v.play().catch(function(){{}}); }});
+    chs.forEach(function(c){{ c.addEventListener('click', function(){{ v.currentTime = +c.dataset.t; paint(); if (v.paused && !held) v.play().catch(function(){{}}); }}); }});
+    function seek(e){{ var r = bar.getBoundingClientRect(); v.currentTime = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * (v.duration || {FLOW_LEN}); paint(); }}
+    bar.addEventListener('pointerdown', function(e){{ bar.setPointerCapture(e.pointerId); seek(e); bar.onpointermove = seek; }});
+    bar.addEventListener('pointerup', function(){{ bar.onpointermove = null; }});
+    bar.addEventListener('keydown', function(e){{ if (e.key === 'ArrowRight') v.currentTime += 5; if (e.key === 'ArrowLeft') v.currentTime -= 5; paint(); }});
+    new IntersectionObserver(function(es){{ if (es[0].isIntersecting) {{ if (!held && v.paused && !v.ended) v.play().catch(function(){{}}); }} else if (!v.paused) v.pause(); }}, {{ threshold: .5 }}).observe(fsec.querySelector('.phone'));
+  }}
 
   // the real QR fills in when the payment section comes into view
   var fig = document.querySelector('.qrfig');

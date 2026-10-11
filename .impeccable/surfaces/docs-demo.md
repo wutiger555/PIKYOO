@@ -15,7 +15,7 @@ THESIS: A feature tour a coach can actually read: each feature gets its own sect
 
 OWN-WORLD: Carbon stage (#0F110F; #1A1D1B + weave for active steps, the QR panel and the account stub), lime only on money and on the live step/tab (≤8% of a frame), #F2F3EF only on the phone screens. Barlow Condensed for display and every figure, Noto Sans TC for body. Ball-hole dots as tab and detail markers; story-style progress bars over each phone.
 
-STORY: The hero states the offer and shows the QR payment with NT$600 landing in the coach's account. Sticky tabs (找到你・預約・收款・行事曆・上課・學生・你的頁面) let the coach jump to any feature; each section plays on its own and can be paused, stepped or clicked into. Ends at the lime first-batch invitation.
+STORY: First section after the hero is a 68-second recorded run (booking → coach confirms → student scans the QR and reports → coach confirms → paid) beside 12 clickable chapters that seek the video and follow playback. The hero states the offer and shows the QR payment with NT$600 landing in the coach's account. Sticky tabs (找到你・預約・收款・行事曆・上課・學生・你的頁面) let the coach jump to any feature; each section plays on its own and can be paused, stepped or clicked into. Ends at the lime first-batch invitation.
 
 FIRST VIEWPORT: Brand top left; headline 「學生自己來預約，錢直接進你帳戶，你只管教球。」 left at clamp(40px,4.6vw,66px); two actions (看收款怎麼運作 primary, 從頭看每個功能); the payment-page phone right with one scan sweep and the carbon stub counting to +NT$600; the feature tab row at the fold.
 
