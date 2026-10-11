@@ -59,14 +59,14 @@ h1 em {{ font-style:normal; color:var(--lime) }}
 section {{ padding-block:56px; border-top:1px solid var(--line) }}
 h2 {{ font-family:var(--disp); font-weight:700; font-size:clamp(32px,3.6vw,46px); line-height:1.05; margin:0 0 6px }}
 .who {{ color:var(--muted); margin:0 0 36px; font-size:17px }}
-.row {{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:clamp(20px,4vw,48px) }}
-.clip {{ margin:0; display:grid; gap:18px; align-content:start }}
-.phone {{ position:relative; width:min(100%,250px); aspect-ratio:402/874; border-radius:12% / 5.5%; background:#070807; padding:3.2%; box-shadow:0 24px 60px rgba(0,0,0,.55), inset 0 0 0 1.5px #3A3F3A; cursor:pointer }}
+.row {{ display:grid; gap:72px }}
+.clip {{ margin:0; display:grid; grid-template-columns:280px minmax(0,1fr); gap:clamp(32px,6vw,80px); align-items:center }}
+.phone {{ position:relative; width:100%; aspect-ratio:402/874; border-radius:12% / 5.5%; background:#070807; padding:3.2%; box-shadow:0 24px 60px rgba(0,0,0,.55), inset 0 0 0 1.5px #3A3F3A; cursor:pointer }}
 .phone video {{ width:100%; height:100%; display:block; object-fit:cover; object-position:top; border-radius:9.5% / 4.4%; background:var(--screen) }}
-.clip figcaption {{ display:grid; grid-template-columns:auto 1fr; gap:2px 12px; align-items:baseline; max-width:34ch }}
-.n {{ grid-row:span 2; width:28px; height:28px; border-radius:50%; display:grid; place-items:center; font-family:var(--disp); font-weight:700; font-size:16px; background:var(--lime); color:var(--lime-ink) }}
-.clip b {{ font-size:19px }}
-.d {{ color:var(--muted); font-size:15px }}
+.clip figcaption {{ display:grid; gap:10px; max-width:36ch }}
+.n {{ width:40px; height:40px; border-radius:50%; display:grid; place-items:center; font-family:var(--disp); font-weight:700; font-size:22px; background:var(--lime); color:var(--lime-ink) }}
+.clip b {{ font-family:var(--disp); font-size:clamp(28px,3vw,38px); line-height:1.1 }}
+.d {{ color:var(--muted); font-size:18px }}
 
 .join {{ margin-block:24px 40px; background:var(--lime); color:var(--lime-ink); border-radius:20px; padding:clamp(28px,5vw,48px); display:flex; flex-wrap:wrap; gap:20px 40px; align-items:end; justify-content:space-between }}
 .join h2 {{ margin:0 0 10px; font-size:clamp(36px,4.4vw,56px) }}
@@ -77,9 +77,10 @@ h2 {{ font-family:var(--disp); font-weight:700; font-size:clamp(32px,3.6vw,46px)
 footer {{ color:var(--muted); font-size:13px; padding-block:0 40px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px }}
 
 @media (max-width:760px) {{
-  .row {{ grid-template-columns:1fr; gap:44px }}
-  .clip {{ grid-template-columns:150px 1fr; align-items:center; gap:18px }}
-  .phone {{ width:150px }}
+  .row {{ gap:56px }}
+  .clip {{ grid-template-columns:1fr; gap:20px; justify-items:center; text-align:center }}
+  .phone {{ width:min(240px,68vw) }}
+  .clip figcaption {{ justify-items:center }}
   .flow li + li::before {{ width:14px }}
   .flow li span {{ padding:8px 12px; font-size:15px }}
   .flow li small {{ display:none }}
@@ -103,13 +104,13 @@ footer {{ color:var(--muted); font-size:13px; padding-block:0 40px; display:flex
 
 <section aria-labelledby="h-s">
   <h2 id="h-s">學生怎麼用</h2>
-  <p class="who">三個畫面，從找到你到付完錢。</p>
+  <p class="who">三步，從找到你到付完錢。</p>
   <div class="row">{row(STUDENT, "學生")}</div>
 </section>
 
 <section aria-labelledby="h-c">
   <h2 id="h-c">你怎麼用</h2>
-  <p class="who">教練端只有三個分頁：今天、學生、我的頁面。平常只要做這三件事。</p>
+  <p class="who">平常只要做這三件事。</p>
   <div class="row">{row(COACH, "教練")}</div>
 </section>
 
@@ -136,7 +137,11 @@ footer {{ color:var(--muted); font-size:13px; padding-block:0 40px; display:flex
     var h = innerHeight || document.documentElement.clientHeight;
     clips.forEach(function(it){{
       var r = it.v.getBoundingClientRect(), shown = Math.min(r.bottom, h) - Math.max(r.top, 0);
-      if (shown > r.height * .5) {{ if (!it.held && it.v.paused) it.v.play().catch(function(){{}}); }}
+      it.score = shown > r.height * .5 ? -Math.abs((r.top + r.bottom) / 2 - h / 2) : -Infinity;
+    }});
+    var best = clips.reduce(function(a, b){{ return b.score > a.score ? b : a; }});
+    clips.forEach(function(it){{
+      if (it === best && it.score > -Infinity) {{ if (!it.held && it.v.paused) it.v.play().catch(function(){{}}); }}
       else if (!it.v.paused) it.v.pause();
     }});
   }}
