@@ -811,6 +811,7 @@ export type Database = {
           method: Database["public"]["Enums"]["pay_method"]
           paid_at: string | null
           payer_id: string
+          proof_path: string | null
           ref_last5: string | null
           reported_at: string | null
           status: Database["public"]["Enums"]["payment_status"]
@@ -823,6 +824,7 @@ export type Database = {
           method: Database["public"]["Enums"]["pay_method"]
           paid_at?: string | null
           payer_id: string
+          proof_path?: string | null
           ref_last5?: string | null
           reported_at?: string | null
           status?: Database["public"]["Enums"]["payment_status"]
@@ -835,6 +837,7 @@ export type Database = {
           method?: Database["public"]["Enums"]["pay_method"]
           paid_at?: string | null
           payer_id?: string
+          proof_path?: string | null
           ref_last5?: string | null
           reported_at?: string | null
           status?: Database["public"]["Enums"]["payment_status"]
@@ -1323,7 +1326,7 @@ export type Database = {
       reject_payment_report: { Args: { p_payment: string }; Returns: undefined }
       remind_payment: { Args: { p_payment: string }; Returns: undefined }
       report_payment: {
-        Args: { p_last5: string; p_payment: string }
+        Args: { p_last5: string; p_payment: string; p_proof?: string }
         Returns: undefined
       }
       request_booking: {

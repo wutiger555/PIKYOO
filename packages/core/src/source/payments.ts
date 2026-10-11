@@ -17,22 +17,27 @@ const STATUS: Record<Enums<"payment_status">, PaymentRow["status"]> = { waiting:
 const explain = (message: string) =>
   new Error(/not found/.test(message) ? "找不到這筆付款，或已經處理過了"
     : /ref_last5/.test(message) ? "末五碼請填 5 個數字"
+    : /proof path/.test(message) ? "截圖上傳有問題，請重新選一張"
     : /permission denied|row-level security/.test(message) ? "請先登入"
     : `沒有成功，請稍後再試（${message}）`);
 
 /** 收款: payments for the coach's confirmed bookings, newest first, in the console row shape. */
 export async function coachPayments(sb: Sb, coachId: string): Promise<PaymentRow[]> {
   const r = await sb.from("payments")
-    .select("id, amount, method, status, ref_last5, reported_at, paid_at, lesson_bookings!inner(starts_at, coach_id, coach_plans(name)), profiles!payments_payer_id_fkey(display_name)")
+    .select("id, amount, method, status, ref_last5, proof_path, reported_at, paid_at, lesson_bookings!inner(starts_at, coach_id, coach_plans(name)), profiles!payments_payer_id_fkey(display_name)")
     .eq("lesson_bookings.coach_id", coachId).order("created_at", { ascending: false }).limit(100);
   if (r.error) throw explain(r.error.message);
+  // screenshots live in a private bucket: hand out links that expire in an hour (only reports still being checked)
+  const paths = r.data.flatMap((p) => (p.proof_path && p.status === "reported" ? [p.proof_path] : []));
+  const signed = paths.length ? await sb.storage.from("payment-proofs").createSignedUrls(paths, 3600) : { data: [], error: null };
+  const urlOf = new Map((signed.data ?? []).flatMap((s) => (s.path && s.signedUrl ? [[s.path, s.signedUrl] as const] : [])));
   return r.data.map((p) => {
     const lesson = tpeParts(p.lesson_bookings.starts_at);
     const name = p.profiles?.display_name || "學生";
     const st = STATUS[p.status];
     return {
       id: p.id, initial: name.slice(0, 1), name, what: `${p.lesson_bookings.coach_plans?.name ?? "課程"}・${lesson.date}（${lesson.weekday}）`,
-      amount: p.amount, via: PAY[p.method], status: st, ref: p.ref_last5 ?? undefined,
+      amount: p.amount, via: PAY[p.method], status: st, ref: p.ref_last5 ?? undefined, proof: (p.proof_path && urlOf.get(p.proof_path)) || undefined,
       at: st === "paid" ? tpeParts(p.paid_at ?? Date.now()).date : st === "reported" ? `${tpeParts(p.reported_at ?? Date.now()).date} 回報` : "等學生付款",
     };
   });
@@ -56,9 +61,9 @@ export const remindPayment = async (sb: Sb, paymentId: string) => {
   if (r.error) throw explain(r.error.message);
 };
 
-/** 我已付款: last5 for a bank transfer, empty otherwise. */
-export const reportPayment = async (sb: Sb, paymentId: string, last5: string) => {
-  const r = await sb.rpc("report_payment", { p_payment: paymentId, p_last5: last5 });
+/** 我已付款: last5 for a bank transfer (empty otherwise), and the storage path of a 對帳截圖 if one was attached. */
+export const reportPayment = async (sb: Sb, paymentId: string, last5: string, proofPath?: string) => {
+  const r = await sb.rpc("report_payment", { p_payment: paymentId, p_last5: last5, ...(proofPath ? { p_proof: proofPath } : {}) });
   if (r.error) throw explain(r.error.message);
 };
 

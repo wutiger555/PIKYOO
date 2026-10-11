@@ -354,7 +354,7 @@ export function CoachPaymentsScreen() {
                 <td>{p.status === "reported" && <input type="checkbox" className="pay-pick" aria-label={`選取 ${p.name}`} checked={picked.includes(p.id)} onChange={() => togglePick(p.id)} />}</td>
                 <td><div className="con-who"><span className="avatar">{p.initial}</span><b>{p.name}</b></div></td>
                 <td>{p.what}</td>
-                <td><span className="tag tag-neutral">{p.via}</span>{p.status === "reported" && p.ref && <small>末五碼 <b className="num">{p.ref}</b></small>}</td>
+                <td><span className="tag tag-neutral">{p.via}</span>{p.status === "reported" && p.ref && <small>末五碼 <b className="num">{p.ref}</b></small>}{p.status === "reported" && p.proof && <ProofThumb src={p.proof} name={p.name} />}</td>
                 <td><Status tone={PAY_LABEL[p.status][1]}>{PAY_LABEL[p.status][0]}</Status><small>{p.status === "paid" ? `${p.at} 入帳` : p.at}</small></td>
                 <td className="r num con-amt">{money(p.amount)}</td>
                 <td>
@@ -401,6 +401,7 @@ export function CoachPaymentsScreen() {
                   <span>{p.at}</span>
                 )}
               </div>
+              {p.status === "reported" && p.proof && <ProofThumb src={p.proof} name={p.name} />}
               {p.status === "reported" && (
                 <div className="btnrow btnrow-tight">
                   <button className="btn btn-secondary" onClick={() => notReceived(p)}>還沒收到</button>
@@ -527,5 +528,16 @@ function PayoutDetailsSheet({ onClose }: { onClose: () => void }) {
       <p className="fine" style={{ margin: "8px 0 0" }}>學生付款頁會用這個帳號產生轉帳 QR code，用銀行 App 一掃就帶入帳號和金額，錢直接進你的帳戶。</p>
       <button className="btn btn-primary btn-lg btn-block" style={{ marginTop: 12 }} disabled={busy} onClick={save}>{busy ? "儲存中…" : "儲存"}</button>
     </Sheet>
+  );
+}
+
+/** 對帳截圖: a small preview; tapping opens the full screenshot in a new tab (signed link, expires in an hour). */
+function ProofThumb({ src, name }: { src: string; name: string }) {
+  return (
+    <a className="proof-thumb" href={src} target="_blank" rel="noopener noreferrer" aria-label={`看 ${name} 的轉帳截圖`}>
+      {/* eslint-disable-next-line @next/next/no-img-element -- signed storage link, not an optimisable asset */}
+      <img src={src} alt="" />
+      <span>轉帳截圖</span>
+    </a>
   );
 }

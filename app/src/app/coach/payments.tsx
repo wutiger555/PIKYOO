@@ -1,6 +1,7 @@
+import { Image } from "expo-image";
 import { router } from "expo-router";
 import { useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Modal, Pressable, Text, View } from "react-native";
 import { PAYOUT_METHODS, RECEIVED_BEFORE } from "@pikyoo/core/data/coaches";
 import { money } from "@pikyoo/core/format";
 import type { PaymentRow } from "@pikyoo/core/types";
@@ -13,16 +14,17 @@ import { Avatar, c, ConsolePage } from "@/ui/console";
 import { Icon } from "@/ui/Icon";
 import { Sheet } from "@/ui/Sheet";
 import { Status } from "@/ui/Status";
-import { color, radius } from "@/ui/theme";
+import { color, photo, radius } from "@/ui/theme";
 import { toast } from "@/ui/Toast";
 
 const PAY_LABEL: Record<PaymentRow["status"], [string, "almost" | "info" | "open"]> = { wait: ["待付款", "almost"], reported: ["學生已回報", "info"], paid: ["已收款", "open"] };
 
-/** 收款對帳 (website: CoachPaymentsScreen): received vs due, filter by state, confirm transfers by last five digits,
- *  several reports at once. */
+/** 收款對帳 (website: CoachPaymentsScreen): received vs due, filter by state, check each report against its 對帳截圖 or
+ *  last five digits, and confirm several reports at once. */
 export default function CoachPayments() {
   const { payments, markPaid, rejectReport, remindPayment } = useSession();
   const [collect, setCollect] = useState<PaymentRow | null>(null);
+  const [viewing, setViewing] = useState<string | null>(null);
   const [picked, setPicked] = useState<string[]>([]);
   const reported = payments.filter((p) => p.status === "reported");
   const pickedRows = reported.filter((p) => picked.includes(p.id));
@@ -95,6 +97,12 @@ export default function CoachPayments() {
             <Tag>{p.via}</Tag>
             <Text style={{ fontSize: 13, color: color.muted }}>{p.status === "reported" ? (p.ref ? <>末五碼 <Num style={{ fontSize: 15 }}>{p.ref}</Num>・{p.at}</> : p.at) : p.status === "paid" ? `${p.at} 入帳` : p.at}</Text>
           </View>
+          {p.status === "reported" && p.proof && (
+            <Pressable onPress={() => setViewing(p.proof!)} style={{ flexDirection: "row", alignItems: "center", gap: 10 }} accessibilityLabel={`看 ${p.name} 的轉帳截圖`}>
+              <Image source={{ uri: photo(p.proof) }} style={{ width: 44, height: 72, borderRadius: 6, borderWidth: 1, borderColor: color.line }} contentFit="cover" />
+              <Text style={{ fontSize: 14, fontWeight: "700", textDecorationLine: "underline" }}>轉帳截圖（點開看）</Text>
+            </Pressable>
+          )}
           {p.status === "reported" && (
             <View style={{ flexDirection: "row", gap: 8 }}>
               <Btn label="還沒收到" lg={false} style={{ flex: 1, borderRadius: 999 }} onPress={() => { rejectReport(p.id); toast("已請學生重新確認", `${p.name} 會收到通知`); }} />
@@ -115,6 +123,14 @@ export default function CoachPayments() {
       {!list.length && <Text style={c.hint}>這個分類沒有款項。</Text>}
       <Text style={c.hint}>錢直接進你自己的帳戶，PIKYOO 幫你把付款資訊給學生、記錄對帳。</Text>
       {settings && <PayoutSheet onClose={() => setSettings(false)} />}
+      {viewing && (
+        <Modal visible animationType="fade" onRequestClose={() => setViewing(null)}>
+          <Pressable onPress={() => setViewing(null)} style={{ flex: 1, backgroundColor: "#000" }} accessibilityLabel="關閉截圖">
+            <Image source={{ uri: photo(viewing) }} style={{ flex: 1, margin: 16, marginTop: 60 }} contentFit="contain" />
+            <Text style={{ color: "#fff", textAlign: "center", fontSize: 14, paddingBottom: 40 }}>點一下關閉</Text>
+          </Pressable>
+        </Modal>
+      )}
       {collect && <CollectQRSheet who={collect.name} amount={collect.amount} onClose={() => setCollect(null)} onReceived={() => { markPaid(collect.id); toast(`已記錄 ${collect.name} 付款`); setCollect(null); }} />}
     </ConsolePage>
   );

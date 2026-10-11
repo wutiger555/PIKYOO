@@ -16,8 +16,8 @@ const run = async (f: () => Promise<void>) => {
 
 export const markPaidAction = async (paymentId: string) => run(async () => markPaid(await supabaseServer(), String(paymentId)));
 
-export const reportPaymentAction = async (paymentId: string, last5: string) =>
-  run(async () => reportPayment(await supabaseServer(), String(paymentId), String(last5 ?? "")));
+export const reportPaymentAction = async (paymentId: string, last5: string, proofPath?: string) =>
+  run(async () => reportPayment(await supabaseServer(), String(paymentId), String(last5 ?? ""), proofPath ? String(proofPath) : undefined));
 
 export const savePayoutAction = async (coachRowId: string, details: PayoutDetails) =>
   run(async () => savePayout(await supabaseServer(), String(coachRowId), details));

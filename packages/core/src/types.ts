@@ -264,6 +264,8 @@ export interface PaymentRow {
   status: "wait" | "reported" | "paid";
   /** last-5 digits reported for a bank transfer */
   ref?: string;
+  /** 對帳截圖 the student attached: a link the coach can open (signed, expires in an hour) */
+  proof?: string;
   at: string;
 }
 

@@ -13,6 +13,7 @@ import { bookingDays, DEMO_PAYOUT } from "@pikyoo/core/data/coaches";
 import type { MyBooking } from "@pikyoo/core/source/bookings";
 import type { MyPayment } from "@pikyoo/core/source/payments";
 import { reportPaymentAction } from "@/lib/payments";
+import { uploadPaymentProof } from "@/lib/uploads";
 import { cancelBookingAction } from "@/lib/bookings";
 import { newBooking, useCoach, useDemo } from "@/lib/demo-store";
 import { realAuth } from "@/lib/env";
@@ -140,7 +141,7 @@ export function BookingStatusScreen({ demo, live, payment }: { demo?: BookingSta
       <div className="state-card">
         <Status tone="info">等待教練對帳</Status>
         <h1>已回報付款</h1>
-        <p className="text-muted">{realAuth ? (payment?.ref ? `末五碼 ${payment.ref}。` : "") : last5 ? `末五碼 ${last5}。` : "你回報已用 LINE Pay 付款。"}教練確認收到後會通知你。</p>
+        <p className="text-muted">{realAuth ? (payment?.ref ? `末五碼 ${payment.ref}。` : "") : last5 ? `末五碼 ${last5}。` : b.pay === "LINE Pay" ? "你回報已用 LINE Pay 付款。" : "已附上轉帳截圖。"}教練確認收到後會通知你。</p>
         {!realAuth && (
           <button className="btn btn-ghost demo-btn" onClick={() => { setStatus("paid"); toast("教練確認收到付款"); }}>
             <Icon name="info" size={16} />Demo：模擬教練確認收到
@@ -213,10 +214,15 @@ function LivePayBox({ payment, pay }: { payment: MyPayment | null; pay: string }
   const toast = useToast();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
-  const report = async (ref: string) => {
+  // a screenshot goes straight from the browser to the private bucket first, then the report points at it
+  const report = async (ref: string, proof?: File | null) => {
     if (!payment) return;
     setBusy(true);
-    const r = await reportPaymentAction(payment.id, ref);
+    let path: string | undefined;
+    if (proof) {
+      try { path = await uploadPaymentProof(payment.id, proof); } catch (e) { setBusy(false); return toast((e as Error).message); }
+    }
+    const r = await reportPaymentAction(payment.id, ref, path);
     setBusy(false);
     if (r.error) return toast(r.error);
     toast("已通知教練，確認收到後會通知你");

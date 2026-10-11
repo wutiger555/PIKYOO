@@ -8,12 +8,20 @@ import { money } from "@pikyoo/core/format";
 import { twqrTransfer } from "@pikyoo/core/twqr";
 
 /** 銀行轉帳 in two steps (docs/PAYMENTS.md §1.5): ① transfer — scan the TWQR code with any bank app (on a phone: save it,
- *  then 從相簿掃描), or by hand with copy buttons; ② report the last five digits. Money goes straight to the coach. */
+ *  then 從相簿掃描), or by hand with copy buttons; ② report with the bank app's screenshot or the last five digits
+ *  (either is enough). Money goes straight to the coach. */
 export function TransferPay({ bank, account, name, amount, busy, onReport }: {
-  bank: string; account: string; name: string; amount: number; busy?: boolean; onReport: (last5: string) => void;
+  bank: string; account: string; name: string; amount: number; busy?: boolean; onReport: (last5: string, proof: File | null) => void;
 }) {
   const toast = useToast();
   const [last5, setLast5] = useState("");
+  const [proof, setProof] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const pick = (f: File | null) => {
+    if (preview) URL.revokeObjectURL(preview);
+    setProof(f);
+    setPreview(f ? URL.createObjectURL(f) : null);
+  };
   const [qr, setQr] = useState<string | null>(null);
   const code = twqrTransfer({ bank, account, amount });
   useEffect(() => {
@@ -60,11 +68,24 @@ export function TransferPay({ bank, account, name, amount, busy, onReport }: {
       </li>
       <li>
         <b>轉好了，回報給教練</b>
+        <p className="fine" style={{ margin: 0 }}>附上銀行 App 的轉帳成功畫面，或填轉出帳號末五碼，擇一就可以。</p>
+        {preview ? (
+          <div className="proof-pick">
+            {/* eslint-disable-next-line @next/next/no-img-element -- a local preview before upload */}
+            <img src={preview} alt="轉帳截圖預覽" />
+            <button className="linkbtn" onClick={() => pick(null)}>換一張</button>
+          </div>
+        ) : (
+          <label className="btn btn-secondary btn-block proof-add">
+            <Icon name="image" size={18} />附上轉帳截圖
+            <input type="file" accept="image/*" hidden onChange={(e) => pick(e.target.files?.[0] ?? null)} />
+          </label>
+        )}
         <div className="field">
-          <label htmlFor="last5">你的轉出帳號末五碼</label>
+          <label htmlFor="last5">轉出帳號末五碼{proof ? "（選填）" : ""}</label>
           <input id="last5" className="input num" inputMode="numeric" maxLength={5} value={last5} onChange={(e) => setLast5(e.target.value.replace(/\D/g, ""))} />
         </div>
-        <button className="btn btn-primary btn-lg btn-block" disabled={last5.length !== 5 || busy} onClick={() => onReport(last5)}>我已轉帳</button>
+        <button className="btn btn-primary btn-lg btn-block" disabled={!(proof || last5.length === 5) || (last5.length > 0 && last5.length !== 5) || busy} onClick={() => onReport(last5, proof)}>我已轉帳</button>
       </li>
     </ol>
   );
