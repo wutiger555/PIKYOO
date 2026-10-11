@@ -7,22 +7,23 @@ import base64, pathlib
 ROOT = pathlib.Path(__file__).parent
 def b64(name, mime): return f"data:{mime};base64," + base64.b64encode((ROOT / name).read_bytes()).decode()
 
+# Six steps in the order a coach lives them: found, booked, the schedule, teaching, the students, then the money.
 STUDENT = [
-  ("s1", "找到你", "學生打開 App 找教練，點進你的頁面，看到你的介紹、課程和價錢。"),
-  ("s2", "選時段、送出預約", "選課程、選時段、選付款方式，按送出。這時還不用付錢。"),
-  ("s3", "你答應後，轉帳付款", "掃 QR 或照帳號轉帳，轉好按「我付好了」。錢直接進你的帳戶。"),
+  ("s1", "學生找到你", "你有一個自己的教練頁：照片、認證、課程和價錢，學生一頁看完。"),
+  ("s2", "學生自己約課", "學生挑你開放的時段送出，不用再來回傳訊息喬時間。"),
 ]
 COACH = [
-  ("c1", "答應預約", "新的預約出現在「待辦」，按一下確認，付款資訊就自動傳給學生。"),
-  ("c2", "看今天的課", "點進一堂課：誰要來、誰付了、上次的筆記，都在同一頁。"),
-  ("c3", "確認收到錢", "學生說付好了，你看一下帳戶，按「收到了」就完成。"),
+  ("c4", "你的課表", "今天、這週有哪些課一目了然；新的預約在「待辦」，按一下答應。"),
+  ("c2", "上課這一堂", "點進一堂課：誰要來、點名、課前備註，都在同一頁。"),
+  ("c5", "每位學生的紀錄", "上過幾堂、套票剩幾堂、你寫的課後筆記，下次上課前看一眼就好。"),
+  ("c3", "收款", "學生直接轉給你，說付好了，你看一下帳戶按「收到了」。"),
 ]
 
-def row(items, who):
+def row(items, who, start=0):
     return "".join(f'''
     <figure class="clip">
       <div class="phone"><video muted playsinline loop preload="metadata" poster="{b64(f'clip-{k}.jpg', 'image/jpeg')}" src="{b64(f'clip-{k}.mp4', 'video/mp4')}" aria-label="{who}：{t}（實機錄影）"></video></div>
-      <figcaption><span class="n">{i+1}</span><b>{t}</b><span class="d">{d}</span></figcaption>
+      <figcaption><span class="n">{start+i+1}</span><b>{t}</b><span class="d">{d}</span></figcaption>
     </figure>''' for i, (k, t, d) in enumerate(items))
 
 page = f"""<title>PIKYOO 匹友</title>
@@ -52,8 +53,6 @@ h1 em {{ font-style:normal; color:var(--lime) }}
 .flow li {{ display:flex; align-items:center; font-weight:700; font-size:17px }}
 .flow li span {{ padding:10px 18px; border-radius:999px; border:1.5px solid var(--line); white-space:nowrap }}
 .flow li small {{ color:var(--muted); font-weight:400; margin-left:6px }}
-.flow li:last-child span {{ background:var(--lime); color:var(--lime-ink); border-color:var(--lime) }}
-.flow li:last-child small {{ color:var(--lime-ink) }}
 .flow li + li::before {{ content:""; width:28px; height:1.5px; background:var(--line) }}
 
 section {{ padding-block:56px; border-top:1px solid var(--line) }}
@@ -93,25 +92,26 @@ footer {{ color:var(--muted); font-size:13px; padding-block:0 40px; display:flex
   PIKYOO 匹友
 </div>
 <header>
-  <h1>學生自己約課、自己付款，<br><em>你只要按「答應」。</em></h1>
-  <p class="sub">PIKYOO 是給雙北匹克球教練的 App。學生在上面找到你、預約、轉帳；你用手機答應預約、看今天的課、確認收到錢。</p>
+  <h1>從被學生找到、約課、上課到收款，<br><em>一支手機搞定。</em></h1>
+  <p class="sub">PIKYOO 是給雙北匹克球教練的約課與上課平台。下面六步，就是你用它的一天。</p>
   <ol class="flow" aria-label="整個流程">
-    <li><span>學生預約</span></li>
-    <li><span>你答應</span></li>
-    <li><span>學生付款<small>直接進你帳戶</small></span></li>
+    <li><span>被找到</span></li>
+    <li><span>約課</span></li>
+    <li><span>上課</span></li>
+    <li><span>收款</span></li>
   </ol>
 </header>
 
 <section aria-labelledby="h-s">
-  <h2 id="h-s">學生怎麼用</h2>
-  <p class="who">三步，從找到你到付完錢。</p>
+  <h2 id="h-s">學生這一端</h2>
+  <p class="who">學生用 App 或網站找到你、約你的課。</p>
   <div class="row">{row(STUDENT, "學生")}</div>
 </section>
 
 <section aria-labelledby="h-c">
-  <h2 id="h-c">你怎麼用</h2>
-  <p class="who">平常只要做這三件事。</p>
-  <div class="row">{row(COACH, "教練")}</div>
+  <h2 id="h-c">你這一端</h2>
+  <p class="who">教練 App 只有三個分頁：今天、學生、我的頁面。</p>
+  <div class="row">{row(COACH, "教練", len(STUDENT))}</div>
 </section>
 
 <div class="join">
