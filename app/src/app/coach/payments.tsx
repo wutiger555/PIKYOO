@@ -18,10 +18,20 @@ import { toast } from "@/ui/Toast";
 
 const PAY_LABEL: Record<PaymentRow["status"], [string, "almost" | "info" | "open"]> = { wait: ["待付款", "almost"], reported: ["學生已回報", "info"], paid: ["已收款", "open"] };
 
-/** 收款對帳 (website: CoachPaymentsScreen): received vs due, filter by state, confirm transfers by last five digits. */
+/** 收款對帳 (website: CoachPaymentsScreen): received vs due, filter by state, confirm transfers by last five digits,
+ *  several reports at once. */
 export default function CoachPayments() {
   const { payments, markPaid, rejectReport, remindPayment } = useSession();
   const [collect, setCollect] = useState<PaymentRow | null>(null);
+  const [picked, setPicked] = useState<string[]>([]);
+  const reported = payments.filter((p) => p.status === "reported");
+  const pickedRows = reported.filter((p) => picked.includes(p.id));
+  const togglePick = (id: string) => setPicked((xs) => (xs.includes(id) ? xs.filter((x) => x !== id) : [...xs, id]));
+  const confirmPicked = () => {
+    pickedRows.forEach((p) => markPaid(p.id));
+    toast(`已確認收到 ${pickedRows.length} 筆`, "學生都會收到通知");
+    setPicked([]);
+  };
   const [filter, setFilter] = useState<"all" | PaymentRow["status"]>("all");
   const [settings, setSettings] = useState(false);
   const list = payments.filter((p) => filter === "all" || p.status === filter);
@@ -51,9 +61,32 @@ export default function CoachPayments() {
         ))}
       </View>
 
+      {reported.length > 1 && (
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: color.accentSoft, borderRadius: radius.md, padding: 12 }}>
+          {pickedRows.length ? (
+            <>
+              <Text style={{ flex: 1, fontSize: 14 }}>已選 <Num style={{ fontSize: 16 }}>{pickedRows.length}</Num> 筆・<Num style={{ fontSize: 16 }}>{money(pickedRows.reduce((a, p) => a + p.amount, 0))}</Num></Text>
+              <Pressable onPress={() => setPicked([])} hitSlop={8}><Text style={{ fontSize: 14, fontWeight: "700", textDecorationLine: "underline" }}>取消</Text></Pressable>
+              <Btn kind="primary" label={`確認收到 ${pickedRows.length} 筆`} lg={false} style={{ borderRadius: 999 }} onPress={confirmPicked} />
+            </>
+          ) : (
+            <>
+              <Text style={{ flex: 1, fontSize: 13, color: color.n700 }}>{reported.length} 筆學生已回報，對過銀行入帳後可以一次確認</Text>
+              <Btn label="全選已回報" lg={false} style={{ borderRadius: 999 }} onPress={() => setPicked(reported.map((p) => p.id))} />
+            </>
+          )}
+        </View>
+      )}
+
       {list.map((p) => (
-        <View key={p.id} style={[c.card, p.id === "nmine" && { borderColor: color.accent700, borderWidth: 1.5 }]}>
+        <View key={p.id} style={[c.card, p.id === "nmine" && { borderColor: color.accent700, borderWidth: 1.5 }, picked.includes(p.id) && { borderColor: color.text, borderWidth: 1.5 }]}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+            {p.status === "reported" && (
+              <Pressable onPress={() => togglePick(p.id)} hitSlop={10} accessibilityRole="checkbox" accessibilityState={{ checked: picked.includes(p.id) }} accessibilityLabel={`選取 ${p.name}`}
+                style={{ width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: color.text, alignItems: "center", justifyContent: "center", backgroundColor: picked.includes(p.id) ? color.text : color.surface }}>
+                {picked.includes(p.id) && <Icon name="check" size={13} tint="#fff" />}
+              </Pressable>
+            )}
             <Avatar t={p.initial} />
             <View style={{ flex: 1 }}><Text style={{ fontSize: 16, fontWeight: "800" }}>{p.name}</Text><Text style={{ fontSize: 13, color: color.muted }}>{p.what}</Text></View>
             <View style={{ alignItems: "flex-end", gap: 4 }}><Num style={{ fontSize: 21 }}>{money(p.amount)}</Num><Status tone={PAY_LABEL[p.status][1]}>{PAY_LABEL[p.status][0]}</Status></View>
