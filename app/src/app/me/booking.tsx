@@ -60,10 +60,10 @@ export default function BookingStatusPage() {
   let main: React.ReactNode;
   if (st === "pending") {
     main = card(L.tone, L.label, "預約已送出", `${c.name} ${p.reply}。回覆後會用 LINE 通知你；48 小時沒回覆會自動取消，不收任何費用。`,
-      <Pressable onPress={() => { setStatus("confirmed"); toast(`${c.name} 確認了你的預約`, "通知也會出現在「我的 → 通知」"); }} style={s.demoBtn}>
-        <Text style={{ fontWeight: "700" }}>示範：模擬教練按下確認</Text>
+      <Pressable onPress={() => { setStatus("confirmed"); toast(`${c.name} 答應了你的預約`, "通知也會出現在「我的 → 通知」"); }} style={s.demoBtn}>
+        <Text style={{ fontWeight: "700" }}>示範：模擬教練按下答應</Text>
       </Pressable>,
-      c.id === "mia" ? "也可以到「我的 → 我是教練：教練後台」，以 Mia 的身分在「今天 → 待辦」按確認。" : undefined);
+      c.id === "mia" ? "也可以到「我的 → 我是教練：教練後台」，以 Mia 的身分在「今天 → 待辦」按答應。" : undefined);
   } else if (st === "confirmed") {
     main = (
       <>

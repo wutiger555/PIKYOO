@@ -19,7 +19,7 @@ import { toast } from "@/ui/Toast";
 
 
 
-/** 收款紀錄 (website: CoachPaymentsScreen), opened from 我的頁面 or 今天's 待收款: received vs due, filter by state, confirm transfers by last five digits,
+/** 收款紀錄 (website: CoachPaymentsScreen), opened from 我的頁面 or 今天's 還沒收到: received vs due, filter by state, confirm transfers by last five digits,
  *  several reports at once. */
 export default function CoachPayments() {
   const { payments, markPaid, rejectReport, remindPayment } = useSession();

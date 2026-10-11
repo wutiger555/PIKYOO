@@ -65,7 +65,7 @@ export default function CoachCalendar() {
         <View style={{ flexDirection: "row", gap: 12, marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,.14)" }}>
           <Stat n={String(today.length)} label="今天的課" />
           <Stat n={String(weekCount)} label="本週課" />
-          <Stat n={money(due)} label="待收款 ›" onPress={() => router.push("/coach-payments")} last />
+          <Stat n={money(due)} label="還沒收到 ›" onPress={() => router.push("/coach-payments")} last />
         </View>
       </>
     }>
