@@ -18,13 +18,12 @@ import { newBooking, useCoach, useDemo } from "@/lib/demo-store";
 import { realAuth } from "@/lib/env";
 import type { BookingStatus } from "@pikyoo/core/types";
 import { money } from "@pikyoo/core/format";
+import { BOOKING_LABEL, BOOKING_STEPS, bookingStep } from "@pikyoo/core/labels";
 import { Photo } from "./CoachCard";
 import { bookingTotal } from "./BookScreen";
 import { TransferPay } from "./TransferPay";
 
-const STEPS = ["送出申請", "教練確認", "付款", "上課"];
-
-/** docs/PRD.md §6.3 — 送出申請 → 教練確認 → 付款 → 上課. Payment happens only after the coach confirms.
+/** docs/PRD.md §6.3 — 教練回覆 → 付款 → 完成, the same three words as the app (@pikyoo/core/labels). Payment happens only after the coach confirms.
  *  Desktop: progress and the current step on the left, the lesson summary on the right.
  *  With real sign-in `live` is the student's booking from the database (null: none), and it can be cancelled here. */
 export function BookingStatusScreen({ demo, live, payment }: { demo?: BookingStatus; live?: MyBooking | null; payment?: MyPayment | null }) {
@@ -32,7 +31,6 @@ export function BookingStatusScreen({ demo, live, payment }: { demo?: BookingSta
   const router = useRouter();
   const { booking: demoBooking, setBooking } = useDemo();
   const b = realAuth && live ? live.booking : demoBooking;
-  const [last5, setLast5] = useState("40213");
   // /me/booking?demo=pending|confirmed seeds Mia's trial lesson so the flow index can deep-link a state.
   useEffect(() => {
     if (demo) setBooking({ ...newBooking(), slot: "10:00", status: demo });
@@ -61,7 +59,7 @@ export function BookingStatusScreen({ demo, live, payment }: { demo?: BookingSta
   // real sign-in: after the coach confirms, the payment row says how far the student got
   const st: BookingStatus = live && payment && b.status === "confirmed" ? (payment.status === "wait" ? "confirmed" : payment.status) : b.status;
   const ended = live && live.state !== "pending" && live.state !== "confirmed" ? live.state : null;
-  const idx = ended === "done" ? 4 : { pending: 1, confirmed: 2, reported: 2, paid: 3 }[st];
+  const idx = ended === "done" ? BOOKING_STEPS.length : bookingStep(st);
   const cancel = async () => {
     if (!live || !confirm("確定取消這堂課的預約？教練會收到通知。")) return;
     const r = await cancelBookingAction(live.id);
@@ -92,12 +90,12 @@ export function BookingStatusScreen({ demo, live, payment }: { demo?: BookingSta
   } else if (st === "pending") {
     main = (
       <div className="state-card">
-        <Status tone="almost">待教練確認</Status>
+        <Status tone={BOOKING_LABEL.pending.tone}>{BOOKING_LABEL.pending.label}</Status>
         <h1>預約已送出</h1>
-        <p className="text-muted">{c.name} {p.reply}。確認後會用 LINE 通知你，48 小時未處理會自動取消。</p>
+        <p className="text-muted">{c.name} {p.reply}。答應後會用 LINE 通知你；48 小時沒回覆會自動取消，不收任何費用。</p>
         {!realAuth && (
-          <button className="btn btn-ghost demo-btn" onClick={() => { setStatus("confirmed"); toast(`${c.name.split(" ")[0]} 已確認你的預約`); }}>
-            <Icon name="info" size={16} />Demo：模擬教練按下確認
+          <button className="btn btn-ghost demo-btn" onClick={() => { setStatus("confirmed"); toast(`${c.name.split(" ")[0]} 答應了你的預約`); }}>
+            <Icon name="info" size={16} />Demo：模擬教練按下答應
           </button>
         )}
       </div>
@@ -106,9 +104,9 @@ export function BookingStatusScreen({ demo, live, payment }: { demo?: BookingSta
     main = (
       <>
         <div className="state-card">
-          <Status tone="open">教練已確認</Status>
-          <h1>完成付款就搞定了</h1>
-          <p className="text-muted">錢直接付給教練，付好後按一下，教練就知道了。上課前 24 小時可免費改期。</p>
+          <Status tone={BOOKING_LABEL.confirmed.tone}>{BOOKING_LABEL.confirmed.label}</Status>
+          <h1>{c.name.split(" ")[0]} 答應了，付款就完成</h1>
+          <p className="text-muted">錢直接付給教練。付好後按「我付好了」。上課前 24 小時可免費改期。</p>
         </div>
         <div className="paybox">
           <div className="paybox-h"><span>應付金額</span><b className="num">{money(total)}</b></div>
@@ -118,13 +116,13 @@ export function BookingStatusScreen({ demo, live, payment }: { demo?: BookingSta
               <button className="btn btn-primary btn-lg btn-block" onClick={() => toast("Demo：這裡會打開教練的 LINE Pay 收款連結")}>
                 <Icon name="wallet" size={20} />打開 LINE Pay 付款
               </button>
-              <button className="btn btn-secondary btn-block" style={{ marginTop: 8 }} onClick={() => { setLast5(""); setStatus("reported"); toast("已通知教練，確認收到後會通知你"); }}>付好了，通知教練</button>
+              <button className="btn btn-secondary btn-block" style={{ marginTop: 8 }} onClick={() => { setStatus("reported"); toast("已通知教練"); }}>我付好了</button>
             </>
           )}
           {b.pay === "銀行轉帳" && (
             <>
               <TransferPay {...DEMO_PAYOUT} amount={total}
-                onReport={(l5) => { setLast5(l5); setStatus("reported"); toast("已通知教練，對帳後會通知你"); }} />
+                onReport={() => { setStatus("reported"); toast("已通知教練"); }} />
             </>
           )}
           {b.pay === "現場付現" && <p style={{ margin: 0 }}>上課當天付 <b>{money(total)}</b> 給教練即可。</p>}
@@ -138,12 +136,12 @@ export function BookingStatusScreen({ demo, live, payment }: { demo?: BookingSta
   } else if (st === "reported") {
     main = (
       <div className="state-card">
-        <Status tone="info">等待教練對帳</Status>
-        <h1>已回報付款</h1>
-        <p className="text-muted">{realAuth ? (payment?.ref ? `末五碼 ${payment.ref}。` : "") : last5 ? `末五碼 ${last5}。` : "你回報已用 LINE Pay 付款。"}教練確認收到後會通知你。</p>
+        <Status tone={BOOKING_LABEL.reported.tone}>{BOOKING_LABEL.reported.label}</Status>
+        <h1>付好了！</h1>
+        <p className="text-muted">已通知 {c.name.split(" ")[0]}，不用再做什麼。前一天 20:00 會用 LINE 提醒你上課。</p>
         {!realAuth && (
           <button className="btn btn-ghost demo-btn" onClick={() => { setStatus("paid"); toast("教練確認收到付款"); }}>
-            <Icon name="info" size={16} />Demo：模擬教練確認收到
+            <Icon name="info" size={16} />Demo：模擬教練確認收到款項
           </button>
         )}
       </div>
@@ -151,9 +149,9 @@ export function BookingStatusScreen({ demo, live, payment }: { demo?: BookingSta
   } else {
     main = (
       <div className="state-card">
-        <Status tone="open">已付款</Status>
+        <Status tone={BOOKING_LABEL.paid.tone}>{BOOKING_LABEL.paid.label}</Status>
         <h1>準備好上課了！</h1>
-        <p className="text-muted">前一天 20:00 會用 LINE 提醒你，記得穿運動鞋。</p>
+        <p className="text-muted">{c.name.split(" ")[0]} 確認收到款項了。前一天 20:00 會用 LINE 提醒你，記得穿運動鞋。</p>
       </div>
     );
   }
@@ -167,7 +165,7 @@ export function BookingStatusScreen({ demo, live, payment }: { demo?: BookingSta
         <div className="bk-cols">
         <div className="bk-main">
         {!(ended && ended !== "done") && <ol className="tracker">
-          {STEPS.map((s, i) => (
+          {BOOKING_STEPS.map((s, i) => (
             <li key={s} className={i < idx ? "done" : i === idx ? "now" : ""}>
               <i>{i < idx && <Icon name="check" size={12} stroke={3} />}</i>
               <span>{s}</span>
@@ -226,9 +224,9 @@ function LivePayBox({ payment, pay }: { payment: MyPayment | null; pay: string }
   return (
     <>
       <div className="state-card">
-        <Status tone="open">教練已確認</Status>
-        <h1>完成付款就搞定了</h1>
-        <p className="text-muted">錢直接付給教練。付好後按一下，教練就知道了。</p>
+        <Status tone={BOOKING_LABEL.confirmed.tone}>{BOOKING_LABEL.confirmed.label}</Status>
+        <h1>教練答應了，付款就完成</h1>
+        <p className="text-muted">錢直接付給教練。付好後按「我付好了」。</p>
       </div>
       <div className="paybox">
         <div className="paybox-h"><span>應付金額</span><b className="num">{money(payment?.amount ?? 0)}</b></div>
@@ -241,7 +239,7 @@ function LivePayBox({ payment, pay }: { payment: MyPayment | null; pay: string }
         ) : pay === "LINE Pay" && d.link ? (
           <>
             <a className="btn btn-primary btn-lg btn-block" href={d.link} target="_blank" rel="noopener noreferrer"><Icon name="wallet" size={20} />用 LINE Pay 付款</a>
-            <button className="btn btn-secondary btn-block" style={{ marginTop: 8 }} disabled={busy} onClick={() => report("")}>付好了，通知教練</button>
+            <button className="btn btn-secondary btn-block" style={{ marginTop: 8 }} disabled={busy} onClick={() => report("")}>我付好了</button>
           </>
         ) : (
           <TransferPay bank={d.bank ?? ""} account={d.account ?? ""} name={d.name ?? ""} amount={payment.amount} busy={busy} onReport={report} />

@@ -13,11 +13,11 @@ import { useCoaches, useDemo } from "@/lib/demo-store";
 import { money } from "@pikyoo/core/format";
 import type { MyBooking } from "@pikyoo/core/source/bookings";
 import type { Group } from "@pikyoo/core/types";
+import { BOOKING_LABEL } from "@pikyoo/core/labels";
 import { Photo } from "../coaches/CoachCard";
 
 type Tab = "next" | "group" | "done";
 
-const BOOKING_STATE = { pending: ["待教練確認", "almost"], confirmed: ["待付款", "info"], reported: ["等教練對帳", "info"], paid: ["已付款", "open"] } as const;
 const GROUP_STATE: Record<Group["status"], [string, "almost" | "info" | "open" | "ended"]> = {
   gathering: ["揪團中", "almost"], requested: ["等教練確認", "info"], confirmed: ["教練已確認", "open"], declined: ["教練婉拒", "ended"],
 };
@@ -26,13 +26,13 @@ const GROUP_STATE: Record<Group["status"], [string, "almost" | "info" | "open" |
 const history = () => [{ coachId: "mia", plan: "新手體驗課", when: `${demoDate(-9)}10:00` }];
 
 const LIVE_STATE: Record<MyBooking["state"], [string, "almost" | "info" | "open" | "ended"]> = {
-  pending: ["待教練確認", "almost"], confirmed: ["教練已確認", "open"], done: ["已上課", "ended"],
+  pending: [BOOKING_LABEL.pending.label, "almost"], confirmed: [BOOKING_LABEL.confirmed.label, "info"], done: ["已上課", "ended"],
   declined: ["教練婉拒", "ended"], expired: ["已逾時", "ended"], cancelled: ["已取消", "ended"],
 };
 
-/** A real booking (real sign-in): opens its status page. */
+/** A real booking (real sign-in): opens its status page. Once the student has paid, their part reads 完成. */
 const PAID_STATE: Record<NonNullable<MyBooking["paid"]>, [string, "almost" | "info" | "open"]> = {
-  wait: ["待付款", "almost"], reported: ["已回報付款", "info"], paid: ["已付款", "open"],
+  wait: [BOOKING_LABEL.confirmed.label, "info"], reported: [BOOKING_LABEL.reported.label, "open"], paid: [BOOKING_LABEL.paid.label, "open"],
 };
 
 function LiveRow({ x }: { x: MyBooking }) {
@@ -98,7 +98,7 @@ export function MyLessonsScreen({ live }: { live?: MyBooking[] }) {
             <div className="lesson-b">
               <b>{plan.name}</b>
               <span className="text-muted">{c.name}・{c.profile.venues[0].name}</span>
-              <Status tone={BOOKING_STATE[b.status][1]}>{BOOKING_STATE[b.status][0]}</Status>
+              <Status tone={BOOKING_LABEL[b.status].tone}>{BOOKING_LABEL[b.status].label}</Status>
             </div>
             <Icon name="right" size={18} />
           </Link>

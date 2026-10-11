@@ -8,9 +8,17 @@ import { color, radius } from "./theme";
 
 // Shared pieces of the coach console screens.
 
-/** A console tab's page: an optional carbon hero under the status bar, then content; tabs sit over the bottom. */
-export function ConsolePage({ hero, title, action, children }: { hero?: React.ReactNode; title?: string; action?: React.ReactNode; children: React.ReactNode }) {
+/** A console tab's page: an optional carbon hero under the status bar, then content; tabs sit over the bottom.
+ *  `inStack`: a page opened from a tab (收款紀錄, 課程與時段) under the navigation header, which carries its title and back button. */
+export function ConsolePage({ hero, title, action, children, inStack }: { hero?: React.ReactNode; title?: string; action?: React.ReactNode; children: React.ReactNode; inStack?: boolean }) {
   const insets = useSafeAreaInsets();
+  if (inStack) {
+    return (
+      <ScrollView style={{ flex: 1, backgroundColor: color.bg }} contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 48 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
+        {children}
+      </ScrollView>
+    );
+  }
   useFocusEffect(useCallback(() => { if (hero) { setStatusBarStyle("light"); return () => setStatusBarStyle("dark"); } }, [hero]));
   return (
     <View style={{ flex: 1, backgroundColor: color.bg }}>

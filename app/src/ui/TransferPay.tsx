@@ -17,6 +17,7 @@ import { toast } from "./Toast";
  *  ② report the last five digits. The money goes straight to the coach's account. */
 export function TransferPay({ bank, account, name, amount, onReport }: { bank: string; account: string; name: string; amount: number; onReport: (last5: string) => void }) {
   const [last5, setLast5] = useState("");
+  const [ref, setRef] = useState(false);
   const shot = useRef<View>(null);
   const code = twqrTransfer({ bank, account, amount });
   const copy = async (text: string, msg: string) => { await Clipboard.setStringAsync(text); toast(msg); };
@@ -58,10 +59,14 @@ export function TransferPay({ bank, account, name, amount, onReport }: { bank: s
         <Row label="金額" value={money(amount)} onCopy={() => copy(String(amount), "已複製金額")} />
       </View>
       <View style={[{ gap: 8 }, s.split]}>
-        {step(2, "轉好了，回報給教練")}
-        <Text style={{ fontSize: 13, color: color.muted }}>你的轉出帳號末五碼</Text>
-        <TextInput value={last5} onChangeText={(t) => setLast5(t.replace(/\D/g, "").slice(0, 5))} keyboardType="number-pad" style={s.input} placeholder="12345" placeholderTextColor={color.n500} />
-        <Btn kind="primary" label="我已轉帳" disabled={last5.length !== 5} onPress={() => onReport(last5)} />
+        {step(2, "轉好了，按這裡")}
+        <Btn kind="primary" label="我付好了" disabled={last5.length > 0 && last5.length !== 5} onPress={() => onReport(last5)} />
+        {/* optional: the last five digits help the coach match the transfer, but nobody has to type them */}
+        {ref ? (
+          <TextInput value={last5} onChangeText={(t) => setLast5(t.replace(/\D/g, "").slice(0, 5))} keyboardType="number-pad" style={s.input} placeholder="轉出帳號末五碼" placeholderTextColor={color.n500} autoFocus />
+        ) : (
+          <Pressable onPress={() => setRef(true)} hitSlop={8}><Text style={{ fontSize: 13, color: color.muted, textDecorationLine: "underline" }}>附上轉出帳號末五碼，教練比較好找（選填）</Text></Pressable>
+        )}
       </View>
     </View>
   );

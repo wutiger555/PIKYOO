@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { bookingDays } from "@pikyoo/core/data/coaches";
 import { money } from "@pikyoo/core/format";
+import { BOOKING_LABEL, BOOKING_STEPS, bookingStep } from "@pikyoo/core/labels";
 import type { BookingStatus } from "@pikyoo/core/types";
 import { bookingTotal } from "@/data/booking";
 import { addEventToCalendar, lessonDates } from "@/data/phone";
@@ -17,14 +18,11 @@ import { color, radius } from "@/ui/theme";
 import { toast } from "@/ui/Toast";
 import { TransferPay } from "@/ui/TransferPay";
 
-const STEPS = ["送出申請", "教練確認", "付款", "上課"];
-
-/** 我的預約 (website: BookingStatusScreen, docs/PRD.md §6.3): 送出申請 → 教練確認 → 付款 → 上課; payment only after the coach confirms.
+/** 我的預約 (website: BookingStatusScreen, docs/PRD.md §6.3): 等教練回覆 → 去付款 → 完成; payment only after the coach confirms.
  *  The app's demo booking for now; live bookings, with the coach's real payment details, come with sign-in (step 17). */
 export default function BookingStatusPage() {
   const { booking: b, setBookingStatus, reportPayment, cancelBooking, coaches, payout } = useSession();
   const c = coaches.find((x) => x.id === b?.coachId);
-  const [last5, setLast5] = useState("");
   const [change, setChange] = useState(false);
   if (!b || !b.slot || !c) {
     return (
@@ -39,7 +37,8 @@ export default function BookingStatusPage() {
   const { plan, total } = bookingTotal(b, p);
   const day = bookingDays().find((d) => d.key === b.dayKey) ?? { date: b.dayKey, weekday: "" };
   const st = b.status;
-  const idx = { pending: 1, confirmed: 2, reported: 2, paid: 3 }[st];
+  const idx = bookingStep(st);
+  const L = BOOKING_LABEL[st];
   const setStatus = (status: BookingStatus) => setBookingStatus(status);
   const venue = p.venues[0]?.name ?? "";
   const offset = Number(b.dayKey.replace("d", ""));
@@ -60,42 +59,42 @@ export default function BookingStatusPage() {
   );
   let main: React.ReactNode;
   if (st === "pending") {
-    main = card("almost", "待教練確認", "預約已送出", `${c.name} ${p.reply}。確認後會用 LINE 通知你，48 小時未處理會自動取消。`,
+    main = card(L.tone, L.label, "預約已送出", `${c.name} ${p.reply}。回覆後會用 LINE 通知你；48 小時沒回覆會自動取消，不收任何費用。`,
       <Pressable onPress={() => { setStatus("confirmed"); toast(`${c.name} 確認了你的預約`, "通知也會出現在「我的 → 通知」"); }} style={s.demoBtn}>
         <Text style={{ fontWeight: "700" }}>示範：模擬教練按下確認</Text>
       </Pressable>,
-      c.id === "mia" ? "也可以到「我的 → 我是教練：教練後台」，以 Mia 的身分在「行事曆 → 待處理」按確認。" : undefined);
+      c.id === "mia" ? "也可以到「我的 → 我是教練：教練後台」，以 Mia 的身分在「今天 → 待辦」按確認。" : undefined);
   } else if (st === "confirmed") {
     main = (
       <>
-        {card("open", "教練已確認", "完成付款就搞定了", "錢直接付給教練，付好後按一下，教練就知道了。上課前 24 小時可免費改期。")}
+        {card(L.tone, L.label, `${c.name.split(" ")[0]} 答應了，付款就完成`, "錢直接轉給教練。付好後按「我付好了」。上課前 24 小時可免費改期。")}
         <View style={s.paybox}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" }}><Text style={{ color: color.muted }}>應付金額</Text><Num style={{ fontSize: 28 }}>{money(total)}</Num></View>
           {b.pay === "LINE Pay" && (
             <>
               <Btn kind="primary" icon="wallet" label="打開 LINE Pay 付款" onPress={() => toast("示範：這裡會打開教練的 LINE Pay 收款連結")} />
-              <Btn label="付好了，通知教練" onPress={() => { reportPayment(""); toast("已通知教練", "教練確認收到後會通知你"); }} />
+              <Btn label="我付好了" onPress={() => { reportPayment(""); toast("已通知教練"); }} />
             </>
           )}
           {b.pay === "銀行轉帳" && (
-            <TransferPay {...payout} amount={total} onReport={(l5) => { setLast5(l5); reportPayment(l5); toast("已通知教練", "教練對帳後會通知你"); }} />
+            <TransferPay {...payout} amount={total} onReport={(l5) => { reportPayment(l5); toast("已通知教練"); }} />
           )}
           {b.pay === "現場付現" && <Text style={{ fontSize: 16 }}>上課當天付 <Text style={{ fontWeight: "800" }}>{money(total)}</Text> 給教練即可。</Text>}
         </View>
       </>
     );
   } else if (st === "reported") {
-    main = card("info", "等待教練對帳", "已回報付款", `${b.pay === "LINE Pay" ? "你回報已用 LINE Pay 付款" : `轉帳末五碼 ${last5}`}。教練確認收到後會通知你。`,
+    main = card(L.tone, L.label, "付好了！", `已通知 ${c.name.split(" ")[0]}，不用再做什麼。前一天 20:00 會用 LINE 提醒你上課。`,
       <Pressable onPress={() => setStatus("paid")} style={s.demoBtn}><Text style={{ fontWeight: "700" }}>示範：模擬教練確認收到</Text></Pressable>);
   } else {
-    main = card("open", "已付款", "準備好上課了！", "前一天 20:00 會用 LINE 提醒你，記得穿運動鞋。");
+    main = card(L.tone, L.label, "準備好上課了！", `${c.name.split(" ")[0]} 確認收到款項了。前一天 20:00 會用 LINE 提醒你，記得穿運動鞋。`);
   }
   const booked = st !== "pending";
 
   return (
     <ScrollView contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 48 }}>
       <View style={{ flexDirection: "row" }}>
-        {STEPS.map((x, i) => (
+        {BOOKING_STEPS.map((x, i) => (
           <View key={x} style={{ flex: 1, alignItems: "center", gap: 6 }}>
             <View style={[s.dot, i < idx && { backgroundColor: color.text, borderColor: color.text }, i === idx && { backgroundColor: color.accent, borderColor: color.text }]}>
               {i < idx && <Icon name="check" size={11} tint="#fff" />}

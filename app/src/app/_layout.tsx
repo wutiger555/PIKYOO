@@ -32,10 +32,12 @@ export default function RootLayout() {
           <Stack.Screen name="me/notifications" options={{ title: "通知" }} />
           <Stack.Screen name="me/saved" options={{ title: "收藏的教練" }} />
           <Stack.Screen name="me/profile" options={{ title: "編輯個人資料" }} />
-          <Stack.Screen name="coach-inbox" options={{ title: "待處理" }} />
+          <Stack.Screen name="coach-inbox" options={{ title: "待辦" }} />
           <Stack.Screen name="coach-lesson/[id]" options={{ title: "課程" }} />
           <Stack.Screen name="coach-student/[id]" options={{ title: "學生" }} />
           <Stack.Screen name="coach-bank" options={{ title: "收款帳戶" }} />
+          <Stack.Screen name="coach-payments" options={{ title: "收款紀錄" }} />
+          <Stack.Screen name="coach-plans" options={{ title: "課程與時段" }} />
         </Stack>
         <ToastHost />
       </SessionProvider>

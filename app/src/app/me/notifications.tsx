@@ -6,7 +6,7 @@ import { Icon } from "@/ui/Icon";
 import { color, radius } from "@/ui/theme";
 
 /** Website links to the app's routes: 我的課 is a tab here; query strings are the website's demo switches. */
-const appPath = (href: string) => href.replace(/\?.*$/, "").replace(/^\/me\/lessons$/, "/lessons");
+const appPath = (href: string) => href.replace(/\?.*$/, "").replace(/^\/me\/lessons$/, "/lessons").replace(/^\/coach\/(payments|lessons)$/, (_, p) => (p === "payments" ? "/coach-payments" : "/coach-plans"));
 
 /** 通知 (website: NotificationsScreen): newest first, unread in bold until you leave the page; the demo booking's steps
  *  arrive here as they happen. Live notifications come with sign-in (they already reach LINE). */

@@ -19,6 +19,7 @@ import { markPaidAction, rejectReportAction, remindPaymentAction, savePayoutActi
 import { CollectQRSheet } from "./CollectQR";
 import { realAuth } from "@/lib/env";
 import type { BookingRequest, PaymentRow } from "@pikyoo/core/types";
+import { PAY_LABEL } from "@pikyoo/core/labels";
 
 type ConsoleTab = "today" | "lessons" | "page" | "pay";
 
@@ -193,7 +194,7 @@ export function CoachTodayScreen() {
           <div className="stats" style={{ marginTop: 16 }}>
             <div><b className="num">{pend.length}</b><span>待確認</span></div>
             {!realAuth && <div><b className="num">6</b><span>本週課</span></div>}
-            <Link href="/coach/payments"><b className="num">{money(due)}</b><span>待收款</span></Link>
+            <Link href="/coach/payments"><b className="num">{money(due)}</b><span>還沒收到</span></Link>
           </div>
         </div>
         <section className="sec">
@@ -238,12 +239,6 @@ export function CoachTodayScreen() {
     </>
   );
 }
-
-const PAY_LABEL: Record<PaymentRow["status"], [string, "almost" | "info" | "open"]> = {
-  wait: ["待付款", "almost"],
-  reported: ["學生已回報", "info"],
-  paid: ["已收款", "open"],
-};
 
 /** 收款對帳: received vs due, filter by state, confirm transfers by last-5, LINE reminders that link to the student's
  *  transfer QR, and 現場收款 QR for taking payment on court (docs/PAYMENTS.md §1.5). */
@@ -299,7 +294,7 @@ export function CoachPaymentsScreen() {
   const got = payments.filter((p) => p.status === "paid").reduce((a, p) => a + p.amount, 0) + (realAuth ? 0 : RECEIVED_BEFORE);
   const due = payments.filter((p) => p.status !== "paid").reduce((a, p) => a + p.amount, 0);
   const cnt = (k: PaymentRow["status"]) => payments.filter((p) => p.status === k).length;
-  const opts: [typeof filter, string][] = [["all", "全部"], ["reported", `已回報 ${cnt("reported")}`], ["wait", `待付款 ${cnt("wait")}`], ["paid", "已收"]];
+  const opts: [typeof filter, string][] = [["all", "全部"], ["reported", `說付好了 ${cnt("reported")}`], ["wait", `還沒付 ${cnt("wait")}`], ["paid", "已收到"]];
 
   return (
     <>
@@ -340,8 +335,8 @@ export function CoachPaymentsScreen() {
               </>
             ) : (
               <>
-                <span className="text-muted">{reported.length} 筆學生已回報，對過銀行入帳後可以一次確認</span>
-                <button className="btn btn-secondary" onClick={() => setPicked(reported.map((p) => p.id))}>全選已回報</button>
+                <span className="text-muted">{reported.length} 位學生說付好了，看過銀行入帳後可以一次確認</span>
+                <button className="btn btn-secondary" onClick={() => setPicked(reported.map((p) => p.id))}>全選說付好了的</button>
               </>
             )}
           </div>
@@ -355,7 +350,7 @@ export function CoachPaymentsScreen() {
                 <td><div className="con-who"><span className="avatar">{p.initial}</span><b>{p.name}</b></div></td>
                 <td>{p.what}</td>
                 <td><span className="tag tag-neutral">{p.via}</span>{p.status === "reported" && p.ref && <small>末五碼 <b className="num">{p.ref}</b></small>}</td>
-                <td><Status tone={PAY_LABEL[p.status][1]}>{PAY_LABEL[p.status][0]}</Status><small>{p.status === "paid" ? `${p.at} 入帳` : p.at}</small></td>
+                <td><Status tone={PAY_LABEL[p.status].tone}>{PAY_LABEL[p.status].label}</Status><small>{p.status === "paid" ? `${p.at} 入帳` : p.at}</small></td>
                 <td className="r num con-amt">{money(p.amount)}</td>
                 <td>
                   {p.status === "reported" && (
@@ -388,7 +383,7 @@ export function CoachPaymentsScreen() {
                 </div>
                 <div style={{ textAlign: "right" }}>
                   <b className="num" style={{ fontSize: 20 }}>{money(p.amount)}</b>
-                  <div><Status tone={PAY_LABEL[p.status][1]}>{PAY_LABEL[p.status][0]}</Status></div>
+                  <div><Status tone={PAY_LABEL[p.status].tone}>{PAY_LABEL[p.status].label}</Status></div>
                 </div>
               </div>
               <div className="payrow-m">

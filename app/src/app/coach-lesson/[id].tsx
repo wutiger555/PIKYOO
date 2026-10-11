@@ -2,6 +2,7 @@ import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { demoDay } from "@pikyoo/core/data/today";
+import { PAY_LABEL } from "@pikyoo/core/labels";
 import type { Attendance } from "@pikyoo/core/data/schedule";
 import { addLessonToCalendar, nowHHMM } from "@/data/phone";
 import { useSession } from "@/data/session";
@@ -83,7 +84,7 @@ export default function LessonDetail() {
                   <Text style={{ fontSize: 16, fontWeight: "800" }}>{x?.name}</Text>
                   <Text style={c.hint}>{x?.level}・{x?.times ? `上過 ${x.times} 堂` : "第一次上課"}{x?.pack ? `・套票剩 ${x.pack.total - x.pack.used} 堂` : ""}</Text>
                 </View>
-                <Status tone={pay === "paid" ? "open" : pay === "reported" ? "info" : "almost"}>{pay === "paid" ? "已付款" : pay === "reported" ? "已回報" : "未付款"}</Status>
+                <Status tone={PAY_LABEL[pay].tone}>{PAY_LABEL[pay].label}</Status>
               </Pressable>
               {x?.notes[0] && <Text style={st.lastNote} numberOfLines={2}>上次：{x.notes[0].text}</Text>}
               {pay !== "paid" && !off && (
