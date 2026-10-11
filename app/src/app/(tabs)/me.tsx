@@ -69,18 +69,10 @@ export default function Me() {
         <View style={{ padding: 16, gap: 20 }}>
           {signedIn && <Text style={{ fontSize: 12, color: color.muted, marginTop: -8 }}>出席紀錄只有你看得到；團主在名單上只會看到出席率。</Text>}
 
-          <Link href="/lessons" asChild>
-            <Pressable style={s.rowCard}>
-              <Icon name="cal" size={22} />
-              <View style={{ flex: 1 }}><Text style={{ fontSize: 16, fontWeight: "800" }}>我的課</Text><Text style={{ fontSize: 13, color: color.muted }}>即將上課、上過的課</Text></View>
-              <Icon name="right" size={14} tint={color.muted} />
-            </Pressable>
-          </Link>
-
           {signedIn && (
             <Pressable onPress={() => router.push("/coach")} style={[s.rowCard, { backgroundColor: color.carbon, borderColor: color.carbon }]}>
               <Icon name="whistle" size={22} tint={color.accent} />
-              <View style={{ flex: 1 }}><Text style={{ fontSize: 16, fontWeight: "800", color: "#fff" }}>我是教練：教練後台</Text><Text style={{ fontSize: 13, color: color.onCarbonMuted }}>確認預約、收款對帳、回覆提問、編輯教練頁（示範：Mia 教練）</Text></View>
+              <View style={{ flex: 1 }}><Text style={{ fontSize: 16, fontWeight: "800", color: "#fff" }}>我是教練：教練後台</Text><Text style={{ fontSize: 13, color: color.onCarbonMuted }}>接預約、看課表、收錢（示範：Mia 教練）</Text></View>
               <Icon name="right" size={14} tint={color.onCarbonMuted} />
             </Pressable>
           )}
@@ -110,7 +102,7 @@ export default function Me() {
             <View style={s.card}>
               {signedIn && <Row icon="bell" label="通知" sub={unread ? `${unread} 則未讀` : undefined} onPress={() => router.push("/me/notifications")} />}
               {signedIn && <Row icon="heart" label="收藏的教練" sub={favs.length ? `${favs.length} 位` : "在教練頁按愛心收藏"} onPress={() => router.push("/me/saved")} />}
-              <Row icon="whistle" label="我是教練：教練後台" sub={signedIn ? "示範：以 Mia 教練的身分" : "登入後使用"} onPress={() => (signedIn ? router.push("/coach") : setLogin(true))} />
+              {!signedIn && <Row icon="whistle" label="我是教練：教練後台" sub="登入後使用" onPress={() => setLogin(true)} />}
               <Row icon="sprout" label="第一次打匹克球？" sub="規則與程度自評（網站）" onPress={() => web("/learn")} />
               {signedIn
                 ? <Row icon="logout" label="登出（示範：看訪客畫面）" onPress={signOut} last />

@@ -20,7 +20,7 @@ const greet = (hm: string) => (hm < "11:00" ? "早安" : hm < "18:00" ? "午安"
 const label = (n: number) => `${demoDay(n).date}（${demoDay(n).weekday}）${n === 0 ? "今天" : n === 1 ? "明天" : ""}`;
 
 /** 行事曆: the coach's home. Every lesson by day or week, pending requests and blocked time on the same calendar,
- *  and the phone's own calendar and reminders one tap away. Requests and questions sit behind 待處理. */
+ *  and the phone's own calendar and reminders one tap away. Requests, 學生說付好了 and questions sit behind 待辦. */
 export default function CoachCalendar() {
   const s = useSession();
   const { lessons, requests, questions, myCoach, payments, students, blocks } = s;
@@ -31,6 +31,7 @@ export default function CoachCalendar() {
   const monday = mondayOf(week);
   const live = lessons.filter((l) => l.status === "confirmed");
   const pend = requests.filter((r) => r.status === "pending").length;
+  const paid = payments.filter((p) => p.status === "reported").length;
   const ask = questions.filter((q) => q.coachId === myCoach?.id && !q.answer).length;
   const today = live.filter((l) => l.offset === 0).sort((a, b) => a.start.localeCompare(b.start));
   const nowHM = nowHHMM();
@@ -54,7 +55,7 @@ export default function CoachCalendar() {
           <RolePill />
           <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
             <ToStudent />
-            <Pressable onPress={() => router.push("/coach-inbox")} accessibilityLabel="待處理"><Icon name="bell" size={20} tint="#fff" /></Pressable>
+            <Pressable onPress={() => router.push("/coach-inbox")} accessibilityLabel="待辦"><Icon name="bell" size={20} tint="#fff" /></Pressable>
           </View>
         </View>
         <Text style={{ color: "#fff", fontSize: 26, fontWeight: "800", marginTop: 16 }}>{greet(nowHM)}，{myCoach?.name.split(" ")[0]}</Text>
@@ -64,16 +65,16 @@ export default function CoachCalendar() {
         <View style={{ flexDirection: "row", gap: 12, marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,.14)" }}>
           <Stat n={String(today.length)} label="今天的課" />
           <Stat n={String(weekCount)} label="本週課" />
-          <Stat n={money(due)} label="待收款 ›" onPress={() => router.push("/coach/payments")} last />
+          <Stat n={money(due)} label="待收款 ›" onPress={() => router.push("/coach-payments")} last />
         </View>
       </>
     }>
-      {pend + ask > 0 && (
+      {pend + paid + ask > 0 && (
         <Pressable onPress={() => router.push("/coach-inbox")} style={st.inbox}>
-          <View style={st.inboxDot}><Num style={{ fontSize: 16 }}>{pend + ask}</Num></View>
+          <View style={st.inboxDot}><Num style={{ fontSize: 16 }}>{pend + paid + ask}</Num></View>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 16, fontWeight: "800" }}>待處理</Text>
-            <Text style={{ fontSize: 13, color: color.n700 }}>{[pend && `${pend} 筆預約待確認`, ask && `${ask} 則提問待回覆`].filter(Boolean).join("・")}</Text>
+            <Text style={{ fontSize: 16, fontWeight: "800" }}>待辦</Text>
+            <Text style={{ fontSize: 13, color: color.n700 }}>{[pend && `${pend} 個預約要回覆`, paid && `${paid} 位學生說付好了`, ask && `${ask} 則提問`].filter(Boolean).join("・")}</Text>
           </View>
           <Icon name="right" size={15} />
         </Pressable>

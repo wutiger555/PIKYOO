@@ -31,7 +31,7 @@ export default function CoachLessons() {
   const open = WEEK.reduce((n, d) => n + (p.availability[d]?.length ?? 0), 0);
 
   return (
-    <ConsolePage title="課程與時段">
+    <ConsolePage inStack>
       <SecHead en="Plans" title="課程方案" right={<Text style={{ fontSize: 13, color: color.muted }}>起價 {money(co.priceFrom)}</Text>} />
       <Text style={c.hint}>開啟「可揪朋友」的方案，學生可以發起揪團、邀朋友各自用帳號加入，人數到了才送給你確認。</Text>
       {p.plans.map((pl, i) => (

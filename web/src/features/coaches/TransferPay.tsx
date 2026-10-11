@@ -8,12 +8,14 @@ import { money } from "@pikyoo/core/format";
 import { twqrTransfer } from "@pikyoo/core/twqr";
 
 /** 銀行轉帳 in two steps (docs/PAYMENTS.md §1.5): ① transfer — scan the TWQR code with any bank app (on a phone: save it,
- *  then 從相簿掃描), or by hand with copy buttons; ② report the last five digits. Money goes straight to the coach. */
+ *  then 從相簿掃描), or by hand with copy buttons; ② tap 我付好了. The last five digits are optional, behind a link,
+ *  so paying is never blocked on typing. Money goes straight to the coach. */
 export function TransferPay({ bank, account, name, amount, busy, onReport }: {
   bank: string; account: string; name: string; amount: number; busy?: boolean; onReport: (last5: string) => void;
 }) {
   const toast = useToast();
   const [last5, setLast5] = useState("");
+  const [ref, setRef] = useState(false);
   const [qr, setQr] = useState<string | null>(null);
   const code = twqrTransfer({ bank, account, amount });
   useEffect(() => {
@@ -59,12 +61,16 @@ export function TransferPay({ bank, account, name, amount, busy, onReport }: {
         </dl>
       </li>
       <li>
-        <b>轉好了，回報給教練</b>
-        <div className="field">
-          <label htmlFor="last5">你的轉出帳號末五碼</label>
-          <input id="last5" className="input num" inputMode="numeric" maxLength={5} value={last5} onChange={(e) => setLast5(e.target.value.replace(/\D/g, ""))} />
-        </div>
-        <button className="btn btn-primary btn-lg btn-block" disabled={last5.length !== 5 || busy} onClick={() => onReport(last5)}>我已轉帳</button>
+        <b>轉好了，按這裡</b>
+        {ref ? (
+          <div className="field">
+            <label htmlFor="last5">你的轉出帳號末五碼（選填）</label>
+            <input id="last5" className="input num" inputMode="numeric" maxLength={5} value={last5} onChange={(e) => setLast5(e.target.value.replace(/\D/g, ""))} />
+          </div>
+        ) : (
+          <button className="linkbtn" style={{ marginBottom: 10 }} onClick={() => setRef(true)}>附上轉出帳號末五碼，教練比較好找（選填）</button>
+        )}
+        <button className="btn btn-primary btn-lg btn-block" disabled={(last5.length > 0 && last5.length !== 5) || busy} onClick={() => onReport(last5)}>我付好了</button>
       </li>
     </ol>
   );

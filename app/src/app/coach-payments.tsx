@@ -1,8 +1,9 @@
-import { router } from "expo-router";
+import { router, Stack } from "expo-router";
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { PAYOUT_METHODS, RECEIVED_BEFORE } from "@pikyoo/core/data/coaches";
 import { money } from "@pikyoo/core/format";
+import { PAY_LABEL } from "@pikyoo/core/labels";
 import type { PaymentRow } from "@pikyoo/core/types";
 import { useSession } from "@/data/session";
 import { Num, Tag } from "@/ui/badges";
@@ -16,9 +17,9 @@ import { Status } from "@/ui/Status";
 import { color, radius } from "@/ui/theme";
 import { toast } from "@/ui/Toast";
 
-const PAY_LABEL: Record<PaymentRow["status"], [string, "almost" | "info" | "open"]> = { wait: ["待付款", "almost"], reported: ["學生已回報", "info"], paid: ["已收款", "open"] };
 
-/** 收款對帳 (website: CoachPaymentsScreen): received vs due, filter by state, confirm transfers by last five digits,
+
+/** 收款紀錄 (website: CoachPaymentsScreen), opened from 我的頁面 or 今天's 待收款: received vs due, filter by state, confirm transfers by last five digits,
  *  several reports at once. */
 export default function CoachPayments() {
   const { payments, markPaid, rejectReport, remindPayment } = useSession();
@@ -38,10 +39,11 @@ export default function CoachPayments() {
   const got = payments.filter((p) => p.status === "paid").reduce((a, p) => a + p.amount, 0) + RECEIVED_BEFORE;
   const due = payments.filter((p) => p.status !== "paid").reduce((a, p) => a + p.amount, 0);
   const cnt = (k: PaymentRow["status"]) => payments.filter((p) => p.status === k).length;
-  const opts: [typeof filter, string][] = [["all", "全部"], ["reported", `已回報 ${cnt("reported")}`], ["wait", `待付款 ${cnt("wait")}`], ["paid", "已收"]];
+  const opts: [typeof filter, string][] = [["all", "全部"], ["reported", `說付好了 ${cnt("reported")}`], ["wait", `還沒付 ${cnt("wait")}`], ["paid", "已收到"]];
 
   return (
-    <ConsolePage title="收款" action={<Pressable onPress={() => setSettings(true)} accessibilityLabel="收款設定" hitSlop={8}><Icon name="settings" size={22} /></Pressable>}>
+    <ConsolePage inStack>
+      <Stack.Screen options={{ headerRight: () => <Pressable onPress={() => setSettings(true)} accessibilityLabel="收款設定" hitSlop={8}><Icon name="settings" size={22} /></Pressable> }} />
       <View style={{ backgroundColor: color.carbon, borderRadius: radius.lg, padding: 18, gap: 10 }}>
         <Text style={{ color: color.onCarbonMuted, fontSize: 13 }}>{new Date().getMonth() + 1} 月</Text>
         <View style={{ flexDirection: "row" }}>
@@ -71,8 +73,8 @@ export default function CoachPayments() {
             </>
           ) : (
             <>
-              <Text style={{ flex: 1, fontSize: 13, color: color.n700 }}>{reported.length} 筆學生已回報，對過銀行入帳後可以一次確認</Text>
-              <Btn label="全選已回報" lg={false} style={{ borderRadius: 999 }} onPress={() => setPicked(reported.map((p) => p.id))} />
+              <Text style={{ flex: 1, fontSize: 13, color: color.n700 }}>{reported.length} 位學生說付好了，看過銀行入帳後可以一次確認</Text>
+              <Btn label="全選說付好了的" lg={false} style={{ borderRadius: 999 }} onPress={() => setPicked(reported.map((p) => p.id))} />
             </>
           )}
         </View>
@@ -89,7 +91,7 @@ export default function CoachPayments() {
             )}
             <Avatar t={p.initial} />
             <View style={{ flex: 1 }}><Text style={{ fontSize: 16, fontWeight: "800" }}>{p.name}</Text><Text style={{ fontSize: 13, color: color.muted }}>{p.what}</Text></View>
-            <View style={{ alignItems: "flex-end", gap: 4 }}><Num style={{ fontSize: 21 }}>{money(p.amount)}</Num><Status tone={PAY_LABEL[p.status][1]}>{PAY_LABEL[p.status][0]}</Status></View>
+            <View style={{ alignItems: "flex-end", gap: 4 }}><Num style={{ fontSize: 21 }}>{money(p.amount)}</Num><Status tone={PAY_LABEL[p.status].tone}>{PAY_LABEL[p.status].label}</Status></View>
           </View>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
             <Tag>{p.via}</Tag>
@@ -113,7 +115,7 @@ export default function CoachPayments() {
         </View>
       ))}
       {!list.length && <Text style={c.hint}>這個分類沒有款項。</Text>}
-      <Text style={c.hint}>錢直接進你自己的帳戶，PIKYOO 幫你把付款資訊給學生、記錄對帳。</Text>
+      <Text style={c.hint}>錢直接進你自己的帳戶，PIKYOO 只幫你把付款資訊給學生、記下誰付了。</Text>
       {settings && <PayoutSheet onClose={() => setSettings(false)} />}
       {collect && <CollectQRSheet who={collect.name} amount={collect.amount} onClose={() => setCollect(null)} onReceived={() => { markPaid(collect.id); toast(`已記錄 ${collect.name} 付款`); setCollect(null); }} />}
     </ConsolePage>

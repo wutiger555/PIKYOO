@@ -49,7 +49,7 @@ export default function CoachProfileEditor() {
   const movePhoto = (i: number, to: number) => { const xs = [...p.photos]; const [ph] = xs.splice(i, 1); xs.splice(to, 0, ph); setP({ photos: xs }); };
 
   return (
-    <ConsolePage title="我的教練頁" action={<Pressable onPress={preview} hitSlop={8} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}><Icon name="image" size={18} /><Text style={{ fontWeight: "700" }}>預覽</Text></Pressable>}>
+    <ConsolePage title="我的頁面" action={<Pressable onPress={preview} hitSlop={8} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}><Icon name="image" size={18} /><Text style={{ fontWeight: "700" }}>預覽</Text></Pressable>}>
       <View style={c.card}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
           <View style={{ flex: 1 }}><Text style={c.hint}>你的專屬連結，放在 IG／Threads 個人簡介</Text><Num style={{ fontSize: 20 }}>{p.slug}</Num></View>
@@ -63,6 +63,20 @@ export default function CoachProfileEditor() {
             <Text style={{ fontSize: 14, color: ok ? color.text : color.muted }}>{t}</Text>
           </View>
         ))}
+      </View>
+
+      {/* what used to be the 課程 and 收款 tabs: one tap in from here */}
+      <View style={c.card}>
+        <Pressable onPress={() => router.push("/coach-plans")} style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 4 }}>
+          <Icon name="cal" size={20} />
+          <View style={{ flex: 1 }}><Text style={{ fontSize: 16, fontWeight: "800" }}>課程與時段</Text><Text style={c.hint}>價格、時長、每週開放的時間</Text></View>
+          <Icon name="right" size={14} tint={color.muted} />
+        </Pressable>
+        <Pressable onPress={() => router.push("/coach-payments")} style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 4, borderTopWidth: 1, borderTopColor: color.n100, paddingTop: 12 }}>
+          <Icon name="wallet" size={20} />
+          <View style={{ flex: 1 }}><Text style={{ fontSize: 16, fontWeight: "800" }}>收款紀錄與帳戶</Text><Text style={c.hint}>這個月收了多少、誰還沒付、你的銀行帳戶</Text></View>
+          <Icon name="right" size={14} tint={color.muted} />
+        </Pressable>
       </View>
 
       <SecHead en="Photos" title="照片" />

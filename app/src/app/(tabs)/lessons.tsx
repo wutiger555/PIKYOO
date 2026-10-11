@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { bookingDays } from "@pikyoo/core/data/coaches";
 import { demoDate } from "@pikyoo/core/data/today";
 import { money } from "@pikyoo/core/format";
+import { BOOKING_LABEL } from "@pikyoo/core/labels";
 import { bookingTotal } from "@/data/booking";
 import { isLive } from "@/data/catalog";
 import { useSession } from "@/data/session";
@@ -19,7 +20,7 @@ import { GameTicket } from "@/ui/Ticket";
 import { color, radius } from "@/ui/theme";
 import { toast } from "@/ui/Toast";
 
-const BOOKING_STATE = { pending: ["待教練確認", "almost"], confirmed: ["待付款", "info"], reported: ["等教練對帳", "info"], paid: ["已付款", "open"] } as const;
+
 
 /** 我的課 (website: MyLessonsScreen): 即將上課 (the lesson booked plus the games joined) and 上過的 (rate it, book again).
  *  Live bookings need sign-in (step 17); 揪團 stays on the demo website (PLAN D7). */
@@ -75,7 +76,7 @@ export default function Lessons() {
                 <View style={{ flex: 1, gap: 4 }}>
                   <Text style={s.title}>{plan.name}</Text>
                   <Text style={s.muted}>{c.name}・{c.profile.venues[0]?.name}・{money(bookingTotal(b, c.profile).total)}</Text>
-                  <Status tone={BOOKING_STATE[b.status][1]}>{BOOKING_STATE[b.status][0]}</Status>
+                  <Status tone={BOOKING_LABEL[b.status].tone}>{BOOKING_LABEL[b.status].label}</Status>
                 </View>
                 <Icon name="right" size={16} tint={color.muted} />
               </Pressable>

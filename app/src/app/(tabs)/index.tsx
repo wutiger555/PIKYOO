@@ -46,7 +46,7 @@ function MemberHome({ cat, top }: { cat: Catalog; top: number }) {
   const { setFilters, booking, coaches, profile: ME } = useSession();
   const bc = booking?.slot ? coaches.find((c) => c.id === booking.coachId) : null;
   const bd = booking && bookingDays().find((d) => d.key === booking.dayKey);
-  const NEXT = { pending: "等教練確認", confirmed: "教練已確認，記得付款", reported: "已回報付款，等教練對帳", paid: "已付款，準備上課" } as const;
+  const NEXT = { pending: "等教練回覆", confirmed: "教練答應了，去付款", reported: "完成，等上課", paid: "完成，等上課" } as const;
   const fit = coaches.filter((c) => ME.level >= c.levelMin && ME.level <= c.levelMax);
   const rail = [...fit, ...coaches.filter((c) => !fit.includes(c))];
   // the soonest open sessions across coaches whose level range fits me

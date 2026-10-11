@@ -21,7 +21,7 @@ export function describe(kind: string, p: Payload): Pick<Notice, "title" | "body
     case "booking_declined": return { title: "教練婉拒了這個時段", body: "換一個時段再試試", href: booking };
     case "booking_cancelled": return { title: "學生取消了預約", href: "/coach" };
     case "booking_expired": return { title: "預約已逾時取消", body: "教練 48 小時內沒有回覆，沒有任何費用", href: booking };
-    case "payment_reported": return { title: "學生回報已付款", body: "到「收款」確認收到", href: "/coach/payments" };
+    case "payment_reported": return { title: "學生說付好了", body: "看一下入帳，按「收到了」", href: "/coach/payments" };
     case "payment_received": return { title: "教練確認收到款項", body: "準備好上課了！", href: booking };
     case "payment_not_received": return { title: "教練說還沒收到款項", body: "請確認轉帳後再回報一次", href: booking };
     case "game_promoted": return { title: "候補成功！你遞補上球局了", href: game };
