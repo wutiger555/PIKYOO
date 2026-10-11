@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
+"""PIKYOO coach demo, feature tour. A short hero, the recorded flow, sticky feature tabs, then one section per feature
+whose phone plays its screens like a short video beside the numbered steps and details.
 
-
-PIKYOO coach demo, feature tour (flow.mp4: one take on the iPhone 17 simulator, 2026-10-11, demo data,
-recorded with `xcrun simctl io booted recordVideo`, re-timed to 30 fps, dead time cut and sped up with ffmpeg): a short hero, then one section per feature. Each section has a phone that plays
-its screens like a short video (pause, step, click a step) beside a numbered step list and the details."""
+Provenance for docs/demo/PIKYOO-教練示範網站.html. Inputs (not committed): img/<shot>.png are iPhone 17 simulator
+screenshots of the app in demo mode (EXPO_PUBLIC_DATA_SOURCE=demo) taken 2026-10-10, shrunk to 720 px wide with sips;
+qr.json is the TWQR transfer string for the demo account rendered to modules with the `qrcode` package (see
+packages/core/src/twqr.ts); flow.mp4 is one take on the same simulator on 2026-10-11 (demo data), recorded with
+`xcrun simctl io booted recordVideo`, re-timed to 30 fps, dead time cut and sped up with ffmpeg; poster.jpg is its
+first frame. Run from a folder holding them; the output is wrapped in a doctype/head skeleton before use."""
 import base64, json, pathlib
 
 ROOT = pathlib.Path(__file__).parent
