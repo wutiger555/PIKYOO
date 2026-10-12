@@ -1,24 +1,31 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Icon } from "@/components/pk/Icon";
 import { LevelPicker } from "@/components/pk/LevelPicker";
 import { Sheet, SoonButton, TabBar } from "@/components/pk/Shell";
 import { TopNav } from "@/components/pk/TopNav";
-import { filterCoaches } from "@pikyoo/core/coach-filters";
-import { emptyCoachFilters, useCoaches, useDemo } from "@/lib/demo-store";
+import { area, coachAreas, coachPins, filterCoaches, offMap, teachesAt } from "@pikyoo/core/coach-filters";
+import { emptyCoachFilters, useCatalog, useCoaches, useDemo } from "@/lib/demo-store";
 import { LEVELS, levelText, money } from "@pikyoo/core/format";
-import type { Coach, LessonType } from "@pikyoo/core/types";
+import type { Coach, Court, LessonType } from "@pikyoo/core/types";
 import { CoachCard, Photo } from "./CoachCard";
+import { CoachMap } from "./CoachMap";
 
-/** F3-3 找教練: "我是【程度】，想上【類型】" need sentence, standard cards, compare up to 3.
- *  Desktop (`.dk`, ≥1024px): top nav, the sentence as a header, filter sidebar, two-column card grid. */
+/** F3-3 找教練: "我是【程度】，想在【區域／場地】上【類型】" need sentence, standard cards, compare up to 3, and a
+ *  列表／地圖 switch: the map pins each court with its coaches' starting price (CoachMap).
+ *  Desktop (`.dk`, ≥1024px): top nav, the sentence as a header, filter sidebar, two-column card grid or the map. */
 export function FindCoachesScreen() {
   const { coachFilters: f, setCoachFilters, compare } = useDemo();
   const coaches = useCoaches();
-  const [sheet, setSheet] = useState<"lv" | "cmp" | null>(null);
-  const list = filterCoaches(coaches, f);
+  const { courts } = useCatalog();
+  const [sheet, setSheet] = useState<"lv" | "cmp" | "where" | null>(null);
+  const [view, setView] = useState<"list" | "map">("list");
+  const list = filterCoaches(coaches, f, courts);
+  const pins = useMemo(() => coachPins(list, courts), [list, courts]);
+  const unpinned = offMap(list, pins).length;
+  const where = f.courtId ? courts.find((c) => c.id === f.courtId)?.name ?? "選地點" : f.areas.length ? f.areas.join("・") : "選地點";
   const initialOf = (id: string) => coaches.find((c) => c.id === id)?.initial;
 
   const typeChip = (t: LessonType) => (
@@ -33,7 +40,11 @@ export function FindCoachesScreen() {
       <span><b>{label}</b><small>{sub}</small></span>
     </label>
   );
-  const anyFilter = f.level != null || f.type != null || f.cert || f.beg;
+  const anyFilter = f.level != null || f.type != null || f.cert || f.beg || f.areas.length > 0 || f.courtId != null;
+  // with no match in the chosen areas, offer the areas that do have coaches for the rest of the sentence
+  const nearby = f.areas.length && !list.length
+    ? [...new Set(filterCoaches(coaches, { ...f, areas: [] }, courts).flatMap((c) => coachAreas(c, courts)))].filter((a) => !f.areas.includes(a)).slice(0, 4)
+    : [];
 
   return (
     <>
@@ -53,7 +64,12 @@ export function FindCoachesScreen() {
               {f.level != null ? LEVELS[f.level] : "選程度"}
               <Icon name="down" size={16} />
             </button>
-            ，想上
+            ，想在
+            <button className="need-pick" onClick={() => setSheet("where")}>
+              <Icon name="pin" size={15} />{where}
+              <Icon name="down" size={16} />
+            </button>
+            上
           </div>
           <div className="chips">
             {typeChip("體驗課")}{typeChip("一對一")}{typeChip("小班")}{typeChip("團體")}
@@ -61,9 +77,6 @@ export function FindCoachesScreen() {
           <div className="chips mb-only">
             {flagChip("cert", "已認證教練")}
             {flagChip("beg", "新手友善")}
-            <SoonButton className="chip" msg="區域：大安・信義・中山（可多選）">
-              <Icon name="pin" size={15} />大安・信義・中山
-            </SoonButton>
           </div>
         </div>
         <div className="fc-cols">
@@ -71,8 +84,8 @@ export function FindCoachesScreen() {
           <h3>篩選</h3>
           {flagCheck("cert", "已認證教練", "協會、總會、PPR、IPTPA 查驗過")}
           {flagCheck("beg", "新手友善", "專帶第一次拿拍的人")}
-          <h3>區域</h3>
-          <SoonButton className="chip fc-soon" msg="區域：大安・信義・中山（可多選）"><Icon name="pin" size={15} />大安・信義・中山</SoonButton>
+          <h3>地點</h3>
+          <button className="chip" aria-pressed={f.areas.length > 0 || f.courtId != null} onClick={() => setSheet("where")}><Icon name="pin" size={15} />{where === "選地點" ? "選區域或場地" : where}</button>
           <h3>價格與時段</h3>
           <SoonButton className="chip fc-soon" msg="價格區間（下一輪）">價格區間</SoonButton>
           <SoonButton className="chip fc-soon" msg="平日晚上／週末（下一輪）">平日晚上・週末</SoonButton>
@@ -81,19 +94,36 @@ export function FindCoachesScreen() {
         <div className="fc-main">
         <div className="list-meta">
           <span><b>{list.length}</b> 位教練符合</span>
-          <SoonButton className="sortbtn" msg="排序：最近可約／價格／評價">最近可約<Icon name="down" size={14} /></SoonButton>
+          <div className="fc-view">
+            {view === "list" && <SoonButton className="sortbtn" msg="排序：最近可約／價格／評價">最近可約<Icon name="down" size={14} /></SoonButton>}
+            <div className="seg" role="radiogroup" aria-label="顯示方式">
+              <label className="seg-opt"><input type="radio" name="fcv" checked={view === "list"} onChange={() => setView("list")} />列表</label>
+              <label className="seg-opt"><input type="radio" name="fcv" checked={view === "map"} onChange={() => setView("map")} /><Icon name="pin" size={14} />地圖</label>
+            </div>
+          </div>
         </div>
-        <div className="stack pad fc-grid">
+        {view === "map" && (
+          <>
+            <CoachMap pins={pins} />
+            {unpinned > 0 && <p className="fine pad">另有 {unpinned} 位教練還沒標上課場地，切回列表就看得到。</p>}
+          </>
+        )}
+        {view === "list" && <div className="stack pad fc-grid">
           {list.length ? (
             list.map((c) => <CoachCard key={c.id} coach={c} />)
           ) : (
             <div className="empty-s">
-              <h3>沒有符合的教練</h3>
-              <p className="text-muted">放寬程度或類型看看。</p>
+              <h3>{f.areas.length ? `${f.areas.join("・")}目前還沒有符合的教練` : "沒有符合的教練"}</h3>
+              {nearby.length > 0 ? (
+                <>
+                  <p className="text-muted">這些區域有：</p>
+                  <div className="chips" style={{ justifyContent: "center" }}>{nearby.map((a) => <button key={a} className="chip" onClick={() => setCoachFilters((p) => ({ ...p, areas: [a], courtId: null }))}><Icon name="pin" size={14} />{a}</button>)}</div>
+                </>
+              ) : <p className="text-muted">放寬程度、類型或地點看看。</p>}
               <button className="btn btn-secondary" onClick={() => setCoachFilters(emptyCoachFilters())}>清除條件</button>
             </div>
           )}
-        </div>
+        </div>}
         <p className="fine pad">所有教練用同一張卡片格式，價格、程度、認證都寫在同一個位置，方便比較。Demo 的教練照片為免費圖庫的示意照，不是教練本人。</p>
         </div>
         </div>
@@ -131,6 +161,7 @@ export function FindCoachesScreen() {
         </Sheet>
       )}
       {sheet === "cmp" && <CompareSheet ids={compare} onClose={() => setSheet(null)} />}
+      {sheet === "where" && <WhereSheet coaches={coaches} courts={courts} onClose={() => setSheet(null)} />}
     </>
   );
 }
@@ -193,6 +224,48 @@ function CompareSheet({ ids, onClose }: { ids: string[]; onClose: () => void }) 
             </tr>
           </tbody>
         </table>
+      </div>
+    </Sheet>
+  );
+}
+
+/** 在哪上課: 行政區 (several) or one court. Only places where some coach teaches are offered, each with its count, plus
+ *  a shortcut to the student's own 常打區域. */
+function WhereSheet({ coaches, courts, onClose }: { coaches: Coach[]; courts: Court[]; onClose: () => void }) {
+  const { coachFilters: f, setCoachFilters, profile } = useDemo();
+  const [areas, setAreas] = useState(f.areas);
+  const [courtId, setCourtId] = useState(f.courtId);
+  const counts = new Map<string, number>();
+  coaches.forEach((c) => coachAreas(c, courts).forEach((a) => counts.set(a, (counts.get(a) ?? 0) + 1)));
+  const options = [...counts.keys()].sort((a, b) => counts.get(b)! - counts.get(a)! || a.localeCompare(b, "zh-Hant"));
+  const mine = profile.areas.map(area).filter((a) => counts.has(a));
+  const places = courts.map((ct) => ({ ct, n: coaches.filter((c) => teachesAt(c, ct.id)).length })).filter((x) => x.n > 0);
+  const toggle = (a: string) => { setCourtId(null); setAreas((p) => (p.includes(a) ? p.filter((x) => x !== a) : [...p, a])); };
+  const apply = (next: { areas: string[]; courtId: string | null }) => { setCoachFilters((p) => ({ ...p, ...next })); onClose(); };
+  return (
+    <Sheet className="sheet-coach where-sheet" onClose={onClose}>
+      <h2>想在哪裡上課？</h2>
+      <p className="text-muted" style={{ fontSize: 14, margin: 0 }}>選區域（可多選），或直接選一個場地。</p>
+      {mine.length > 0 && (
+        <button className="linkbtn" style={{ marginTop: 10 }} onClick={() => { setCourtId(null); setAreas(mine); }}>用我常打的區域：{mine.join("・")}</button>
+      )}
+      <h3>區域</h3>
+      <div className="wrapchips">
+        {options.map((a) => <button key={a} type="button" className="chip" aria-pressed={areas.includes(a)} onClick={() => toggle(a)}>{a}<small>{counts.get(a)}</small></button>)}
+      </div>
+      <h3>場地</h3>
+      <div className="where-courts">
+        {places.map(({ ct, n }) => (
+          <button key={ct.id} type="button" className="where-court" aria-pressed={courtId === ct.id} onClick={() => { setAreas([]); setCourtId(courtId === ct.id ? null : ct.id); }}>
+            <Icon name="pin" size={16} />
+            <span>{ct.name}<small>{ct.district}・{ct.kind} {ct.courtCount} 面</small></span>
+            <b className="num">{n} 位</b>
+          </button>
+        ))}
+      </div>
+      <div style={{ display: "flex", gap: 8, marginTop: "var(--space-4)" }}>
+        <button className="btn btn-secondary" onClick={() => apply({ areas: [], courtId: null })}>不限地點</button>
+        <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => apply({ areas, courtId })}>套用</button>
       </div>
     </Sheet>
   );
