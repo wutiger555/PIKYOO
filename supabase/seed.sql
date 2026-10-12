@@ -34,35 +34,35 @@ insert into auth.users (id, aud, role, email, confirmation_token, recovery_token
   (md5('pikyoo-seed:小安')::uuid, 'authenticated', 'authenticated', 'seed+29@pikyoo.test', '', '', '', '', '{"name":"小安"}'::jsonb);
 
 insert into public.courts (slug, name, city, district, address, kind, court_count, surface, is_free, price_note, hours_note,
-  amenities, has_aircon, has_lights, booking_method, booking_note, rules, photos, verified_at) values (
+  amenities, has_aircon, has_lights, booking_method, booking_note, rules, photos, verified_at, lat, lng) values (
   'daan', '大安運動中心', '台北市', '大安區', '台北市大安區辛亥路三段 55 號', 'indoor', 4, 'PU 多功能球場',
   false, '每面每小時約 NT$400（依時段）', '每天 06:00–22:00', array['冷氣', '淋浴', '停車', '租拍']::text[], true, true, 'public_system', '運動中心官網線上預約，開放 14 天內的時段',
-  '需穿室內運動鞋；每次預約最多 2 小時。', '[{"path":"/photos/court-daan.jpg","alt":"空無一人的室內 PU 球場，藍色地板與白線"}]'::jsonb, '2026-09-01');
+  '需穿室內運動鞋；每次預約最多 2 小時。', '[{"path":"/photos/court-daan.jpg","alt":"空無一人的室內 PU 球場，藍色地板與白線"}]'::jsonb, '2026-09-01', 25.02073, 121.54601);
 insert into public.courts (slug, name, city, district, address, kind, court_count, surface, is_free, price_note, hours_note,
-  amenities, has_aircon, has_lights, booking_method, booking_note, rules, photos, verified_at) values (
+  amenities, has_aircon, has_lights, booking_method, booking_note, rules, photos, verified_at, lat, lng) values (
   'xinyi', '信義運動中心', '台北市', '信義區', '台北市信義區松勤街 100 號', 'indoor', 3, 'PU 多功能球場',
   false, '每面每小時約 NT$450（依時段）', '每天 06:00–22:00', array['冷氣', '淋浴', '停車']::text[], true, true, 'public_system', '運動中心官網線上預約',
-  '需穿室內運動鞋。', '[{"path":"/photos/court-xinyi.jpg","alt":"室內球場上兩位球員在對打"}]'::jsonb, '2026-09-01');
+  '需穿室內運動鞋。', '[{"path":"/photos/court-xinyi.jpg","alt":"室內球場上兩位球員在對打"}]'::jsonb, '2026-09-01', 25.0317, 121.56677);
 insert into public.courts (slug, name, city, district, address, kind, court_count, surface, is_free, price_note, hours_note,
-  amenities, has_aircon, has_lights, booking_method, booking_note, rules, photos, verified_at) values (
+  amenities, has_aircon, has_lights, booking_method, booking_note, rules, photos, verified_at, lat, lng) values (
   'dajia', '大佳河濱公園', '台北市', '中山區', '台北市中山區濱江街 5 號', 'outdoor', 6, '硬地',
   true, '免費', '全天開放・夜間照明到 22:00', array['夜間照明', '停車']::text[], false, true, 'walk_in', '先到先打，週末早上人多',
-  '下雨地滑請勿使用；請自備球網以外的器材。', '[{"path":"/photos/court-dajia.jpg","alt":"綠樹環繞、有圍網的戶外球場"}]'::jsonb, '2026-09-01');
+  '下雨地滑請勿使用；請自備球網以外的器材。', '[{"path":"/photos/court-dajia.jpg","alt":"綠樹環繞、有圍網的戶外球場"}]'::jsonb, '2026-09-01', 25.07473, 121.539);
 insert into public.courts (slug, name, city, district, address, kind, court_count, surface, is_free, price_note, hours_note,
-  amenities, has_aircon, has_lights, booking_method, booking_note, rules, photos, verified_at) values (
+  amenities, has_aircon, has_lights, booking_method, booking_note, rules, photos, verified_at, lat, lng) values (
   'zhongshan', '中山運動中心', '台北市', '中山區', '台北市中山區中山北路二段 44 巷 2 號', 'indoor', 4, 'PU 多功能球場',
   false, '每面每小時約 NT$400（依時段）', '每天 06:00–22:00', array['冷氣', '淋浴', '租拍']::text[], true, true, 'public_system', '運動中心官網線上預約',
-  '需穿室內運動鞋。', '[{"path":"/photos/court-zhongshan.jpg","alt":"室內球場上女球員在網前擊球"}]'::jsonb, null);
+  '需穿室內運動鞋。', '[{"path":"/photos/court-zhongshan.jpg","alt":"室內球場上女球員在網前擊球"}]'::jsonb, null, 25.05486, 121.52139);
 insert into public.courts (slug, name, city, district, address, kind, court_count, surface, is_free, price_note, hours_note,
-  amenities, has_aircon, has_lights, booking_method, booking_note, rules, photos, verified_at) values (
+  amenities, has_aircon, has_lights, booking_method, booking_note, rules, photos, verified_at, lat, lng) values (
   'neihu', '內湖運動中心', '台北市', '內湖區', '台北市內湖區洲子街 12 號', 'indoor', 3, 'PU 多功能球場',
   false, '每面每小時約 NT$350（依時段）', '每天 06:00–22:00', array['冷氣', '停車']::text[], true, true, 'public_system', '運動中心官網線上預約',
-  '需穿室內運動鞋。', '[{"path":"/photos/court-neihu.jpg","alt":"室內球場上男球員準備擊球"}]'::jsonb, null);
+  '需穿室內運動鞋。', '[{"path":"/photos/court-neihu.jpg","alt":"室內球場上男球員準備擊球"}]'::jsonb, null, 25.07723, 121.57536);
 insert into public.courts (slug, name, city, district, address, kind, court_count, surface, is_free, price_note, hours_note,
-  amenities, has_aircon, has_lights, booking_method, booking_note, rules, photos, verified_at) values (
+  amenities, has_aircon, has_lights, booking_method, booking_note, rules, photos, verified_at, lat, lng) values (
   'banqiao', '新北市板橋第一運動場風雨球場', '新北市', '板橋區', '新北市板橋區漢生東路 278 號', 'covered', 2, '硬地',
   false, '每小時約 NT$200', '每天 06:00–22:00', array['夜間照明', '停車']::text[], false, true, 'phone', '打電話到場館管理室預約',
-  '颱風與豪雨停開。', '[{"path":"/photos/court-banqiao.jpg","alt":"夜間打燈的兩面球場空拍"}]'::jsonb, null);
+  '颱風與豪雨停開。', '[{"path":"/photos/court-banqiao.jpg","alt":"夜間打燈的兩面球場空拍"}]'::jsonb, null, 25.01017, 121.46838);
 insert into public.coaches (profile_id, slug, name, status, tagline, bio, areas, level_min, level_max, style, beginner_friendly,
   coaching_since, reply_note, play, audience, languages, availability, venues, steps, pay_methods, policy, photos, timeline, quotes, approved_at) values (
   md5('pikyoo-seed:Mia 林')::uuid, 'mia', 'Mia 林', 'approved', '網球教練 8 年轉匹克球，專帶第一次拿拍的人。', '我相信第一堂課最重要的是「打得到球、想再來」。每堂課會拍一段你的揮拍影片，課後用 LINE 傳給你，附上一個回家可以練的重點。', array['大安', '信義']::text[], 0, 3, array['新手友善', '拆解動作', '影片回饋']::text[],

@@ -7,9 +7,10 @@ import { AppBar, SoonButton } from "@/components/pk/Shell";
 import { GameTicket } from "@/components/pk/Ticket";
 import { useToast } from "@/components/pk/Toast";
 import { TopNav } from "@/components/pk/TopNav";
-import { Img } from "@/features/coaches/CoachCard";
+import { CoachMini, Img } from "@/features/coaches/CoachCard";
+import { teachesAt } from "@pikyoo/core/coach-filters";
 import { lessons as demoLessons } from "@pikyoo/core/data/games";
-import { useAllGames } from "@/lib/demo-store";
+import { useAllGames, useCoaches, useDemo } from "@/lib/demo-store";
 import { money } from "@pikyoo/core/format";
 import type { Court } from "@pikyoo/core/types";
 
@@ -21,13 +22,15 @@ const BOOK_CTA: Record<Court["booking"], string> = {
   免預約: "直接去打",
 };
 
-/** F4-2 球場詳情: facts, how to book (one tap out), rules, and the games and lessons held here.
+/** F4-2 球場詳情: facts, how to book (one tap out), rules, the coaches who teach here, and the games and lessons held here.
  *  Desktop: facts, games and lessons on the left; booking card, location and the report link on the right. The phone
  *  keeps its single-column order via `.o1`–`.o8` (the two column wrappers are `display: contents` there). */
 export function CourtDetailScreen({ court: c }: { court: Court }) {
   const toast = useToast();
   const games = useAllGames().filter((g) => g.courtId === c.id);
   const lessons = demoLessons().filter((l) => l.courtId === c.id);
+  const coaches = useCoaches().filter((x) => teachesAt(x, c.id));
+  const { setCoachFilters } = useDemo();
   const maps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.address)}`;
   const bookBtn =
     c.booking === "免預約" ? (
@@ -96,6 +99,14 @@ export function CourtDetailScreen({ court: c }: { court: Court }) {
             </div>
           )}
         </div>
+
+        {coaches.length > 0 && (
+          <div className="dblock o7">
+            <h3>在這裡教課的教練</h3>
+            <div className="hscroll" style={{ padding: "0 0 4px" }}>{coaches.map((x) => <CoachMini key={x.id} coach={x} />)}</div>
+            <Link className="linkbtn" href="/coaches" onClick={() => setCoachFilters((p) => ({ ...p, areas: [], courtId: c.id }))}>在找教練裡看這個場地 →</Link>
+          </div>
+        )}
 
         {lessons.length > 0 && (
           <div className="dblock o7">

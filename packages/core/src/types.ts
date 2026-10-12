@@ -93,6 +93,9 @@ export interface Court {
   distance: string;
   /** pin position on the placeholder map, % from left/top */
   map: [number, number];
+  /** WGS84 coordinates for the real map (找教練 地圖); courts without them stay off it */
+  lat?: number;
+  lng?: number;
   /** 16:9 venue photo (demo: stock photo, see docs/PHOTOS.md) */
   photo?: { src: string; alt: string };
 }

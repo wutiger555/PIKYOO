@@ -2,6 +2,7 @@ import { Link, Stack, useLocalSearchParams } from "expo-router";
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { lessons as demoLessons } from "@pikyoo/core/data/games";
+import { teachesAt } from "@pikyoo/core/coach-filters";
 import { money } from "@pikyoo/core/format";
 import type { Court } from "@pikyoo/core/types";
 import { isLive, useCatalog } from "@/data/catalog";
@@ -18,7 +19,8 @@ const BOOK_CTA: Record<Court["booking"], string> = {
   公立預約系統: "前往預約系統", 官網預約: "前往官網預約", "LINE 預約": "用 LINE 預約", 電話預約: "打電話預約", 免預約: "直接去打",
 };
 
-/** F4-2 球場詳情 (website: CourtDetailScreen): facts, how to book, rules, location, and the games and lessons held here. */
+/** F4-2 球場詳情 (website: CourtDetailScreen): facts, how to book, rules, location, the coaches who teach here, and the games
+ *  and lessons held here. */
 export default function CourtPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { catalog } = useCatalog();
@@ -26,6 +28,7 @@ export default function CourtPage() {
   const insets = useSafeAreaInsets();
   if (!catalog || !c) return <Page><WithCatalog>{() => <Text style={{ fontSize: 16 }}>找不到這個球場</Text>}</WithCatalog></Page>;
   const games = catalog.games.filter((g) => g.courtId === c.id);
+  const coaches = catalog.coaches.filter((x) => teachesAt(x, c.id));
   // the website shows the demo's sample lessons here too; live lessons per court come with the booking data
   const lessons = isLive ? [] : demoLessons().filter((l) => l.courtId === c.id);
   const maps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.address)}`;
@@ -54,6 +57,20 @@ export default function CourtPage() {
             <Text style={{ fontSize: 14, color: color.muted }}>{c.address}</Text>
             <Btn label="導航" icon="pin" lg={false} onPress={() => Linking.openURL(maps)} style={{ alignSelf: "flex-start", borderRadius: 999 }} />
           </Block>
+          {coaches.length > 0 && (
+            <Block title="在這裡教課的教練">
+              {coaches.map((x) => (
+                <Link key={x.id} href={`/coaches/${x.id}`} asChild>
+                  <Pressable style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 6 }}>
+                    {x.profile.photos[0] ? <Photo src={x.profile.photos[0].src} alt={x.name} style={{ width: 48, height: 48, borderRadius: 24 }} tag={false} /> : <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: color.n200, alignItems: "center", justifyContent: "center" }}><Text style={{ fontWeight: "700" }}>{x.initial}</Text></View>}
+                    <View style={{ flex: 1 }}><Text style={{ fontSize: 16, fontWeight: "700" }}>{x.name}</Text><Text style={{ fontSize: 13, color: color.muted }}>{x.types.join("・")}</Text></View>
+                    <Num style={{ fontSize: 18 }}>{money(x.priceFrom)}<Text style={{ fontSize: 12, color: color.muted }}> 起</Text></Num>
+                    <Icon name="right" size={14} tint={color.muted} />
+                  </Pressable>
+                </Link>
+              ))}
+            </Block>
+          )}
           <Block title="這裡的球局">
             {games.length ? games.map((g) => <GameTicket key={g.id} game={g} />) : <Text style={{ color: color.muted }}>這週還沒有人在這裡開團。開團請到網站。</Text>}
           </Block>

@@ -49,10 +49,10 @@ const emit = (s: string) => out.push(s);
 // — courts —
 for (const c of COURTS) {
   emit(`insert into public.courts (slug, name, city, district, address, kind, court_count, surface, is_free, price_note, hours_note,
-  amenities, has_aircon, has_lights, booking_method, booking_note, rules, photos, verified_at) values (
+  amenities, has_aircon, has_lights, booking_method, booking_note, rules, photos, verified_at, lat, lng) values (
   ${q(c.id)}, ${q(c.name)}, ${q(c.address.slice(0, 3))}, ${q(c.district)}, ${q(c.address)}, '${KIND[c.kind]}', ${c.courtCount}, ${q(c.surface)},
   ${c.free}, ${q(c.priceNote)}, ${q(c.hours)}, ${arr(c.amenities)}, ${c.aircon}, ${c.lights}, '${BOOKING[c.booking]}', ${q(c.bookingNote)},
-  ${q(c.rules)}, ${json(c.photo ? [{ path: c.photo.src, alt: c.photo.alt }] : [])}, ${c.verified ? q(c.verified.replace("/", "-") + "-01") : "null"});`);
+  ${q(c.rules)}, ${json(c.photo ? [{ path: c.photo.src, alt: c.photo.alt }] : [])}, ${c.verified ? q(c.verified.replace("/", "-") + "-01") : "null"}, ${c.lat ?? "null"}, ${c.lng ?? "null"});`);
 }
 
 // — coaches —

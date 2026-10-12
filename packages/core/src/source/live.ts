@@ -83,6 +83,7 @@ function toCourt(photo: Photo, c: Tables<"courts">, i: number): Court {
     map: c.lat != null && c.lng != null
       ? [Math.round(((c.lng - 121.42) / 0.24) * 100), Math.round(((25.13 - c.lat) / 0.16) * 100)]
       : [15 + ((i * 37) % 70), 20 + ((i * 23) % 60)],
+    lat: c.lat ?? undefined, lng: c.lng ?? undefined,
     photo: p && { src: photo("court-photos", p.path), alt: p.alt },
   };
 }

@@ -230,3 +230,9 @@
   .dk.games .date-h { padding: 24px 0 10px; position: static; }
   .dk.games .games-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding: 0; }
 }
+
+/* 找教練 地圖 on desktop: the map takes the card grid's place, taller, preview cards side by side */
+@media (min-width: 1024px) {
+  .dk .cmap { margin: 0 0 16px; height: calc(100dvh - 240px); min-height: 520px; }
+  .dk .cmap-peek { left: 16px; right: auto; width: min(720px, calc(100% - 32px)); }
+}
