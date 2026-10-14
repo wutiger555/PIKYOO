@@ -2,9 +2,9 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useRef, useState } from "react";
 import { Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { bookingDays, slotsFor } from "@pikyoo/core/data/coaches";
+import { bookingDays, isCertified, slotsFor } from "@pikyoo/core/data/coaches";
 import { CANCEL_TEXT, specialties } from "@pikyoo/core/rules";
-import { levelText, money } from "@pikyoo/core/format";
+import { money } from "@pikyoo/core/format";
 import type { Coach, TimelineItem } from "@pikyoo/core/types";
 import { useSession } from "@/data/session";
 import { Cred, LevelChip, Num, Rating, Tag } from "@/ui/badges";
@@ -19,14 +19,17 @@ import { toast } from "@/ui/Toast";
 
 // F3-4 教練頁 (website: CoachPageScreen / CoachPublicPage), section for section.
 
-type SectionKey = "plans" | "about" | "play" | "time" | "exp" | "reviews" | "qa" | "where";
+// Order (2026-10-15, after the coach interview): what makes a student trust a coach first (reviews, credentials),
+// then what they buy (plans, times), then the person (about), questions and where.
+type SectionKey = "reviews" | "creds" | "plans" | "time" | "about" | "qa" | "where";
 const SECTIONS: [SectionKey, string][] = [
-  ["plans", "課程"], ["reviews", "評價"], ["exp", "經歷"], ["about", "關於我"], ["play", "匹克球檔案"], ["time", "可約時段"], ["qa", "問與答"], ["where", "地點"],
+  ["reviews", "評價"], ["creds", "資格"], ["plans", "課程"], ["time", "時段"], ["about", "關於我"], ["qa", "問與答"], ["where", "地點"],
 ];
-const TITLES: Record<SectionKey, string> = { plans: "課程與價目", about: "關於我", play: "匹克球檔案", time: "可約時段", exp: "經歷與資格", reviews: "學生評價", qa: "問與答", where: "授課地點" };
-/** What a visitor sees before signing in (website: GUEST_SECTIONS); everything else sits behind the sign-in panel. */
-const GUEST_SECTIONS: ReadonlySet<SectionKey> = new Set(["plans", "about"]);
-const COVER_H = 430;
+const TITLES: Record<SectionKey, string> = { reviews: "學生評價", creds: "資格與經歷", plans: "課程與價目", time: "可約時段", about: "關於我", qa: "問與答", where: "授課地點" };
+/** What a visitor sees before signing in (website: GUEST_SECTIONS); everything else sits behind the sign-in panel.
+ *  資格 shows the credentials to everyone; its timeline needs sign-in. */
+const GUEST_SECTIONS: ReadonlySet<SectionKey> = new Set(["creds", "plans", "about"]);
+const COVER_H = 300;
 const TL_ICON: Record<TimelineItem["kind"], IconName> = { cert: "shield", trophy: "trophy", users: "users", cap: "cap" };
 
 export default function CoachPage() {
@@ -89,38 +92,45 @@ function CoachPublicPage({ c }: { c: Coach }) {
 
         {/* 1: carbon hero */}
         <View style={s.hero}>
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Text style={s.heroName}>{c.name}</Text>
-            {c.rating != null && <Rating rating={c.rating} reviews={c.reviews} onCarbon />}
-          </View>
-          <Text style={{ color: color.onCarbonMuted, fontSize: 14 }}>{c.areas.join("・")}・{p.reply}</Text>
-          <Text style={{ color: "#fff", fontSize: 17, lineHeight: 25, marginTop: 6 }}>{c.tagline}</Text>
-          {specialties(c).length > 0 && <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 8 }} accessibilityLabel="教學專長">{specialties(c).map((x) => <Text key={x} style={{ fontSize: 13, fontWeight: "700", paddingHorizontal: 10, paddingVertical: 3, borderRadius: 999, overflow: "hidden", backgroundColor: color.accent, color: color.text }}>{x}</Text>)}</View>}
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 8 }}>{c.creds.map((x, i) => <Cred key={i} c={x} onCarbon />)}</View>
+          <Text style={s.heroName}>{c.name}</Text>
+          {isCertified(c) && <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}><Icon name="check" size={13} tint={color.accent} /><Text style={{ color: color.accent, fontSize: 14, fontWeight: "700" }}>已認證教練</Text></View>}
           <View style={s.stats}>
-            <Stat n={String(c.years)} label="年教學" />
-            <Stat n={String(c.students)} label="位學生" />
-            <Stat n={levelText(c.levelMin, c.levelMax)} label="授課程度" last />
+            <Stat n={c.rating != null ? `★ ${c.rating}` : "—"} label={c.reviews ? `${c.reviews} 則評價` : "還沒有評價"} />
+            <Stat n={String(c.students)} label="位學生上過課" />
+            <Stat n={String(c.years)} label="年教學" last />
           </View>
-        </View>
-
-        {/* 2: gallery */}
-        <View>
-          {gallery.length > 0 && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, padding: 16, paddingBottom: 4 }}>
-              {gallery.map((ph) => (
-                <View key={ph.src} style={{ width: 220, gap: 6 }}>
-                  <Photo src={ph.src} alt={ph.alt} style={{ width: 220, height: 150, borderRadius: radius.md }} />
-                  {ph.caption && <Text style={{ fontSize: 13, color: color.muted }}>{ph.caption}</Text>}
-                </View>
-              ))}
-            </ScrollView>
-          )}
+          <Text style={{ color: "#fff", fontSize: 16, lineHeight: 24, marginTop: 12 }}>{c.tagline}</Text>
+          {specialties(c).length > 0 && <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 10 }} accessibilityLabel="教學專長">{specialties(c).map((x) => <Text key={x} style={{ fontSize: 13, fontWeight: "700", paddingHorizontal: 10, paddingVertical: 3, borderRadius: 999, overflow: "hidden", backgroundColor: color.accent, color: color.text }}>{x}</Text>)}</View>}
         </View>
 
         <View onLayout={(e) => setAnchorY(e.nativeEvent.layout.y)} style={s.anchorsWrap}>{anchors}</View>
 
         <View onLayout={(e) => { bodyY.current = e.nativeEvent.layout.y; }} style={{ paddingHorizontal: 16 }}>
+          {shows("reviews") && (
+            <Block {...at("reviews")} title="學生怎麼說" right={c.rating != null ? <Rating rating={c.rating} reviews={c.reviews} big /> : undefined}>
+              {p.quotes.length ? p.quotes.map((q) => (
+                <View key={q.name} style={s.quote}>
+                  <Text style={[s.body, { fontSize: 16 }]}>「{q.text}」</Text>
+                  <Text style={{ fontSize: 13, color: color.muted }}>{q.name}・{q.level}</Text>
+                </View>
+              )) : <Text style={{ color: color.muted }}>還沒有評價，上完課的學生可以留下第一則。</Text>}
+            </Block>
+          )}
+
+          <Block {...at("creds")} title={TITLES.creds}>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>{c.creds.map((x, i) => <Cred key={i} c={x} />)}</View>
+            {!locked && p.timeline.map((t) => (
+              <View key={t.year + t.text} style={{ flexDirection: "row", gap: 10, alignItems: "flex-start" }}>
+                <Num style={{ width: 40, fontSize: 16, color: color.muted }}>{t.year}</Num>
+                <View style={s.tlIcon}><Icon name={TL_ICON[t.kind]} size={15} /></View>
+                <View style={{ flex: 1, gap: 4 }}>
+                  <Text style={s.body}>{t.text}</Text>
+                  {t.kind === "cert" && <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}><Icon name="check" size={11} tint={color.success} /><Text style={{ fontSize: 12, fontWeight: "700", color: color.success }}>PIKYOO 已查驗</Text></View>}
+                </View>
+              </View>
+            ))}
+          </Block>
+
           <Block {...at("plans")} title={TITLES.plans} right={<LevelChip min={c.levelMin} max={c.levelMax} />}>
             {p.plans.map((pl) => (
               <Pressable key={pl.id} onPress={() => book(pl.id)} style={({ pressed }) => [s.plan, pressed && { borderColor: color.text }]}>
@@ -151,64 +161,6 @@ function CoachPublicPage({ c }: { c: Coach }) {
             </View>
           )}
 
-          {shows("reviews") && (
-            <Block {...at("reviews")} title="學生怎麼說" right={c.rating != null ? <Rating rating={c.rating} reviews={c.reviews} big /> : undefined}>
-              {p.quotes.length ? p.quotes.map((q) => (
-                <View key={q.name} style={s.quote}>
-                  <Text style={[s.body, { fontSize: 16 }]}>「{q.text}」</Text>
-                  <Text style={{ fontSize: 13, color: color.muted }}>{q.name}・{q.level}</Text>
-                </View>
-              )) : <Text style={{ color: color.muted }}>還沒有評價，上完課的學生可以留下第一則。</Text>}
-            </Block>
-          )}
-
-          {shows("exp") && (
-            <Block {...at("exp")} title={TITLES.exp}>
-              {p.timeline.map((t) => (
-                <View key={t.year + t.text} style={{ flexDirection: "row", gap: 10, alignItems: "flex-start" }}>
-                  <Num style={{ width: 40, fontSize: 16, color: color.muted }}>{t.year}</Num>
-                  <View style={s.tlIcon}><Icon name={TL_ICON[t.kind]} size={15} /></View>
-                  <View style={{ flex: 1, gap: 4 }}>
-                    <Text style={s.body}>{t.text}</Text>
-                    {t.kind === "cert" && <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}><Icon name="check" size={11} tint={color.success} /><Text style={{ fontSize: 12, fontWeight: "700", color: color.success }}>PIKYOO 已查驗</Text></View>}
-                  </View>
-                </View>
-              ))}
-            </Block>
-          )}
-
-          <Block {...at("about")} title={TITLES.about}>
-            <Text style={s.body}>{p.bio}</Text>
-            <Text style={s.sub}>上課怎麼進行</Text>
-            {p.steps.map((st, i) => (
-              <View key={i} style={{ flexDirection: "row", gap: 10, alignItems: "flex-start" }}>
-                <Num style={s.stepNo}>{i + 1}</Num><Text style={[s.body, { flex: 1 }]}>{st}</Text>
-              </View>
-            ))}
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 4 }}>{c.style.map((x) => <Tag key={x} tone="outline">{x}</Tag>)}</View>
-            <Text style={s.sub}>適合誰</Text>
-            {p.audience.map((a) => (
-              <View key={a} style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
-                <View style={s.check}><Icon name="check" size={12} /></View><Text style={s.body}>{a}</Text>
-              </View>
-            ))}
-          </Block>
-
-          {shows("play") && (
-            <Block {...at("play")} title={TITLES.play}>
-              <View style={s.pb}>
-                <PB k="球齡"><Text><Num style={{ fontSize: 22 }}>{Math.max(1, new Date().getFullYear() - Number(p.play.since))}</Num><Text style={s.body}> 年</Text><Text style={{ fontSize: 12, color: color.muted }}>（{p.play.since} 年開始）</Text></Text></PB>
-                <PB k="慣用手"><Text style={s.pbV}>{p.play.hand}</Text></PB>
-                <PB k="打法"><Text style={s.pbV}>{p.play.format}</Text></PB>
-                <PB k="運動背景"><Text style={s.pbV}>{p.play.background}</Text></PB>
-                <PB k="DUPR">{(() => { const d = c.creds.find((x) => x.issuer === "DUPR"); return d ? <Text><Num style={{ fontSize: 22 }}>{d.level}</Num><Text style={{ fontSize: 12, color: color.muted }}> {d.verified ? "已驗證" : "自填"}</Text></Text> : <Text style={{ color: color.muted }}>未提供</Text>; })()}</PB>
-                <PB k="授課語言"><Text style={s.pbV}>{p.languages.join("・")}</Text></PB>
-              </View>
-              <Text style={s.sub}>擅長教</Text>
-              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>{p.play.strengths.map((x) => <Tag key={x} tone="olive">{x}</Tag>)}</View>
-            </Block>
-          )}
-
           {shows("time") && (
             <Block {...at("time")} title={TITLES.time} right={<Text style={{ fontSize: 13, color: color.muted }}>未來 7 天</Text>}>
               {days.length ? days.map(({ d, slots }) => (
@@ -227,10 +179,50 @@ function CoachPublicPage({ c }: { c: Coach }) {
             </Block>
           )}
 
-          {shows("qa") && <Block {...at("qa")} title={TITLES.qa}><QuestionBoard coach={c} onAsk={() => (locked ? setLogin(`登入後可以問 ${c.name} 問題`) : setAsking(true))} /></Block>}
+          <Block {...at("about")} title={TITLES.about}>
+            <Text style={s.body}>{p.bio}</Text>
+            <Text style={s.sub}>上課怎麼進行</Text>
+            {p.steps.map((st, i) => (
+              <View key={i} style={{ flexDirection: "row", gap: 10, alignItems: "flex-start" }}>
+                <Num style={s.stepNo}>{i + 1}</Num><Text style={[s.body, { flex: 1 }]}>{st}</Text>
+              </View>
+            ))}
+            <Text style={s.sub}>適合誰</Text>
+            {p.audience.map((a) => (
+              <View key={a} style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
+                <View style={s.check}><Icon name="check" size={12} /></View><Text style={s.body}>{a}</Text>
+              </View>
+            ))}
+            {shows("about") && !locked && (
+              <>
+                <Text style={s.sub}>匹克球檔案</Text>
+                <View style={s.pb}>
+                  <PB k="球齡"><Text style={s.pbV}>{Math.max(1, new Date().getFullYear() - Number(p.play.since))} 年</Text></PB>
+                  <PB k="打法"><Text style={s.pbV}>{p.play.format}</Text></PB>
+                  <PB k="運動背景"><Text style={s.pbV}>{p.play.background}</Text></PB>
+                  <PB k="授課語言"><Text style={s.pbV}>{p.languages.join("・")}</Text></PB>
+                </View>
+              </>
+            )}
+            {gallery.length > 0 && (
+              <>
+                <Text style={s.sub}>上課照片</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
+                  {gallery.map((ph) => (
+                    <View key={ph.src} style={{ width: 200, gap: 6 }}>
+                      <Photo src={ph.src} alt={ph.alt} style={{ width: 200, height: 136, borderRadius: radius.md }} />
+                      {ph.caption && <Text style={{ fontSize: 13, color: color.muted }}>{ph.caption}</Text>}
+                    </View>
+                  ))}
+                </ScrollView>
+              </>
+            )}
+          </Block>
+
+          {shows("qa") && <Block {...at("qa")} title={TITLES.qa} right={<Text style={{ fontSize: 13, color: color.muted }}>{p.reply}</Text>}><QuestionBoard coach={c} onAsk={() => (locked ? setLogin(`登入後可以問 ${c.name} 問題`) : setAsking(true))} /></Block>}
 
           {shows("where") && (
-            <Block {...at("where")} title={TITLES.where} last>
+            <Block {...at("where")} title={TITLES.where} right={<Text style={{ fontSize: 13, color: color.muted }}>{c.areas.join("・")}</Text>} last>
               {p.venues.map((v) => (
                 <Pressable key={v.name} disabled={!v.courtId} onPress={() => router.push(`/courts/${v.courtId}`)} style={{ flexDirection: "row", gap: 10, alignItems: "center", paddingVertical: 6 }}>
                   <View style={s.tlIcon}><Icon name="pin" size={15} /></View>
