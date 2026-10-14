@@ -65,7 +65,7 @@ insert into public.courts (slug, name, city, district, address, kind, court_coun
   '颱風與豪雨停開。', '[{"path":"/photos/court-banqiao.jpg","alt":"夜間打燈的兩面球場空拍"}]'::jsonb, null, 25.01017, 121.46838);
 insert into public.coaches (profile_id, slug, name, status, tagline, bio, areas, level_min, level_max, style, beginner_friendly,
   coaching_since, reply_note, play, audience, languages, availability, venues, steps, pay_methods, policy, photos, timeline, quotes, approved_at) values (
-  md5('pikyoo-seed:Mia 林')::uuid, 'mia', 'Mia 林', 'approved', '網球教練 8 年轉匹克球，專帶第一次拿拍的人。', '我相信第一堂課最重要的是「打得到球、想再來」。每堂課會拍一段你的揮拍影片，課後用 LINE 傳給你，附上一個回家可以練的重點。', array['大安', '信義']::text[], 0, 3, array['新手友善', '拆解動作', '影片回饋']::text[],
+  md5('pikyoo-seed:Mia 林')::uuid, 'mia', 'Mia 林', 'approved', '網球教練 8 年轉匹克球，專帶第一次拿拍的人。', '我相信第一堂課最重要的是「打得到球、想再來」。每堂課會拍一段你的揮拍影片，課後用 LINE 傳給你，附上一個回家可以練的重點。', array['大安', '信義']::text[], 0, 3, array['零基礎入門', '技術細節']::text[],
   true, 2023, '通常 2 小時內回覆', '{"since":"2022","hand":"右手","format":"雙打為主","background":"網球教練 8 年","strengths":["零基礎入門","發球與接發球","網前小球（dink）","網球轉匹克球的揮拍修正"]}'::jsonb, array['第一次拿拍', '打過網球、羽球想轉項', '想先上課再去打新手局', '跟朋友一起來的小班']::text[], array['中文', '英文']::text[], '{"二":["19:30"],"三":["19:30"],"五":["20:00"],"六":["09:00","14:00"],"日":["10:00","15:00"]}'::jsonb,
   '[{"name":"大安運動中心","sub":"室內 4 面・大安區","court_slug":"daan"},{"name":"信義運動中心","sub":"室內 3 面・信義區","court_slug":"xinyi"}]'::jsonb, array['握拍與準備姿勢，先把球打過網', '分解動作＋當場錄影給你看', '小比賽實戰，課後 LINE 傳影片與功課']::text[],
   array['line_pay', 'bank_transfer', 'cash']::public.pay_method[], '上課前 24 小時可免費改期或取消；24 小時內取消收 50%。',
@@ -86,7 +86,7 @@ insert into public.coach_plans (coach_id, key, name, kind, duration_min, size_la
   null, null, 13500, 'per_pack', '每堂 NT$1,350・6 個月內用完', '省 NT$1,500', 3);
 insert into public.coaches (profile_id, slug, name, status, tagline, bio, areas, level_min, level_max, style, beginner_friendly,
   coaching_since, reply_note, play, audience, languages, availability, venues, steps, pay_methods, policy, photos, timeline, quotes, approved_at) values (
-  md5('pikyoo-seed:趙柏宇')::uuid, 'zhao', '趙柏宇', 'approved', 'TMLP 台北站雙打銅牌，把 3.0 打到 3.5。', '很多人卡在 3.0，是因為第三拍和網前轉換沒有固定打法。我會先看你打一局，找出最常失分的兩個球，接下來每堂課只練那兩個，直到比賽裡用得出來。', array['信義', '松山']::text[], 2, 5, array['比賽策略', '第三拍', '雙打站位']::text[],
+  md5('pikyoo-seed:趙柏宇')::uuid, 'zhao', '趙柏宇', 'approved', 'TMLP 台北站雙打銅牌，把 3.0 打到 3.5。', '很多人卡在 3.0，是因為第三拍和網前轉換沒有固定打法。我會先看你打一局，找出最常失分的兩個球，接下來每堂課只練那兩個，直到比賽裡用得出來。', array['信義', '松山']::text[], 2, 5, array['比賽與選手', '技術細節']::text[],
   false, 2022, '通常當天回覆', '{"since":"2020","hand":"右手","format":"雙打為主","background":"桌球校隊、羽球 10 年","strengths":["第三拍 drop","重置球（reset）","雙打站位與換位","比賽策略"]}'::jsonb, array['2.5–3.0 想升級', '準備參加積分賽', '固定球友想一起練戰術']::text[], array['中文']::text[], '{"二":["20:00"],"四":["19:30","21:00"],"六":["16:00"],"日":["09:00"]}'::jsonb,
   '[{"name":"信義運動中心","sub":"室內 3 面・信義區","court_slug":"xinyi"},{"name":"松山運動中心","sub":"室內・松山區","court_slug":null}]'::jsonb, array['先打一局，找出最常失分的兩個球', '每堂只練那兩個球，拆解到你能重複', '2 對 2 實戰，比賽裡用出來才算數']::text[],
   array['bank_transfer', 'cash']::public.pay_method[], '上課前 48 小時可免費改期；48 小時內取消收全額。',
@@ -104,7 +104,7 @@ insert into public.coach_plans (coach_id, key, name, kind, duration_min, size_la
   null, null, 11000, 'per_pack', '每堂 NT$1,100・4 個月內用完', '省 NT$1,000', 2);
 insert into public.coaches (profile_id, slug, name, status, tagline, bio, areas, level_min, level_max, style, beginner_friendly,
   coaching_since, reply_note, play, audience, languages, availability, venues, steps, pay_methods, policy, photos, timeline, quotes, approved_at) values (
-  md5('pikyoo-seed:安妮')::uuid, 'ann', '安妮', 'approved', '週末團體課，一個人來也能馬上找到球伴。', '團體課的好處是：你會認識一群程度差不多的球友。我的課前半小時練基本動作，後面一小時分組打比賽，下課前大家常常就約好下一次一起打了。', array['中山', '大同']::text[], 0, 2, array['團體課', '親子', '可英文授課']::text[],
+  md5('pikyoo-seed:安妮')::uuid, 'ann', '安妮', 'approved', '週末團體課，一個人來也能馬上找到球伴。', '團體課的好處是：你會認識一群程度差不多的球友。我的課前半小時練基本動作，後面一小時分組打比賽，下課前大家常常就約好下一次一起打了。', array['中山', '大同']::text[], 0, 2, array['團體帶氣氛', '親子兒童', '零基礎入門']::text[],
   true, 2024, '通常 1 小時內回覆', '{"since":"2022","hand":"右手","format":"雙打為主","background":"兒童體適能教練 5 年","strengths":["零基礎入門","團體分組練習","發球與接發球","親子課"]}'::jsonb, array['一個人想找球伴', '第一次拿拍', '親子一起學', '英文授課需求']::text[], array['中文', '英文']::text[], '{"三":["19:00"],"六":["09:00","14:00"],"日":["09:00"]}'::jsonb,
   '[{"name":"中山運動中心","sub":"室內 4 面・中山區","court_slug":"zhongshan"},{"name":"大佳河濱公園","sub":"室外 6 面・中山區","court_slug":"dajia"}]'::jsonb, array['30 分鐘基本動作：握拍、發球、接發', '分組輪轉，每個人都有很多擊球機會', '小比賽＋認識球友，下課一起約下次']::text[],
   array['line_pay', 'cash']::public.pay_method[], '上課前 24 小時可免費取消；雨天室外課改到室內或延期。',
@@ -121,7 +121,7 @@ insert into public.coach_plans (coach_id, key, name, kind, duration_min, size_la
   null, null, 900, 'per_lesson', '小朋友 7 歲以上', null, 2);
 insert into public.coaches (profile_id, slug, name, status, tagline, bio, areas, level_min, level_max, style, beginner_friendly,
   coaching_since, reply_note, play, audience, languages, availability, venues, steps, pay_methods, policy, photos, timeline, quotes, approved_at) values (
-  md5('pikyoo-seed:Ray 陳')::uuid, 'ray', 'Ray 陳', 'approved', '4.5 以上陪練，備戰積分賽。', '我自己還在打 DUPR 積分賽，所以課程就是比賽節奏：高強度對抽、發球變化、單打跑位。適合已經會打、想找強度的人。', array['內湖', '南港']::text[], 3, 6, array['進階陪練', '比賽準備']::text[],
+  md5('pikyoo-seed:Ray 陳')::uuid, 'ray', 'Ray 陳', 'approved', '4.5 以上陪練，備戰積分賽。', '我自己還在打 DUPR 積分賽，所以課程就是比賽節奏：高強度對抽、發球變化、單打跑位。適合已經會打、想找強度的人。', array['內湖', '南港']::text[], 3, 6, array['比賽與選手']::text[],
   false, 2025, '通常當天回覆', '{"since":"2019","hand":"左手","format":"單打、雙打都教","background":"網球選手出身","strengths":["快速對抽（hands battle）","發球變化","單打戰術","比賽心理"]}'::jsonb, array['3.5 以上想找強度', '備戰 DUPR 積分賽', '想練單打']::text[], array['中文', '英文']::text[], '{"一":["20:00"],"三":["19:00"],"五":["20:00"],"日":["15:00"]}'::jsonb,
   '[{"name":"內湖運動中心","sub":"室內 3 面・內湖區","court_slug":"neihu"}]'::jsonb, array['暖身後直接比賽強度對抽', '針對弱點設計情境練習', '模擬積分賽的一局，檢討每一分']::text[],
   array['bank_transfer', 'line_pay']::public.pay_method[], '上課前 24 小時可免費改期。',
