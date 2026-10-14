@@ -3,6 +3,7 @@ import { bookingDays, slotsFor } from "../data/coaches";
 import { LEVELS } from "../format";
 import type { Booking, BookingDay, BookingRequest, Coach, Level, PayMethod, Slot, Weekday } from "../types";
 import { PAY_DB } from "./coach-rows";
+import { sharedNotes } from "./notes";
 import type { Database, Enums } from "./db.types";
 
 // 預約上課 (B5, simple first): 選方案與時段 → 送出 → 教練確認／婉拒 → 學生看到結果、可以取消.
@@ -92,6 +93,8 @@ export interface MyBooking {
   id: string; state: MyBookingState; booking: Booking; day: BookingDay; coachName: string; planName: string; amount: number;
   /** the student's payment once the coach confirmed (B5 收款) */
   paid?: "wait" | "reported" | "paid";
+  /** 課後筆記 the coach shared (lesson_notes) */
+  notes?: { body: string; at: string }[];
 }
 
 export async function myBookings(sb: Sb, studentId: string): Promise<MyBooking[]> {
@@ -99,6 +102,7 @@ export async function myBookings(sb: Sb, studentId: string): Promise<MyBooking[]
     .select("id, status, starts_at, expires_at, headcount, note, pay_method, amount, coach_plans(key, name), coaches(slug, name), payments(status, payer_id)")
     .eq("student_id", studentId).is("group_id", null).order("starts_at", { ascending: false }).limit(50);
   if (r.error) throw explain(r.error.message);
+  const notes = await sharedNotes(sb, r.data.map((x) => x.id));
   const now = Date.now();
   return r.data.map((x) => {
     const p = tpeParts(x.starts_at);
@@ -110,7 +114,7 @@ export async function myBookings(sb: Sb, studentId: string): Promise<MyBooking[]
       : x.status;
     const pay = x.payments.find((y) => y.payer_id === studentId)?.status;
     return {
-      id: x.id, state, coachName: x.coaches?.name ?? "", planName: x.coach_plans?.name ?? "", amount: x.amount,
+      id: x.id, state, coachName: x.coaches?.name ?? "", planName: x.coach_plans?.name ?? "", amount: x.amount, notes: notes[x.id],
       paid: pay === "waiting" ? "wait" : pay === "reported" ? "reported" : pay === "paid" || pay === "refunded" ? "paid" : undefined,
       day: { key: p.key, weekday: p.weekday, date: p.date },
       booking: {

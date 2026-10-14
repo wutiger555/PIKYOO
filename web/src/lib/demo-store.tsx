@@ -9,6 +9,8 @@ import { initialQuestions } from "@pikyoo/core/data/questions";
 import { demoNotices } from "@pikyoo/core/data/notifications";
 import { LEVELS } from "@pikyoo/core/format";
 import type { Me } from "@pikyoo/core/source/me";
+import type { PastLesson } from "@pikyoo/core/source/notes";
+import { demoPastLessons } from "@pikyoo/core/data/schedule";
 import type { Catalog } from "@pikyoo/core/source/types";
 import type { Booking, BookingRequest, Coach, Game, Group, MyGameStatus, PaymentRow, Profile, Question } from "@pikyoo/core/types";
 
@@ -44,6 +46,8 @@ interface DemoState {
   payments: PaymentRow[];
   /** the signed-in coach's own page, edited in the console (Mia in the demo) */
   myCoach: Coach;
+  /** the coach's 上過的課 and their 課後筆記 */
+  past: PastLesson[];
   groups: Group[];
   questions: Question[];
 }
@@ -66,6 +70,7 @@ const init = (catalog: Catalog, me: Me | null | undefined): DemoState => ({
   payments: me === undefined ? initialPayments() : catalog.myCoach?.payments ?? [],
   // real sign-in: the viewer's own page (an empty placeholder until they apply, see CoachGate); demo: Mia
   myCoach: structuredClone(catalog.myCoach?.coach ?? catalog.coaches.find((c) => c.id === "mia") ?? getCoach("mia")!),
+  past: me === undefined ? demoPastLessons() : catalog.myCoach?.past ?? [],
   groups: me === undefined ? initialGroups() : [], // 揪團 is demo-only for now (PLAN D7)
   questions: catalog.questions ?? initialQuestions(),
 });
@@ -144,6 +149,7 @@ function useDemoValue(catalog: Catalog, me: Me | null | undefined) {
     unmarkReported: (id: string) => set("payments", (ps) => ps.map((x) => (x.id === id ? { ...x, status: "wait" as const, ref: undefined, at: "等學生重新確認" } : x))),
     resetConsole: () => setS((p) => ({ ...p, requests: initialRequests(), payments: initialPayments() })),
     setMyCoach: (u: Updater<Coach>) => set("myCoach", u),
+    setPast: (u: Updater<PastLesson[]>) => set("past", u),
     addGroup: (g: Group) => set("groups", (gs) => [g, ...gs.filter((x) => x.id !== g.id)]),
     updateGroup: (id: string, u: (g: Group) => Group) => set("groups", (gs) => gs.map((g) => (g.id === id ? u(g) : g))),
     submitGroup,

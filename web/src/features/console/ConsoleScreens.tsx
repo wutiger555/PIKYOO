@@ -20,6 +20,8 @@ import { CollectQRSheet } from "./CollectQR";
 import { realAuth } from "@/lib/env";
 import type { BookingRequest, PaymentRow } from "@pikyoo/core/types";
 import { PAY_LABEL } from "@pikyoo/core/labels";
+import type { PastLesson } from "@pikyoo/core/source/notes";
+import { writeNoteAction } from "@/lib/notes";
 
 type ConsoleTab = "today" | "lessons" | "page" | "pay";
 
@@ -178,6 +180,7 @@ export function CoachTodayScreen() {
   const pend = requests.filter((r) => r.status === "pending");
   const ask = questions.filter((q) => q.coachId === myCoach.id && !q.answer);
   const due = payments.filter((p) => p.status !== "paid").reduce((a, p) => a + p.amount, 0);
+  const [writing, setWriting] = useState<PastLesson | null>(null);
   return (
     <>
       <ConsoleFrame active="today" className="con-pb">
@@ -234,9 +237,86 @@ export function CoachTodayScreen() {
           </div>
         </section>}
         </div>
+        <PastLessons onWrite={setWriting} />
       </ConsoleFrame>
       <CoachTabs active="today" />
+      {/* after the scroller, so focusing the textarea doesn't make the page jump */}
+      {writing && <NoteSheet lesson={writing} onClose={() => setWriting(null)} />}
     </>
+  );
+}
+
+/** 上過的課: write a 課後筆記 after each lesson. Shared by default, so the student sees what to practise next. */
+function PastLessons({ onWrite }: { onWrite: (l: PastLesson) => void }) {
+  const { past } = useDemo();
+  if (!past.length) return null;
+  const todo = past.filter((l) => !l.notes.length).length;
+  return (
+    <>
+      <section className="sec">
+        <div className="sec-head">
+          <h2><span className="en">Notes</span>上過的課</h2>
+          <span className="text-muted" style={{ fontSize: 14 }}>{todo ? `${todo} 堂還沒寫課後筆記` : "筆記都寫好了"}</span>
+        </div>
+        <div className="stack past-list">
+          {past.map((l) => (
+            <div key={l.id} className="past">
+              <div className="past-h">
+                <span><b>{l.student}</b><span className="text-muted">・{l.plan}・{l.date}（{l.weekday}）{l.slot}</span></span>
+                <button className={`btn ${l.notes.length ? "btn-ghost" : "btn-secondary"}`} style={{ minHeight: 36, padding: "0 12px", fontSize: 14 }} onClick={() => onWrite(l)}>
+                  {l.notes.length ? "再寫一則" : "寫課後筆記"}
+                </button>
+              </div>
+              {l.notes.map((n) => (
+                <p key={n.id} className="past-note"><small>{n.shared ? "學生看得到" : "只有你看得到"}・{n.at}</small>{n.body}</p>
+              ))}
+            </div>
+          ))}
+        </div>
+      </section>
+    </>
+  );
+}
+
+const NOTE_PROMPTS = ["今天練了：", "做得好的：", "下次練：", "回家功課："];
+
+function NoteSheet({ lesson, onClose }: { lesson: PastLesson; onClose: () => void }) {
+  const { setPast } = useDemo();
+  const toast = useToast();
+  const router = useRouter();
+  const [body, setBody] = useState("");
+  const [shared, setShared] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const add = (p: string) => setBody((b) => (b.trim() ? `${b.trimEnd()}\n${p}` : p));
+  const save = async () => {
+    const text = body.trim();
+    if (!text) return;
+    if (realAuth) {
+      setBusy(true);
+      const r = await writeNoteAction(lesson.id, text, shared);
+      setBusy(false);
+      if (r.error) return toast(r.error);
+      router.refresh();
+    } else {
+      const note = { id: `n-${Date.now()}`, body: text, shared, at: "剛剛" };
+      setPast((ps) => ps.map((l) => (l.id === lesson.id ? { ...l, notes: [...l.notes, note] } : l)));
+    }
+    toast(shared ? `已傳給 ${lesson.student}` : "已存好，只有你看得到");
+    onClose();
+  };
+  return (
+    <Sheet onClose={onClose}>
+      <h2>{lesson.student} 的課後筆記</h2>
+      <p className="text-muted" style={{ margin: "0 0 10px", fontSize: 14 }}>{lesson.plan}・{lesson.date}（{lesson.weekday}）{lesson.slot}</p>
+      <div className="chips" style={{ marginBottom: 8 }}>{NOTE_PROMPTS.map((p) => <button key={p} type="button" className="chip" onClick={() => add(p)}>{p.replace("：", "")}</button>)}</div>
+      <textarea className="input" rows={6} value={body} maxLength={1000} onChange={(e) => setBody(e.target.value)} placeholder={"今天練了：\n下次練："} aria-label="課後筆記" />
+      <label className="fc-check" style={{ marginTop: 10 }}>
+        <input type="checkbox" checked={shared} onChange={() => setShared(!shared)} />
+        <span><b>分享給 {lesson.student}</b><small>{shared ? "學生會收到通知，在「我的課」看得到" : "只有你看得到，下次上課前提醒自己"}</small></span>
+      </label>
+      <p className="fine" style={{ margin: "8px 0 0" }}>筆記不能留電話、LINE 或 IG，聯絡都在 PIKYOO 裡進行。</p>
+      <button className="btn btn-primary btn-lg btn-block" style={{ marginTop: 12 }} disabled={!body.trim() || busy} onClick={save}>{shared ? "存好並傳給學生" : "存好"}</button>
+    </Sheet>
   );
 }
 

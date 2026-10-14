@@ -561,6 +561,47 @@ export type Database = {
           },
         ]
       }
+      lesson_notes: {
+        Row: {
+          body: string
+          booking_id: string
+          coach_id: string
+          created_at: string
+          id: string
+          shared: boolean
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          booking_id: string
+          coach_id: string
+          created_at?: string
+          id?: string
+          shared?: boolean
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          booking_id?: string
+          coach_id?: string
+          created_at?: string
+          id?: string
+          shared?: boolean
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_notes_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "lesson_bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lesson_bookings: {
         Row: {
           amount: number
@@ -1321,6 +1362,11 @@ export type Database = {
       payment_instructions: { Args: { p_payment: string }; Returns: Json }
       promote_waitlist: { Args: { p_game: string }; Returns: number }
       reject_payment_report: { Args: { p_payment: string }; Returns: undefined }
+      write_lesson_note: {
+        Args: { p_body: string; p_booking: string; p_note?: string; p_shared: boolean }
+        Returns: string
+      }
+      delete_lesson_note: { Args: { p_note: string }; Returns: undefined }
       remind_payment: { Args: { p_payment: string }; Returns: undefined }
       report_payment: {
         Args: { p_last5: string; p_payment: string }

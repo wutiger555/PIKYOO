@@ -145,6 +145,13 @@ function NoteSheet({ sid, onSave, onClose }: { sid: string; onSave: (t: string, 
   const [share, setShare] = useState(true);
   return (
     <Sheet title={`${st?.name} 的課後筆記`} onClose={onClose}>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+        {["今天練了：", "做得好的：", "下次練：", "回家功課："].map((p) => (
+          <Pressable key={p} onPress={() => setT((x) => (x.trim() ? `${x.trimEnd()}\n${p}` : p))} style={{ borderWidth: 1.5, borderColor: color.line, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 }}>
+            <Text style={{ fontSize: 14, fontWeight: "600" }}>{p.replace("：", "")}</Text>
+          </Pressable>
+        ))}
+      </View>
       <Field value={t} onChange={setT} multiline placeholder="今天練了什麼、下次要加強什麼" />
       <ShareToggle on={share} onPress={() => setShare(!share)} />
       <Btn kind="primary" label="存到學生紀錄" disabled={!t.trim()} onPress={() => onSave(t.trim(), share)} />

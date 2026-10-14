@@ -46,6 +46,7 @@ function LiveRow({ x }: { x: MyBooking }) {
         <b>{x.planName}</b>
         <span className="text-muted">{x.coachName}・{money(x.amount)}</span>
         <Status tone={tone}>{label}</Status>
+        {x.notes?.length ? <p className="lesson-note"><b>{x.coachName.split(" ")[0]} 的課後筆記</b>{x.notes[x.notes.length - 1].body}</p> : null}
       </div>
       <Icon name="right" size={18} />
     </Link>
