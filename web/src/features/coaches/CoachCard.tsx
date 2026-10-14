@@ -8,6 +8,7 @@ import { Icon } from "@/components/pk/Icon";
 import { useToast } from "@/components/pk/Toast";
 import { useDemo } from "@/lib/demo-store";
 import { money } from "@pikyoo/core/format";
+import { specialties } from "@pikyoo/core/rules";
 import type { Coach, CoachProfile } from "@pikyoo/core/types";
 
 /** A photo filling its (position: relative) parent. The demo's bundled photos (/photos/…) are free stock photos
@@ -101,7 +102,7 @@ export function CoachCard({ coach: c }: { coach: Coach }) {
         <div><dt>程度</dt><dd><LevelChip min={c.levelMin} max={c.levelMax} /></dd></div>
         <div><dt>區域</dt><dd>{c.areas.join("・")}</dd></div>
         <div><dt>類型</dt><dd>{c.types.join("・")}</dd></div>
-        <div><dt>擅長</dt><dd>{c.profile.play.strengths[0]}</dd></div>
+        <div><dt>專長</dt><dd>{specialties(c).length ? <span className="ccard-spec">{specialties(c).map((x) => <span key={x}>{x}</span>)}</span> : c.profile.play.strengths[0]}</dd></div>
       </dl>
       <div className="ccard-foot">
         <span className="next"><Icon name="clock" size={15} />最近可約 <b>{c.nextSlot}</b></span>

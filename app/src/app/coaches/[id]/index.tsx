@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import { Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { bookingDays, slotsFor } from "@pikyoo/core/data/coaches";
+import { CANCEL_TEXT, specialties } from "@pikyoo/core/rules";
 import { levelText, money } from "@pikyoo/core/format";
 import type { Coach, TimelineItem } from "@pikyoo/core/types";
 import { useSession } from "@/data/session";
@@ -20,7 +21,7 @@ import { toast } from "@/ui/Toast";
 
 type SectionKey = "plans" | "about" | "play" | "time" | "exp" | "reviews" | "qa" | "where";
 const SECTIONS: [SectionKey, string][] = [
-  ["plans", "課程"], ["about", "關於我"], ["play", "匹克球檔案"], ["time", "可約時段"], ["exp", "經歷"], ["reviews", "評價"], ["qa", "問與答"], ["where", "地點"],
+  ["plans", "課程"], ["reviews", "評價"], ["exp", "經歷"], ["about", "關於我"], ["play", "匹克球檔案"], ["time", "可約時段"], ["qa", "問與答"], ["where", "地點"],
 ];
 const TITLES: Record<SectionKey, string> = { plans: "課程與價目", about: "關於我", play: "匹克球檔案", time: "可約時段", exp: "經歷與資格", reviews: "學生評價", qa: "問與答", where: "授課地點" };
 /** What a visitor sees before signing in (website: GUEST_SECTIONS); everything else sits behind the sign-in panel. */
@@ -94,6 +95,7 @@ function CoachPublicPage({ c }: { c: Coach }) {
           </View>
           <Text style={{ color: color.onCarbonMuted, fontSize: 14 }}>{c.areas.join("・")}・{p.reply}</Text>
           <Text style={{ color: "#fff", fontSize: 17, lineHeight: 25, marginTop: 6 }}>{c.tagline}</Text>
+          {specialties(c).length > 0 && <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 8 }} accessibilityLabel="教學專長">{specialties(c).map((x) => <Text key={x} style={{ fontSize: 13, fontWeight: "700", paddingHorizontal: 10, paddingVertical: 3, borderRadius: 999, overflow: "hidden", backgroundColor: color.accent, color: color.text }}>{x}</Text>)}</View>}
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 8 }}>{c.creds.map((x, i) => <Cred key={i} c={x} onCarbon />)}</View>
           <View style={s.stats}>
             <Stat n={String(c.years)} label="年教學" />
@@ -131,7 +133,7 @@ function CoachPublicPage({ c }: { c: Coach }) {
                 <View style={{ alignItems: "flex-end" }}><Num style={{ fontSize: 24 }}>{money(pl.price)}</Num><Text style={{ fontSize: 12, color: color.muted }}>{pl.unit}</Text></View>
               </Pressable>
             ))}
-            <KV k="取消"><Text style={s.body}>{p.policy}</Text></KV>
+            <KV k="取消"><Text style={s.body}>{CANCEL_TEXT}（平台統一規則）</Text></KV>
             <KV k="付款">
               <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>{p.pay.map((x) => <Tag key={x}>{x}</Tag>)}</View>
               <Text style={{ fontSize: 13, color: color.muted, marginTop: 4 }}>教練確認預約後再付款</Text>
@@ -147,6 +149,32 @@ function CoachPublicPage({ c }: { c: Coach }) {
               </View>
               <Btn label="揪團" lg={false} onPress={() => book(groupPlan.id, true)} style={{ borderRadius: 999 }} />
             </View>
+          )}
+
+          {shows("reviews") && (
+            <Block {...at("reviews")} title="學生怎麼說" right={c.rating != null ? <Rating rating={c.rating} reviews={c.reviews} big /> : undefined}>
+              {p.quotes.length ? p.quotes.map((q) => (
+                <View key={q.name} style={s.quote}>
+                  <Text style={[s.body, { fontSize: 16 }]}>「{q.text}」</Text>
+                  <Text style={{ fontSize: 13, color: color.muted }}>{q.name}・{q.level}</Text>
+                </View>
+              )) : <Text style={{ color: color.muted }}>還沒有評價，上完課的學生可以留下第一則。</Text>}
+            </Block>
+          )}
+
+          {shows("exp") && (
+            <Block {...at("exp")} title={TITLES.exp}>
+              {p.timeline.map((t) => (
+                <View key={t.year + t.text} style={{ flexDirection: "row", gap: 10, alignItems: "flex-start" }}>
+                  <Num style={{ width: 40, fontSize: 16, color: color.muted }}>{t.year}</Num>
+                  <View style={s.tlIcon}><Icon name={TL_ICON[t.kind]} size={15} /></View>
+                  <View style={{ flex: 1, gap: 4 }}>
+                    <Text style={s.body}>{t.text}</Text>
+                    {t.kind === "cert" && <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}><Icon name="check" size={11} tint={color.success} /><Text style={{ fontSize: 12, fontWeight: "700", color: color.success }}>PIKYOO 已查驗</Text></View>}
+                  </View>
+                </View>
+              ))}
+            </Block>
           )}
 
           <Block {...at("about")} title={TITLES.about}>
@@ -196,32 +224,6 @@ function CoachPublicPage({ c }: { c: Coach }) {
                   </View>
                 </View>
               )) : <Text style={{ color: color.muted }}>這週還沒開放時段，可以先在問與答問教練。</Text>}
-            </Block>
-          )}
-
-          {shows("exp") && (
-            <Block {...at("exp")} title={TITLES.exp}>
-              {p.timeline.map((t) => (
-                <View key={t.year + t.text} style={{ flexDirection: "row", gap: 10, alignItems: "flex-start" }}>
-                  <Num style={{ width: 40, fontSize: 16, color: color.muted }}>{t.year}</Num>
-                  <View style={s.tlIcon}><Icon name={TL_ICON[t.kind]} size={15} /></View>
-                  <View style={{ flex: 1, gap: 4 }}>
-                    <Text style={s.body}>{t.text}</Text>
-                    {t.kind === "cert" && <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}><Icon name="check" size={11} tint={color.success} /><Text style={{ fontSize: 12, fontWeight: "700", color: color.success }}>PIKYOO 已查驗</Text></View>}
-                  </View>
-                </View>
-              ))}
-            </Block>
-          )}
-
-          {shows("reviews") && (
-            <Block {...at("reviews")} title="學生怎麼說" right={c.rating != null ? <Rating rating={c.rating} reviews={c.reviews} big /> : undefined}>
-              {p.quotes.length ? p.quotes.map((q) => (
-                <View key={q.name} style={s.quote}>
-                  <Text style={[s.body, { fontSize: 16 }]}>「{q.text}」</Text>
-                  <Text style={{ fontSize: 13, color: color.muted }}>{q.name}・{q.level}</Text>
-                </View>
-              )) : <Text style={{ color: color.muted }}>還沒有評價，上完課的學生可以留下第一則。</Text>}
             </Block>
           )}
 

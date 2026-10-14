@@ -2,6 +2,7 @@ import { Link, router } from "expo-router";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { bookingDays } from "@pikyoo/core/data/coaches";
+import { DEMO_SHARED_NOTE } from "@pikyoo/core/data/schedule";
 import { demoDate } from "@pikyoo/core/data/today";
 import { money } from "@pikyoo/core/format";
 import { BOOKING_LABEL } from "@pikyoo/core/labels";
@@ -50,6 +51,7 @@ export default function Lessons() {
             return mia ? (
               <View style={[s.row, { flexDirection: "column", alignItems: "stretch" }]}>
                 <View style={{ gap: 4 }}><Text style={s.title}>新手體驗課</Text><Text style={s.muted}>{mia.name}・{demoDate(-9)}10:00</Text><Status tone="ended">已完成</Status></View>
+                <View style={{ backgroundColor: color.bg, borderRadius: 10, padding: 12, gap: 4 }}><Text style={{ fontSize: 13, fontWeight: "700" }}>{mia.name.split(" ")[0]} 的課後筆記</Text><Text style={{ fontSize: 14, lineHeight: 21 }}>{DEMO_SHARED_NOTE}</Text></View>
                 <View style={{ flexDirection: "row", gap: 8 }}>
                   <Btn label={rated ? "已評價" : "給評價"} icon="star" lg={false} disabled={rated} style={{ flex: 1, borderRadius: 999 }} onPress={() => setRating(true)} />
                   <Btn kind="primary" label="再約一堂" lg={false} style={{ flex: 1, borderRadius: 999 }} onPress={() => router.push({ pathname: "/coaches/[id]/book", params: { id: mia.id, plan: mia.profile.plans[0]?.id ?? "" } })} />

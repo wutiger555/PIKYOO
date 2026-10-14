@@ -6,6 +6,7 @@ import { PAY_LABEL } from "@pikyoo/core/labels";
 import type { Attendance } from "@pikyoo/core/data/schedule";
 import { addLessonToCalendar, nowHHMM } from "@/data/phone";
 import { useSession } from "@/data/session";
+import { ShareToggle } from "@/ui/ShareToggle";
 import { Num } from "@/ui/badges";
 import { Btn } from "@/ui/Btn";
 import { CollectQRSheet } from "@/ui/CollectQR";
@@ -133,18 +134,20 @@ export default function LessonDetail() {
         <CollectQRSheet who={students.find((y) => y.id === collect)?.name ?? ""} amount={seatAmount(l.id, collect)} onClose={() => setCollect(null)}
           onReceived={() => { markSeatPaid(l.id, collect); toast(`已記錄 ${students.find((y) => y.id === collect)?.name} 付款`); setCollect(null); }} />
       )}
-      {noteFor && <NoteSheet sid={noteFor} onSave={(t) => { addNote(noteFor, t); setNoteFor(null); toast("已存到學生紀錄", "下次上課前會看到"); }} onClose={() => setNoteFor(null)} />}
+      {noteFor && <NoteSheet sid={noteFor} onSave={(t, shared) => { addNote(noteFor, t, shared); setNoteFor(null); toast("已存到學生紀錄", shared ? "學生在「我的課」也看得到" : "下次上課前會看到"); }} onClose={() => setNoteFor(null)} />}
     </View>
   );
 }
 
-function NoteSheet({ sid, onSave, onClose }: { sid: string; onSave: (t: string) => void; onClose: () => void }) {
+function NoteSheet({ sid, onSave, onClose }: { sid: string; onSave: (t: string, shared: boolean) => void; onClose: () => void }) {
   const st = useSession().students.find((x) => x.id === sid);
   const [t, setT] = useState("");
+  const [share, setShare] = useState(true);
   return (
     <Sheet title={`${st?.name} 的課後筆記`} onClose={onClose}>
-      <Field value={t} onChange={setT} multiline placeholder="今天練了什麼、下次要加強什麼（只有你看得到）" />
-      <Btn kind="primary" label="存到學生紀錄" disabled={!t.trim()} onPress={() => onSave(t.trim())} />
+      <Field value={t} onChange={setT} multiline placeholder="今天練了什麼、下次要加強什麼" />
+      <ShareToggle on={share} onPress={() => setShare(!share)} />
+      <Btn kind="primary" label="存到學生紀錄" disabled={!t.trim()} onPress={() => onSave(t.trim(), share)} />
     </Sheet>
   );
 }

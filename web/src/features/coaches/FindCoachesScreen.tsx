@@ -7,6 +7,7 @@ import { LevelPicker } from "@/components/pk/LevelPicker";
 import { Sheet, SoonButton, TabBar } from "@/components/pk/Shell";
 import { TopNav } from "@/components/pk/TopNav";
 import { area, coachAreas, coachPins, filterCoaches, offMap, teachesAt } from "@pikyoo/core/coach-filters";
+import { SPECIALTIES, type Specialty } from "@pikyoo/core/rules";
 import { emptyCoachFilters, useCatalog, useCoaches, useDemo } from "@/lib/demo-store";
 import { LEVELS, levelText, money } from "@pikyoo/core/format";
 import type { Coach, Court, LessonType } from "@pikyoo/core/types";
@@ -34,13 +35,16 @@ export function FindCoachesScreen() {
   const flagChip = (k: "cert" | "beg", label: string) => (
     <button className="chip" aria-pressed={f[k]} onClick={() => setCoachFilters((p) => ({ ...p, [k]: !p[k] }))}>{label}</button>
   );
+  const focusChip = (x: Specialty) => (
+    <button key={x} className="chip" aria-pressed={f.focus === x} onClick={() => setCoachFilters((p) => ({ ...p, focus: p.focus === x ? null : x }))}>{x}</button>
+  );
   const flagCheck = (k: "cert" | "beg", label: string, sub: string) => (
     <label className="fc-check">
       <input type="checkbox" checked={f[k]} onChange={() => setCoachFilters((p) => ({ ...p, [k]: !p[k] }))} />
       <span><b>{label}</b><small>{sub}</small></span>
     </label>
   );
-  const anyFilter = f.level != null || f.type != null || f.cert || f.beg || f.areas.length > 0 || f.courtId != null;
+  const anyFilter = f.level != null || f.type != null || f.cert || f.beg || f.areas.length > 0 || f.courtId != null || f.focus != null;
   // with no match in the chosen areas, offer the areas that do have coaches for the rest of the sentence
   const nearby = f.areas.length && !list.length
     ? [...new Set(filterCoaches(coaches, { ...f, areas: [] }, courts).flatMap((c) => coachAreas(c, courts)))].filter((a) => !f.areas.includes(a)).slice(0, 4)
@@ -78,12 +82,15 @@ export function FindCoachesScreen() {
             {flagChip("cert", "已認證教練")}
             {flagChip("beg", "新手友善")}
           </div>
+          <div className="chips mb-only" aria-label="教學專長">{SPECIALTIES.map(focusChip)}</div>
         </div>
         <div className="fc-cols">
         <aside className="fc-side dk-only" aria-label="篩選">
           <h3>篩選</h3>
           {flagCheck("cert", "已認證教練", "協會、總會、PPR、IPTPA 查驗過")}
           {flagCheck("beg", "新手友善", "專帶第一次拿拍的人")}
+          <h3>教學專長</h3>
+          <div className="wrapchips">{SPECIALTIES.map(focusChip)}</div>
           <h3>地點</h3>
           <button className="chip" aria-pressed={f.areas.length > 0 || f.courtId != null} onClick={() => setSheet("where")}><Icon name="pin" size={15} />{where === "選地點" ? "選區域或場地" : where}</button>
           <h3>價格與時段</h3>

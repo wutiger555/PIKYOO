@@ -8,6 +8,7 @@ import { Num } from "@/ui/badges";
 import { Btn } from "@/ui/Btn";
 import { KIND } from "@/ui/calendar";
 import { Avatar, c, SecHead } from "@/ui/console";
+import { ShareToggle } from "@/ui/ShareToggle";
 import { Field } from "@/ui/form";
 import { Icon } from "@/ui/Icon";
 import { color } from "@/ui/theme";
@@ -17,7 +18,8 @@ const when = (n: number) => `${demoDay(n).date}（${demoDay(n).weekday}）`;
 /** 學生紀錄: what the coach wants before the next lesson — level, package left, notes from past lessons, what's coming. */
 export default function StudentDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { students, lessons, attendance, addNote } = useSession();
+  const { students, lessons, attendance, addNote, shareNote } = useSession();
+  const [share, setShare] = useState(true);
   const [draft, setDraft] = useState("");
   const x = students.find((s) => s.id === id);
   if (!x) return <Text style={{ padding: 16 }}>找不到這位學生</Text>;
@@ -48,13 +50,21 @@ export default function StudentDetail() {
         </View>
       )}
 
-      <SecHead en="Notes" title="課後筆記" right={<Text style={c.hint}>只有你看得到</Text>} />
+      <SecHead en="Notes" title="課後筆記" right={<Text style={c.hint}>可以選擇分享給學生</Text>} />
       <View style={c.card}>
         <Field value={draft} onChange={setDraft} multiline placeholder="新增一則：今天練了什麼、下次要加強什麼" />
-        <Btn kind="primary" lg={false} label="新增筆記" disabled={!draft.trim()} style={{ alignSelf: "flex-end", borderRadius: 999 }} onPress={() => { addNote(x.id, draft.trim()); setDraft(""); }} />
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+          <ShareToggle on={share} onPress={() => setShare(!share)} />
+          <Btn kind="primary" lg={false} label="新增筆記" disabled={!draft.trim()} style={{ borderRadius: 999 }} onPress={() => { addNote(x.id, draft.trim(), share); setDraft(""); }} />
+        </View>
         {x.notes.map((n, i) => (
           <View key={i} style={{ borderTopWidth: 1, borderTopColor: color.n100, paddingTop: 10, gap: 2 }}>
-            <Text style={c.hint}>{n.offset === 0 ? "今天" : when(n.offset)}</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+              <Text style={c.hint}>{n.offset === 0 ? "今天" : when(n.offset)}</Text>
+              <Pressable onPress={() => shareNote(x.id, i, !n.shared)} hitSlop={8} accessibilityLabel={n.shared ? "改成只有你看得到" : "分享給學生"}>
+                <Text style={{ fontSize: 12, fontWeight: "700", color: n.shared ? color.success : color.muted }}>{n.shared ? "學生看得到 ✓" : "只有你看得到"}</Text>
+              </Pressable>
+            </View>
             <Text style={{ fontSize: 15, lineHeight: 22 }}>{n.text}</Text>
           </View>
         ))}
@@ -85,3 +95,4 @@ function LessonRow({ id, label, plan, color: k, tail }: { id: string; label: str
     </Pressable>
   );
 }
+

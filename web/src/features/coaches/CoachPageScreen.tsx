@@ -10,6 +10,7 @@ import { LoginSheet } from "@/components/pk/LoginSheet";
 import { useToast } from "@/components/pk/Toast";
 import { TopNav } from "@/components/pk/TopNav";
 import { bookingDays, slotsFor } from "@pikyoo/core/data/coaches";
+import { CANCEL_TEXT, specialties } from "@pikyoo/core/rules";
 import { useCoach, useDemo } from "@/lib/demo-store";
 import { levelText, money } from "@pikyoo/core/format";
 import type { Coach, TimelineItem } from "@pikyoo/core/types";
@@ -21,8 +22,8 @@ const TL_ICON: Record<TimelineItem["kind"], IconName> = { cert: "shield", trophy
 
 type SectionKey = "plans" | "about" | "play" | "time" | "exp" | "reviews" | "qa" | "where";
 const SECTIONS: [SectionKey, string, string][] = [
-  ["plans", "課程", "課程與價目"], ["about", "關於我", "關於我"], ["play", "匹克球檔案", "匹克球檔案"], ["time", "可約時段", "可約時段"],
-  ["exp", "經歷", "經歷與資格"], ["reviews", "評價", "學生評價"], ["qa", "問與答", "問與答"], ["where", "地點", "授課地點"],
+  ["plans", "課程", "課程與價目"], ["reviews", "評價", "學生評價"], ["exp", "經歷", "經歷與資格"], ["about", "關於我", "關於我"],
+  ["play", "匹克球檔案", "匹克球檔案"], ["time", "可約時段", "可約時段"], ["qa", "問與答", "問與答"], ["where", "地點", "授課地點"],
 ];
 /** What a visitor sees before signing in; every other section sits behind the sign-in panel. Search engines and IG
  *  visitors still get the photos, credentials, prices and bio. Widen or narrow the gate here. */
@@ -97,6 +98,7 @@ export function CoachPublicPage({ coach: c, preview }: { coach: Coach; preview?:
               </div>
               <div className="chero-sub">{c.areas.join("・")}・{p.reply}</div>
               <p className="chero-tag">{c.tagline}</p>
+              {specialties(c).length > 0 && <div className="chero-spec" aria-label="教學專長">{specialties(c).map((x) => <span key={x}>{x}</span>)}</div>}
               <div className="chero-creds">{c.creds.map((x, i) => <Cred key={i} c={x} />)}</div>
               <div className="stats">
                 <div><b className="num">{c.years}</b><span>年教學</span></div>
@@ -145,7 +147,7 @@ export function CoachPublicPage({ coach: c, preview }: { coach: Coach; preview?:
                 })}
               </div>
               <dl className="kv-sm">
-                <dt>取消</dt><dd>{p.policy}</dd>
+                <dt>取消</dt><dd>{CANCEL_TEXT}<small className="text-muted">（平台統一規則）</small></dd>
                 <dt>付款</dt>
                 <dd>
                   <div className="paytags">{p.pay.map((x) => <span key={x} className="tag tag-neutral">{x}</span>)}</div>
@@ -165,6 +167,42 @@ export function CoachPublicPage({ coach: c, preview }: { coach: Coach; preview?:
                   ? <button className="btn btn-secondary" style={{ minHeight: 40, padding: "0 14px" }} onClick={askLogin}>揪團</button>
                   : <Link className="btn btn-secondary" style={{ minHeight: 40, padding: "0 14px" }} href={preview ? "#" : `/coaches/${c.id}/book?plan=${groupPlan.id}&with=friends`}>揪團</Link>}
               </div>
+            )}
+
+            {shows("reviews") && (
+              <section className="blk" id="a-reviews">
+                <div className="blk-h"><h2>學生怎麼說</h2>{c.rating != null && <Rating rating={c.rating} reviews={c.reviews} big />}</div>
+                {p.quotes.length ? (
+                  <div className="quotes">
+                    {p.quotes.map((q) => (
+                      <figure key={q.name} className="quote">
+                        <blockquote>「{q.text}」</blockquote>
+                        <figcaption>{q.name}・{q.level}</figcaption>
+                      </figure>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted">還沒有評價，上完課的學生可以留下第一則。</p>
+                )}
+              </section>
+            )}
+
+            {shows("exp") && (
+              <section className="blk" id="a-exp">
+                <h2>經歷與資格</h2>
+                <ul className="tl">
+                  {p.timeline.map((t) => (
+                    <li key={t.year + t.text}>
+                      <span className="tl-y num">{t.year}</span>
+                      <span className="tl-i"><Icon name={TL_ICON[t.kind]} size={16} /></span>
+                      <span className="tl-t">
+                        {t.text}
+                        {t.kind === "cert" && <span className="vf"><Icon name="check" size={12} stroke={2.4} />PIKYOO 已查驗</span>}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
             )}
 
             <section className="blk" id="a-about">
@@ -217,42 +255,6 @@ export function CoachPublicPage({ coach: c, preview }: { coach: Coach; preview?:
                   </div>
                 ) : (
                   <p className="text-muted">這週還沒開放時段，可以先在<button className="linkbtn" onClick={() => jump("qa")}>問與答</button>問教練。</p>
-                )}
-              </section>
-            )}
-
-            {shows("exp") && (
-              <section className="blk" id="a-exp">
-                <h2>經歷與資格</h2>
-                <ul className="tl">
-                  {p.timeline.map((t) => (
-                    <li key={t.year + t.text}>
-                      <span className="tl-y num">{t.year}</span>
-                      <span className="tl-i"><Icon name={TL_ICON[t.kind]} size={16} /></span>
-                      <span className="tl-t">
-                        {t.text}
-                        {t.kind === "cert" && <span className="vf"><Icon name="check" size={12} stroke={2.4} />PIKYOO 已查驗</span>}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
-
-            {shows("reviews") && (
-              <section className="blk" id="a-reviews">
-                <div className="blk-h"><h2>學生怎麼說</h2>{c.rating != null && <Rating rating={c.rating} reviews={c.reviews} big />}</div>
-                {p.quotes.length ? (
-                  <div className="quotes">
-                    {p.quotes.map((q) => (
-                      <figure key={q.name} className="quote">
-                        <blockquote>「{q.text}」</blockquote>
-                        <figcaption>{q.name}・{q.level}</figcaption>
-                      </figure>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-muted">還沒有評價，上完課的學生可以留下第一則。</p>
                 )}
               </section>
             )}

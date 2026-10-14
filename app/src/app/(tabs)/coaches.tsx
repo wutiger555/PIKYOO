@@ -2,6 +2,7 @@ import { Link } from "expo-router";
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { area, coachAreas, coachPins, emptyCoachFilters, filterCoaches, offMap, teachesAt } from "@pikyoo/core/coach-filters";
+import { SPECIALTIES } from "@pikyoo/core/rules";
 import { LEVELS, levelText, money } from "@pikyoo/core/format";
 import type { Coach, Court, LessonType } from "@pikyoo/core/types";
 import { useCatalog } from "@/data/catalog";
@@ -27,7 +28,7 @@ export default function FindCoaches() {
   const { catalog } = useCatalog();
   const courts = useMemo(() => catalog?.courts ?? [], [catalog]);
   const { height } = useWindowDimensions();
-  const any = f.level != null || f.type != null || f.cert || f.beg || f.areas.length > 0 || f.courtId != null;
+  const any = f.level != null || f.type != null || f.cert || f.beg || f.areas.length > 0 || f.courtId != null || f.focus != null;
   const where = f.courtId ? courts.find((c) => c.id === f.courtId)?.name ?? "選地點" : f.areas.length ? f.areas.join("・") : "選地點";
   return (
     <View style={{ flex: 1 }}>
@@ -47,6 +48,7 @@ export default function FindCoaches() {
           {TYPES.map((t) => <Chip key={t} on={f.type === t} onPress={() => setFilters((p) => ({ ...p, type: p.type === t ? null : t }))}>{t}</Chip>)}
           <Chip on={f.cert} onPress={() => setFilters((p) => ({ ...p, cert: !p.cert }))}>已認證教練</Chip>
           <Chip on={f.beg} onPress={() => setFilters((p) => ({ ...p, beg: !p.beg }))}>新手友善</Chip>
+          {SPECIALTIES.map((x) => <Chip key={x} on={f.focus === x} onPress={() => setFilters((p) => ({ ...p, focus: p.focus === x ? null : x }))}>{x}</Chip>)}
           <View style={{ width: 24 }} />
         </ScrollView>
         <WithCatalog>{(cat) => {

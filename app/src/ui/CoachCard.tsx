@@ -2,6 +2,7 @@ import { Image } from "expo-image";
 import { Link } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { money } from "@pikyoo/core/format";
+import { specialties } from "@pikyoo/core/rules";
 import type { Coach } from "@pikyoo/core/types";
 import { MAX_COMPARE, useSession } from "@/data/session";
 import { Cred, LevelChip, Num, Rating } from "./badges";
@@ -55,7 +56,7 @@ export function CoachCard({ coach }: { coach: Coach }) {
         <Cell label="程度"><LevelChip min={coach.levelMin} max={coach.levelMax} bare /></Cell>
         <Cell label="區域"><Text style={c.dd}>{coach.areas.join("・")}</Text></Cell>
         <Cell label="類型"><Text style={c.dd}>{coach.types.join("・")}</Text></Cell>
-        <Cell label="擅長" last><Text style={c.dd}>{coach.profile.play.strengths[0]}</Text></Cell>
+        <Cell label="專長" last><Text style={c.dd}>{specialties(coach).join("・") || coach.profile.play.strengths[0]}</Text></Cell>
       </View>
       <View style={c.foot}>
         <Icon name="clock" size={14} tint={color.muted} />

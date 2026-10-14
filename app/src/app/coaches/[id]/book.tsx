@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { PAY_HINT } from "@pikyoo/core/data/coaches";
+import { CANCEL_TEXT } from "@pikyoo/core/rules";
 import { slotKey, type BookingCalendar } from "@pikyoo/core/source/bookings";
 import { money } from "@pikyoo/core/format";
 import type { Booking, Coach } from "@pikyoo/core/types";
@@ -117,7 +118,11 @@ function BookForm({ c, cal, planId, dayKey, slot }: { c: Coach; cal: BookingCale
               <View style={{ flex: 1 }}><Text style={s.b}>{x}</Text><Text style={s.small}>{PAY_HINT[x]}</Text></View>
             </Radio>
           ))}
-          <Text style={s.fine}>{p.policy}</Text>
+          <View style={{ borderWidth: 1.5, borderColor: color.text, borderRadius: 12, padding: 12, gap: 2, marginTop: 4 }}>
+            <Text style={{ fontSize: 15, fontWeight: "700" }}>取消與請假規則</Text>
+            <Text style={{ fontSize: 14, lineHeight: 21 }}>{CANCEL_TEXT}</Text>
+            <Text style={{ fontSize: 12, color: color.muted }}>所有教練都一樣，由平台統一規定。</Text>
+          </View>
         </Step>
       </ScrollView>
 

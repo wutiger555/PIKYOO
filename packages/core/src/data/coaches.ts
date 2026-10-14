@@ -8,7 +8,7 @@ export const COACHES: Coach[] = [
     id: "mia", name: "Mia 林", initial: "M",
     creds: [{ issuer: "協會", level: "認證教練", verified: true }, { issuer: "DUPR", level: "4.21", verified: false }],
     areas: ["大安", "信義"], levelMin: 0, levelMax: 3, types: ["體驗課", "一對一", "小班"], priceFrom: 600,
-    nextSlot: "週日 10/4 10:00", style: ["新手友善", "拆解動作", "影片回饋"], beginnerFriendly: true,
+    nextSlot: "週日 10/4 10:00", style: ["零基礎入門", "技術細節"], beginnerFriendly: true,
     years: 3, students: 128, rating: 4.9, reviews: 36,
     tagline: "網球教練 8 年轉匹克球，專帶第一次拿拍的人。",
     profile: {
@@ -50,7 +50,7 @@ export const COACHES: Coach[] = [
     id: "zhao", name: "趙柏宇", initial: "趙",
     creds: [{ issuer: "總會", level: "丙級教練", verified: true }, { issuer: "PPR", level: "Certified", verified: true }],
     areas: ["信義", "松山"], levelMin: 2, levelMax: 5, types: ["一對一", "小班"], priceFrom: 900,
-    nextSlot: "週四 10/1 19:30", style: ["比賽策略", "第三拍", "雙打站位"], beginnerFriendly: false,
+    nextSlot: "週四 10/1 19:30", style: ["比賽與選手", "技術細節"], beginnerFriendly: false,
     years: 4, students: 86, rating: 4.8, reviews: 22, tagline: "TMLP 台北站雙打銅牌，把 3.0 打到 3.5。",
     profile: {
       slug: "pikyoo.tw/c/zhao",
@@ -90,7 +90,7 @@ export const COACHES: Coach[] = [
     id: "ann", name: "安妮", initial: "安",
     creds: [{ issuer: "IPTPA", level: "Level 1", verified: true }],
     areas: ["中山", "大同"], levelMin: 0, levelMax: 2, types: ["體驗課", "團體"], priceFrom: 400,
-    nextSlot: "週六 10/3 09:00", style: ["團體課", "親子", "可英文授課"], beginnerFriendly: true,
+    nextSlot: "週六 10/3 09:00", style: ["團體帶氣氛", "親子兒童", "零基礎入門"], beginnerFriendly: true,
     years: 2, students: 210, rating: 4.9, reviews: 41, tagline: "週末團體課，一個人來也能馬上找到球伴。",
     profile: {
       slug: "pikyoo.tw/c/ann",
@@ -129,7 +129,7 @@ export const COACHES: Coach[] = [
     id: "ray", name: "Ray 陳", initial: "R",
     creds: [{ issuer: "DUPR", level: "4.65", verified: false }],
     areas: ["內湖", "南港"], levelMin: 3, levelMax: 6, types: ["一對一"], priceFrom: 1000,
-    nextSlot: "週三 9/30 19:00", style: ["進階陪練", "比賽準備"], beginnerFriendly: false,
+    nextSlot: "週三 9/30 19:00", style: ["比賽與選手"], beginnerFriendly: false,
     years: 1, students: 24, rating: null, reviews: 0, tagline: "4.5 以上陪練，備戰積分賽。",
     profile: {
       slug: "pikyoo.tw/c/ray",

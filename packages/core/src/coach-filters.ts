@@ -1,4 +1,5 @@
 import { isCertified } from "./data/coaches";
+import { type Specialty, specialties } from "./rules";
 import type { Coach, Court, LessonType, Level } from "./types";
 
 /** 找教練 (F3-3): "我是【程度】，想在【區域／場地】上【類型】" plus 已認證 / 新手友善. Shared by the website and the app. */
@@ -11,9 +12,11 @@ export interface CoachFilters {
   areas: string[];
   /** courts.id (slug): only coaches who teach there */
   courtId: string | null;
+  /** 教學專長 (rules.ts SPECIALTIES) */
+  focus: Specialty | null;
 }
 
-export const emptyCoachFilters = (): CoachFilters => ({ level: null, type: null, cert: false, beg: false, areas: [], courtId: null });
+export const emptyCoachFilters = (): CoachFilters => ({ level: null, type: null, cert: false, beg: false, areas: [], courtId: null, focus: null });
 
 /** 大安區 → 大安: coaches store areas without 區, courts and profiles with it. */
 export const area = (d: string) => d.replace(/區$/, "");
@@ -38,6 +41,7 @@ export function filterCoaches(list: Coach[], f: CoachFilters, courts: Court[] = 
     if (f.cert && !isCertified(c)) return false;
     if (f.beg && !c.beginnerFriendly) return false;
     if (f.courtId && !teachesAt(c, f.courtId)) return false;
+    if (f.focus && !specialties(c).includes(f.focus)) return false;
     if (f.areas.length && !coachAreas(c, courts).some((a) => f.areas.includes(a))) return false;
     return true;
   });

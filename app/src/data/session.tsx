@@ -98,7 +98,9 @@ interface Session {
   markSeatPaid: (lessonId: string, sid: string) => void;
   /** what one seat owes: its 收款 row, else the plan's price */
   seatAmount: (lessonId: string, sid: string) => number;
-  addNote: (sid: string, text: string) => void;
+  addNote: (sid: string, text: string, shared?: boolean) => void;
+  /** 分享給學生 on or off for one of a student's notes */
+  shareNote: (sid: string, index: number, shared: boolean) => void;
 }
 
 const MINE = "mine";
@@ -305,7 +307,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       const plan = myCoach?.profile.plans.find((p) => p.name === l?.plan);
       return plan ? (plan.unit === "/10 堂" ? Math.round(plan.price / 10) : plan.price) : 0;
     },
-    addNote: (sid, text) => setStudents((xs) => xs.map((x) => (x.id === sid ? { ...x, notes: [{ offset: 0, text }, ...x.notes] } : x))),
+    addNote: (sid, text, shared = false) => setStudents((xs) => xs.map((x) => (x.id === sid ? { ...x, notes: [{ offset: 0, text, shared }, ...x.notes] } : x))),
+    shareNote: (sid, index, shared) => setStudents((xs) => xs.map((x) => (x.id === sid ? { ...x, notes: x.notes.map((n, i) => (i === index ? { ...n, shared } : n)) } : x))),
   }), [remindUnpaid, payout, profile, favs, notices, lessons, pendingSlots, students, blocks, attendance, signedIn, filters, compare, asked, booking, gameFilters, mine, myCoach, requests, payments, questions, coaches]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

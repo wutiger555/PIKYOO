@@ -16,9 +16,12 @@ export interface RosterStudent {
   times: number;
   /** a 10-lesson pack: how many are used */
   pack?: { total: number; used: number };
-  /** the coach's own notes, newest first; only the coach sees them */
-  notes: { offset: number; text: string }[];
+  /** the coach's notes, newest first; `shared` ones the student sees too (2026-10-14 interview) */
+  notes: { offset: number; text: string; shared?: boolean }[];
 }
+
+/** The demo student's past lesson with Mia, with the note she shared (我的課 → 上過的). */
+export const DEMO_SHARED_NOTE = "發球拋球再低一點、靠近身體；下次練第三拍 drop，回家可以對牆練 dink 10 分鐘。";
 
 export interface LessonSeat {
   sid: string;

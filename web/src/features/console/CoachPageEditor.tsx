@@ -10,6 +10,7 @@ import { CoachPublicPage } from "@/features/coaches/CoachPageScreen";
 import { Img } from "@/features/coaches/CoachCard";
 import { useCatalog, useDemo } from "@/lib/demo-store";
 import { LEVELS } from "@pikyoo/core/format";
+import { CANCEL_TEXT, SPECIALTIES, specialties } from "@pikyoo/core/rules";
 import type { Coach, CoachProfile, Level, PayMethod, PlayProfile, TimelineItem } from "@pikyoo/core/types";
 import { CoachTabs, ConsoleFrame } from "./ConsoleScreens";
 import { CoachSaveBar, CredentialList, CredentialSheet } from "./CoachAccount";
@@ -180,7 +181,10 @@ export function CoachPageEditor() {
                 <div key={i} className="ed-step"><b className="num">{i + 1}</b><input className="input" aria-label={`第 ${i + 1} 步`} value={st} onChange={(e) => setP({ steps: p.steps.map((x, j) => (j === i ? e.target.value : x)) })} /></div>
               ))}
             </fieldset>
-            <TagEditor label="教學風格標籤" values={c.style} onChange={(style) => setC({ style })} placeholder="例：影片回饋" />
+            <fieldset className="ed-fs">
+              <legend>教學專長（學生可以用這個篩選）</legend>
+              <div className="wrapchips">{SPECIALTIES.map((x) => <button key={x} type="button" className="chip" aria-pressed={specialties(c).includes(x)} onClick={() => setC({ style: toggle(specialties(c), x) })}>{x}</button>)}</div>
+            </fieldset>
             <fieldset className="ed-fs">
               <legend>適合誰</legend>
               <div className="wrapchips">{AUDIENCE.map((a) => <button key={a} type="button" className="chip" aria-pressed={p.audience.includes(a)} onClick={() => setP({ audience: toggle(p.audience, a) })}>{a}</button>)}</div>
@@ -214,7 +218,7 @@ export function CoachPageEditor() {
             </div>
             <div className="field"><label htmlFor="ed-bg">運動背景</label><input id="ed-bg" className="input" value={p.play.background} placeholder="例：網球教練 8 年" onChange={(e) => setPlay({ background: e.target.value })} /></div>
             <fieldset className="ed-fs">
-              <legend>擅長教 <small className="text-muted">（第一項會出現在教練卡）</small></legend>
+              <legend>擅長教 <small className="text-muted">（沒選教學專長時，第一項會出現在教練卡）</small></legend>
               <div className="wrapchips">{[...new Set([...p.play.strengths, ...STRENGTHS])].map((s) => <button key={s} type="button" className="chip" aria-pressed={p.play.strengths.includes(s)} onClick={() => setPlay({ strengths: toggle(p.play.strengths, s) })}>{s}</button>)}</div>
             </fieldset>
             <TagEditor label="授課語言" values={p.languages} onChange={(languages) => setP({ languages })} placeholder="例：台語" />
@@ -259,7 +263,7 @@ export function CoachPageEditor() {
               <legend>學生可以用的付款方式</legend>
               <div className="wrapchips">{PAYS.map((x) => <button key={x} type="button" className="chip" aria-pressed={p.pay.includes(x)} onClick={() => setP({ pay: toggle(p.pay, x) })}>{x}</button>)}</div>
             </fieldset>
-            <div className="field"><label htmlFor="ed-policy">取消規則</label><textarea id="ed-policy" className="input" rows={2} value={p.policy} onChange={(e) => setP({ policy: e.target.value })} /></div>
+            <p className="ed-hint" style={{ margin: 0 }}><b>取消與請假規則</b>由平台統一規定，所有教練都一樣：{CANCEL_TEXT}</p>
             <p className="ed-hint" style={{ margin: 0 }}>課程方案與每週時段在 <Link href="/coach/lessons">課程時段</Link> 設定。</p>
           </section>
 
