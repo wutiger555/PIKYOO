@@ -16,8 +16,6 @@ import { useAccount } from "@/lib/use-account";
 
 type Tab = "joined" | "hosted" | "history";
 
-// F8 匹友信用 v0 — only the player sees the detail; hosts see the rate. Mock numbers.
-const RECORD = { played: 12, attended: 11, late: 1, noShow: 0 };
 
 /** 我的: profile, my games (joined / waitlist / hosted), bookings, attendance record, settings. */
 export function MeScreen() {
@@ -29,7 +27,6 @@ export function MeScreen() {
   const games = useAllGames();
   const [tab, setTab] = useState<Tab>(hosted.length ? "hosted" : "joined");
   const joined = games.filter((g) => mine[g.id]);
-  const rate = Math.round((RECORD.attended / RECORD.played) * 100);
 
   const list = tab === "joined" ? joined : tab === "hosted" ? hosted : [];
   const empty: Record<Tab, [string, string, string]> = {
@@ -58,13 +55,7 @@ export function MeScreen() {
             <LevelChip min={profile.level} lg />
             <Link href="/learn/level-check" className="me-link">重新自評</Link>
           </div>
-          <div className="stats">
-            <div><b className="num">{RECORD.played}</b><span>打過的局</span></div>
-            <div><b className="num">{rate}%</b><span>出席率</span></div>
-            <div><b className="num">{RECORD.late}</b><span>晚取消</span></div>
-          </div>
         </div>
-        <p className="fine pad" style={{ marginTop: 8 }}>出席紀錄只有你看得到；團主在名單上只會看到出席率。</p>
 
         <Link href="/me/lessons" className="card row-card" style={{ margin: "var(--space-4) var(--space-4) 0" }}>
           <Icon name="cal" size={22} />

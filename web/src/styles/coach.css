@@ -298,3 +298,10 @@
 /* coach page hero after the interview: a verified line, then trust numbers (rating, students, years) */
 .chero-cert { display: inline-flex; align-items: center; gap: 4px; color: var(--color-accent); font-size: 14px; font-weight: 700; margin-bottom: 4px; }
 #a-creds .chero-creds { margin-bottom: 12px; }
+
+/* the trimmed coach card (2026-10-15) */
+.ccard-ok { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--color-accent); color: var(--color-on-accent); }
+.ccard-trust { font-size: 14px; color: var(--color-neutral-700); }
+.ccard-trust b { color: var(--color-text); }
+.ccard-meta { font-size: 13px; color: var(--color-muted); }
+.ccard-photo { aspect-ratio: 2.2 / 1; }

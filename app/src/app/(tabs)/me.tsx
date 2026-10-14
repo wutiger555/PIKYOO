@@ -8,29 +8,24 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { shortAreas } from "@pikyoo/core/data/courts";
 import { useCatalog } from "@/data/catalog";
 import { useSession } from "@/data/session";
-import { LevelChip, Num } from "@/ui/badges";
+import { LevelChip } from "@/ui/badges";
 import { Btn } from "@/ui/Btn";
 import { Icon, type IconName } from "@/ui/Icon";
 import { LoginSheet } from "@/ui/LoginSheet";
 import { PkMark } from "@/ui/Logo";
-import { GameTicket } from "@/ui/Ticket";
 import { color, radius } from "@/ui/theme";
 
-// F8 匹友信用 v0, the website's mock numbers: only the player sees the detail; hosts see the rate.
-const RECORD = { played: 12, attended: 11, late: 1 };
 const web = (path: string) => WebBrowser.openBrowserAsync(`https://pikyoo.vercel.app${path}`);
 
-/** 我的 (website: MeScreen): profile and attendance, my lessons, my games, settings. A visitor gets a sign-in card. */
+/** 我的 (website: MeScreen): who I am, the coach console, then one list (球局, 通知, 收藏, 新手). A visitor gets a sign-in card. */
 export default function Me() {
   const insets = useSafeAreaInsets();
   const { signedIn, signOut, mine, profile: me, notices, favs } = useSession();
   const { catalog } = useCatalog();
   const [login, setLogin] = useState(false);
-  const [tab, setTab] = useState<"joined" | "history">("joined");
   useFocusEffect(useCallback(() => { setStatusBarStyle("light"); return () => setStatusBarStyle("dark"); }, []));
   const joined = (catalog?.games ?? []).filter((g) => mine[g.id]);
   const unread = notices.filter((n) => !n.read).length;
-  const rate = Math.round((RECORD.attended / RECORD.played) * 100);
 
   return (
     <View style={{ flex: 1, backgroundColor: color.bg }}>
@@ -50,11 +45,6 @@ export default function Me() {
                 <LevelChip min={me.level} lg />
                 <Pressable onPress={() => web("/learn/level-check")}><Text style={{ color: "#fff", textDecorationLine: "underline", fontSize: 14 }}>重新自評</Text></Pressable>
               </View>
-              <View style={s.stats}>
-                <Stat n={String(RECORD.played)} label="打過的局" />
-                <Stat n={`${rate}%`} label="出席率" />
-                <Stat n={String(RECORD.late)} label="晚取消" last />
-              </View>
             </>
           ) : (
             <View style={{ gap: 10 }}>
@@ -67,8 +57,6 @@ export default function Me() {
         </View>
 
         <View style={{ padding: 16, gap: 20 }}>
-          {signedIn && <Text style={{ fontSize: 12, color: color.muted, marginTop: -8 }}>出席紀錄只有你看得到；團主在名單上只會看到出席率。</Text>}
-
           {signedIn && (
             <Pressable onPress={() => router.push("/coach")} style={[s.rowCard, { backgroundColor: color.carbon, borderColor: color.carbon }]}>
               <Icon name="whistle" size={22} tint={color.accent} />
@@ -77,29 +65,9 @@ export default function Me() {
             </Pressable>
           )}
 
-          {signedIn && (
-            <View style={{ gap: 12 }}>
-              <View style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between" }}>
-                <View><Text style={s.en}>MY GAMES</Text><Text style={{ fontSize: 24, fontWeight: "800" }}>我的球局</Text></View>
-                <Link href="/games" asChild><Pressable><Text style={{ fontWeight: "700", textDecorationLine: "underline" }}>找球友打球</Text></Pressable></Link>
-              </View>
-              <View style={s.seg}>
-                {([["joined", `報名中 ${joined.length}`], ["history", "打過的"]] as const).map(([k, l]) => (
-                  <Pressable key={k} onPress={() => setTab(k)} style={[s.segOpt, tab === k && s.segOn]}><Text style={{ fontWeight: "700" }}>{l}</Text></Pressable>
-                ))}
-              </View>
-              {tab === "joined" && joined.length ? joined.map((g) => <GameTicket key={g.id} game={g} />) : (
-                <View style={s.empty}>
-                  <Text style={{ color: color.muted }}>{tab === "joined" ? "還沒報名任何一局" : "打完的局會出現在這裡"}</Text>
-                  <Btn label="找一局來打" lg={false} onPress={() => router.push("/games")} style={{ borderRadius: 999 }} />
-                </View>
-              )}
-            </View>
-          )}
-
           <View style={{ gap: 12 }}>
-            <View><Text style={s.en}>SETTINGS</Text><Text style={{ fontSize: 24, fontWeight: "800" }}>設定</Text></View>
-            <View style={s.card}>
+                        <View style={s.card}>
+              {signedIn && <Row icon="users" label="我的球局" sub={joined.length ? `報名中 ${joined.length} 場` : "還沒報名球局"} onPress={() => router.push("/games")} />}
               {signedIn && <Row icon="bell" label="通知" sub={unread ? `${unread} 則未讀` : undefined} onPress={() => router.push("/me/notifications")} />}
               {signedIn && <Row icon="heart" label="收藏的教練" sub={favs.length ? `${favs.length} 位` : "在教練頁按愛心收藏"} onPress={() => router.push("/me/saved")} />}
               {!signedIn && <Row icon="whistle" label="我是教練：教練後台" sub="登入後使用" onPress={() => setLogin(true)} />}
@@ -118,11 +86,6 @@ export default function Me() {
   );
 }
 
-const Stat = ({ n, label, last }: { n: string; label: string; last?: boolean }) => (
-  <View style={[{ flex: 1, gap: 2 }, !last && { borderRightWidth: 1, borderRightColor: "rgba(255,255,255,.14)" }]}>
-    <Num style={{ fontSize: 26, color: "#fff" }}>{n}</Num><Text style={{ fontSize: 12, color: color.onCarbonMuted }}>{label}</Text>
-  </View>
-);
 function Row({ icon, label, sub, onPress, last }: { icon: IconName; label: string; sub?: string; onPress: () => void; last?: boolean }) {
   return (
     <Pressable onPress={onPress} style={StyleSheet.flatten([s.row, last && { borderBottomWidth: 0 }])}>
@@ -136,13 +99,7 @@ function Row({ icon, label, sub, onPress, last }: { icon: IconName; label: strin
 const s = StyleSheet.create({
   hero: { backgroundColor: color.carbon, paddingHorizontal: 16, paddingBottom: 20, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
   avatar: { width: 56, height: 56, borderRadius: 28, backgroundColor: color.accent, alignItems: "center", justifyContent: "center" },
-  stats: { flexDirection: "row", gap: 12, marginTop: 16, paddingTop: 14, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,.14)" },
-  en: { fontFamily: "BarlowCondensed_700Bold", fontSize: 12, letterSpacing: 1.5, color: color.muted },
   rowCard: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: color.surface, borderRadius: radius.md, borderWidth: 1, borderColor: color.line, padding: 14 },
   card: { backgroundColor: color.surface, borderRadius: radius.md, borderWidth: 1, borderColor: color.line, paddingHorizontal: 14 },
   row: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: color.n100 },
-  seg: { flexDirection: "row", backgroundColor: color.n100, borderRadius: 999, padding: 4 },
-  segOpt: { flex: 1, alignItems: "center", paddingVertical: 9, borderRadius: 999 },
-  segOn: { backgroundColor: color.surface },
-  empty: { alignItems: "center", gap: 10, backgroundColor: color.surface, borderRadius: radius.md, borderWidth: 1, borderColor: color.line, padding: 20 },
 });
