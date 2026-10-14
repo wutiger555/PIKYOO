@@ -305,3 +305,10 @@
 .past-h > span { min-width: 0; font-size: 15px; }
 .past-note { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--color-bg); font-size: 14px; line-height: 1.6; white-space: pre-line; }
 .past-note small { display: block; color: var(--color-muted); font-size: 12px; margin-bottom: 2px; }
+||||||| a243181
+/* the trimmed coach card (2026-10-15) */
+.ccard-ok { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--color-accent); color: var(--color-on-accent); }
+.ccard-trust { font-size: 14px; color: var(--color-neutral-700); }
+.ccard-trust b { color: var(--color-text); }
+.ccard-meta { font-size: 13px; color: var(--color-muted); }
+.ccard-photo { aspect-ratio: 2.2 / 1; }

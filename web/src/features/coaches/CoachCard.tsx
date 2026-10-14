@@ -3,11 +3,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useState } from "react";
-import { Cred, LevelChip } from "@/components/pk/Badges";
+import { LevelChip } from "@/components/pk/Badges";
 import { Icon } from "@/components/pk/Icon";
 import { useToast } from "@/components/pk/Toast";
 import { useDemo } from "@/lib/demo-store";
-import { money } from "@pikyoo/core/format";
+import { isCertified } from "@pikyoo/core/data/coaches";
+import { levelText, money } from "@pikyoo/core/format";
 import { specialties } from "@pikyoo/core/rules";
 import type { Coach, CoachProfile } from "@pikyoo/core/types";
 
@@ -63,13 +64,14 @@ export function Rating({ rating, reviews, big }: { rating: number; reviews: numb
 
 export const MAX_COMPARE = 3;
 
-/** 標準化教練卡: photo first, then every coach in the same format so price, level and credentials line up. */
+/** 標準化教練卡, trimmed after the 2026-10-14 interview: photo, name, verified, rating and students, specialties, where
+ *  and what level, price and the next free slot. Credentials, tagline and plans are one click away on the coach page. */
 export function CoachCard({ coach: c }: { coach: Coach }) {
   const { compare, setCompare } = useDemo();
   const toast = useToast();
   const on = compare.includes(c.id);
   const cover = c.profile.photos[0];
-  const group = c.profile.plans.find((p) => p.group);
+  const spec = specialties(c);
   const toggle = () => {
     if (on) setCompare((p) => p.filter((x) => x !== c.id));
     else if (compare.length < MAX_COMPARE) setCompare((p) => [...p, c.id]);
@@ -84,26 +86,17 @@ export function CoachCard({ coach: c }: { coach: Coach }) {
         </div>
         <div className="ccard-top">
           <div className="ccard-main">
-            <div className="ccard-name">
-              {c.name}
-              {c.rating != null && <Rating rating={c.rating} reviews={c.reviews} />}
-            </div>
-            <div className="ccard-creds">{c.creds.map((x, i) => <Cred key={i} c={x} />)}</div>
-            <p className="ccard-tag">{c.tagline}</p>
-            {group?.group && <span className="plan-group"><Icon name="users" size={13} />可揪朋友一起上（{group.group.min}–{group.group.max} 人）</span>}
+            <div className="ccard-name">{c.name}{isCertified(c) && <span className="ccard-ok" title="已認證教練"><Icon name="check" size={14} stroke={2.6} /></span>}</div>
+            <div className="ccard-trust">{c.rating != null ? <><b>★ {c.rating}</b>（{c.reviews}）</> : "還沒有評價"}・{c.students} 位學生</div>
+            {spec.length > 0 && <span className="ccard-spec">{spec.map((x) => <span key={x}>{x}</span>)}</span>}
+            <div className="ccard-meta">{c.areas.join("・")}・{levelText(c.levelMin, c.levelMax)}</div>
           </div>
           <div className="ccard-price">
-            <small>起價</small>
             <b className="num">{money(c.priceFrom)}</b>
+            <small>起</small>
           </div>
         </div>
       </Link>
-      <dl className="ccard-grid">
-        <div><dt>程度</dt><dd><LevelChip min={c.levelMin} max={c.levelMax} /></dd></div>
-        <div><dt>區域</dt><dd>{c.areas.join("・")}</dd></div>
-        <div><dt>類型</dt><dd>{c.types.join("・")}</dd></div>
-        <div><dt>專長</dt><dd>{specialties(c).length ? <span className="ccard-spec">{specialties(c).map((x) => <span key={x}>{x}</span>)}</span> : c.profile.play.strengths[0]}</dd></div>
-      </dl>
       <div className="ccard-foot">
         <span className="next"><Icon name="clock" size={15} />最近可約 <b>{c.nextSlot}</b></span>
         <button className={`cmp${on ? " on" : ""}`} aria-pressed={on} onClick={toggle}>

@@ -8,10 +8,10 @@ import { addAllToCalendar, nowHHMM, scheduleReminders, sendTestReminder, type Re
 import { useSession } from "@/data/session";
 import { Num } from "@/ui/badges";
 import { Btn } from "@/ui/Btn";
-import { DayAgenda, KIND, mondayOf, WeekStrip } from "@/ui/calendar";
+import { DayAgenda, mondayOf, WeekStrip } from "@/ui/calendar";
 import { c, ConsolePage, RolePill, ToStudent } from "@/ui/console";
 import { Field, Segmented, SwitchRow } from "@/ui/form";
-import { Icon, type IconName } from "@/ui/Icon";
+import { Icon } from "@/ui/Icon";
 import { Sheet } from "@/ui/Sheet";
 import { color, radius } from "@/ui/theme";
 import { toast } from "@/ui/Toast";
@@ -107,17 +107,13 @@ export default function CoachCalendar() {
         ))
       )}
 
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 4 }}>
-        {(Object.keys(KIND) as (keyof typeof KIND)[]).map((k) => (
-          <View key={k} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}><View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: KIND[k].color }} /><Text style={c.hint}>{KIND[k].label}</Text></View>
+      {/* the tools, one compact row: the agenda stays the focus of 今天 */}
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+        {([["lock", "擋掉時間", () => setSheet("block")], ["cal", "加入手機行事曆", addAll], ["bell", "提醒設定", () => setSheet("remind")]] as const).map(([icon, label, onPress]) => (
+          <Pressable key={label} onPress={onPress} style={{ flexDirection: "row", alignItems: "center", gap: 6, borderWidth: 1.5, borderColor: color.line, backgroundColor: color.surface, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8 }}>
+            <Icon name={icon} size={15} /><Text style={{ fontSize: 14, fontWeight: "600" }}>{label}</Text>
+          </Pressable>
         ))}
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}><View style={{ width: 10, height: 10, borderRadius: 3, borderWidth: 1.5, borderStyle: "dashed", borderColor: color.accent700 }} /><Text style={c.hint}>待確認</Text></View>
-      </View>
-
-      <View style={{ gap: 8 }}>
-        <Tool icon="lock" title="擋掉時間" sub="請假、比賽、出國：學生就預約不到" onPress={() => setSheet("block")} />
-        <Tool icon="cal" title="加入手機行事曆" sub="未來兩週的課一次加入，每堂前 1 小時提醒" onPress={addAll} />
-        <Tool icon="bell" title="提醒設定" sub="上課前提醒、每晚明天課表、訂場提醒" onPress={() => setSheet("remind")} />
       </View>
 
       {sheet === "block" && <BlockSheet day={day} onClose={() => setSheet(null)} />}
@@ -134,15 +130,6 @@ function Stat({ n, label: l, onPress, last }: { n: string; label: string; onPres
   );
 }
 
-function Tool({ icon, title, sub, onPress }: { icon: IconName; title: string; sub: string; onPress: () => void }) {
-  return (
-    <Pressable onPress={onPress} style={st.tool}>
-      <View style={st.toolIc}><Icon name={icon} size={17} /></View>
-      <View style={{ flex: 1 }}><Text style={{ fontSize: 15, fontWeight: "800" }}>{title}</Text><Text style={c.hint}>{sub}</Text></View>
-      <Icon name="right" size={13} tint={color.muted} />
-    </Pressable>
-  );
-}
 
 const hm = (d: Date) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 const at = (h: number) => { const d = new Date(); d.setHours(h, 0, 0, 0); return d; };
