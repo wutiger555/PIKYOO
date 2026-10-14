@@ -9,6 +9,7 @@ import { SoonButton, TabBar } from "@/components/pk/Shell";
 import { TopNav } from "@/components/pk/TopNav";
 import { bookingDays } from "@pikyoo/core/data/coaches";
 import { demoDate } from "@pikyoo/core/data/today";
+import { DEMO_SHARED_NOTE } from "@pikyoo/core/data/schedule";
 import { useCoaches, useDemo } from "@/lib/demo-store";
 import { money } from "@pikyoo/core/format";
 import type { MyBooking } from "@pikyoo/core/source/bookings";
@@ -22,8 +23,8 @@ const GROUP_STATE: Record<Group["status"], [string, "almost" | "info" | "open" |
   gathering: ["揪團中", "almost"], requested: ["等教練確認", "info"], confirmed: ["教練已確認", "open"], declined: ["教練婉拒", "ended"],
 };
 
-// Mock history for the demo: a lesson nine days ago.
-const history = () => [{ coachId: "mia", plan: "新手體驗課", when: `${demoDate(-9)}10:00` }];
+// Mock history for the demo: a lesson nine days ago, with the note the coach shared.
+const history = () => [{ coachId: "mia", plan: "新手體驗課", when: `${demoDate(-9)}10:00`, note: DEMO_SHARED_NOTE }];
 
 const LIVE_STATE: Record<MyBooking["state"], [string, "almost" | "info" | "open" | "ended"]> = {
   pending: [BOOKING_LABEL.pending.label, "almost"], confirmed: [BOOKING_LABEL.confirmed.label, "info"], done: ["已上課", "ended"],
@@ -125,6 +126,7 @@ export function MyLessonsScreen({ live }: { live?: MyBooking[] }) {
                 <b>{h.plan}</b>
                 <span className="text-muted">{c.name}・{h.when}</span>
                 <Status tone="ended">已完成</Status>
+                {h.note && <p className="lesson-note"><b>{c.name.split(" ")[0]} 的課後筆記</b>{h.note}</p>}
               </div>
               <SoonButton className="btn btn-secondary" style={{ minHeight: 38, padding: "0 12px", fontSize: 14 }} msg="評價（P2）">給評價</SoonButton>
             </div>

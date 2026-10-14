@@ -9,6 +9,7 @@ import { AppBar } from "@/components/pk/Shell";
 import { useToast } from "@/components/pk/Toast";
 import { TopNav } from "@/components/pk/TopNav";
 import { PAY_HINT } from "@pikyoo/core/data/coaches";
+import { CANCEL_TEXT } from "@pikyoo/core/rules";
 import { slotKey, type BookingCalendar } from "@pikyoo/core/source/bookings";
 import { requestBookingAction } from "@/lib/bookings";
 import { newBooking, useCoach, useDemo } from "@/lib/demo-store";
@@ -175,6 +176,7 @@ export function BookScreen({ coach, planId, friends, dayKey, slot, calendar }: {
               </label>
             ))}
           </div>
+          <div className="rule-box mb-only"><b>取消與請假規則</b>{CANCEL_TEXT}<small>所有教練都一樣，由平台統一規定。</small></div>
         </section>
         </div>
         <aside className="bk-aside dk-only" aria-label="訂單摘要">
@@ -188,7 +190,8 @@ export function BookScreen({ coach, planId, friends, dayKey, slot, calendar }: {
             </dl>
             <div className="bk-total"><span>{group ? "每人" : "合計"}</span><b className="num">{money(group ? plan.price : total)}</b></div>
             <button className="btn btn-primary btn-lg btn-block" disabled={!b.slot || sending} onClick={submit}>{b.slot ? (sending ? "送出中…" : cta) : "請先選時段"}</button>
-            <p className="fine">教練確認後才需要付款，現在不會扣款。{p.policy}</p>
+            <p className="fine">教練確認後才需要付款，現在不會扣款。</p>
+            <div className="rule-box"><b>取消與請假規則</b>{CANCEL_TEXT}<small>所有教練都一樣，由平台統一規定。</small></div>
           </div>
         </aside>
         </div>

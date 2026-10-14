@@ -284,3 +284,13 @@
 .where-court span { flex: 1; min-width: 0; }
 .where-court small { display: block; color: var(--color-muted); font-size: 13px; }
 @media (prefers-reduced-motion: reduce) { .cmap-peek { animation: none; } .cpin span { transition: none; } }
+
+/* 教學專長 on the coach page hero (carbon) */
+.chero-spec { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 10px; }
+.chero-spec span { font-size: 13px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: var(--color-accent); color: var(--color-on-accent); }
+/* 平台統一的取消與請假規則, shown before a booking is sent */
+.rule-box { margin-top: 10px; padding: 12px 14px; border: 1.5px solid var(--color-text); border-radius: 12px; background: var(--color-surface); font-size: 14px; line-height: 1.6; }
+.rule-box b { display: block; font-size: 15px; margin-bottom: 2px; }
+.rule-box small { display: block; color: var(--color-muted); margin-top: 4px; }
+.ccard-spec { display: flex; flex-wrap: wrap; gap: 4px; }
+.ccard-spec span { font-size: 12px; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: var(--color-accent-100); border: 1px solid var(--color-accent-500); }

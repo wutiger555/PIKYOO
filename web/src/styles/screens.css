@@ -98,3 +98,7 @@ a.tab[aria-current="page"] { color: var(--color-on-accent); }
 .success h1 { font-size: 28px; margin: 0; }
 .success .actions { margin-top: auto; padding-top: var(--space-6); display: flex; flex-direction: column; gap: var(--space-2); }
 }
+
+/* 我的課 → 上過的: the note the coach chose to share */
+.lesson-note { margin: 6px 0 0; padding: 10px 12px; border-radius: 10px; background: var(--color-bg); font-size: 14px; line-height: 1.6; }
+.lesson-note b { display: block; font-size: 13px; }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Icon } from "@/components/pk/Icon";
 import { bookingDays, slotsFor } from "@pikyoo/core/data/coaches";
+import { CANCEL_TEXT } from "@pikyoo/core/rules";
 import { money } from "@pikyoo/core/format";
 import type { Coach } from "@pikyoo/core/types";
 
@@ -80,7 +81,7 @@ export function BookCard({ coach: c, locked, onLogin }: { coach: Coach; locked: 
             </Link>
           )}
           <dl className="bcard-kv">
-            <dt>取消</dt><dd>{p.policy}</dd>
+            <dt>取消</dt><dd>{CANCEL_TEXT}</dd>
             <dt>付款</dt><dd>{p.pay.join("・")}，教練確認後再付</dd>
           </dl>
         </>

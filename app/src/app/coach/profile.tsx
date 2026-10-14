@@ -2,6 +2,7 @@ import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import type { Coach, CoachProfile, PayMethod, PlayProfile } from "@pikyoo/core/types";
+import { CANCEL_TEXT, SPECIALTIES, specialties } from "@pikyoo/core/rules";
 import { useCatalog } from "@/data/catalog";
 import { useSession } from "@/data/session";
 import { Num } from "@/ui/badges";
@@ -107,6 +108,7 @@ export default function CoachProfileEditor() {
         <LevelRange label="授課程度" min={co.levelMin} max={co.levelMax} onChange={(levelMin, levelMax) => setC({ levelMin, levelMax })} />
         <View>
           <PickerRow label="授課區域" multi values={co.areas} options={AREAS} onChange={(areas) => setC({ areas })} />
+          <PickerRow label="教學專長" multi values={specialties(co)} options={[...SPECIALTIES]} onChange={(style) => setC({ style })} />
           <PickerRow label="回覆速度" values={[p.reply]} options={REPLY} onChange={([reply]) => setP({ reply })} />
         </View>
       </View>
@@ -136,7 +138,7 @@ export default function CoachProfileEditor() {
           <PickerRow label="開始打球" values={[p.play.since]} options={["2016", "2017", "2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025", "2026"]} summary={(v) => `${v[0]} 年`} onChange={([since]) => setPlay({ since })} />
           <PickerRow label="擅長教" multi values={p.play.strengths} options={STRENGTHS} summary={(v) => `${v.length} 項：${v.join("、")}`} onChange={(strengths) => setPlay({ strengths })} />
         </View>
-        <Text style={c.hint}>擅長的第一項會出現在教練卡上。</Text>
+        <Text style={c.hint}>教練卡上優先顯示教學專長；沒選專長時顯示擅長的第一項。</Text>
       </View>
 
       <SecHead en="Where" title="授課地點" />
@@ -159,7 +161,7 @@ export default function CoachProfileEditor() {
         <View>
           {PAYS.map((x, i) => <SwitchRow key={x} first={i === 0} label={x} value={p.pay.includes(x)} onChange={(on) => setP({ pay: on ? [...p.pay, x] : p.pay.filter((y) => y !== x) })} />)}
         </View>
-        <Field label="取消規則" value={p.policy} multiline onChange={(policy) => setP({ policy })} />
+        <Text style={c.hint}>取消與請假規則由平台統一規定：{CANCEL_TEXT}</Text>
         <Text style={c.hint}>課程方案與每週時段在「課程」分頁設定。</Text>
       </View>
 
