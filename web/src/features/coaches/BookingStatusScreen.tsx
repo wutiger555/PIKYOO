@@ -81,7 +81,8 @@ export function BookingStatusScreen({ demo, live, payment }: { demo?: BookingSta
       <div className="state-card">
         <Status tone={tone}>{label}</Status>
         <h1>{title}</h1>
-        <p className="text-muted">{text}</p>
+        <p className="text-muted">{live?.notes?.length ? "" : text}</p>
+        {live?.notes?.map((n, i) => <p key={i} className="lesson-note" style={{ textAlign: "left", whiteSpace: "pre-line" }}><b>{c.name.split(" ")[0]} 的課後筆記・{n.at}</b>{n.body}</p>)}
         {ended !== "done" && <Link className="btn btn-primary" href={`/coaches/${c.id}/book?plan=${b.planId}`}>重新選時段</Link>}
       </div>
     );

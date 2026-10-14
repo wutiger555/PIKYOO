@@ -299,6 +299,13 @@
 .chero-cert { display: inline-flex; align-items: center; gap: 4px; color: var(--color-accent); font-size: 14px; font-weight: 700; margin-bottom: 4px; }
 #a-creds .chero-creds { margin-bottom: 12px; }
 
+/* 上過的課 and their 課後筆記 (coach console) */
+.past { background: var(--color-surface); border: 1px solid var(--color-line); border-radius: 12px; padding: 12px 14px; display: grid; gap: 8px; }
+.past-h { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.past-h > span { min-width: 0; font-size: 15px; }
+.past-note { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--color-bg); font-size: 14px; line-height: 1.6; white-space: pre-line; }
+.past-note small { display: block; color: var(--color-muted); font-size: 12px; margin-bottom: 2px; }
+||||||| a243181
 /* the trimmed coach card (2026-10-15) */
 .ccard-ok { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--color-accent); color: var(--color-on-accent); }
 .ccard-trust { font-size: 14px; color: var(--color-neutral-700); }

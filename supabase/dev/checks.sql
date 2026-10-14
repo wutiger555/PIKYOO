@@ -507,3 +507,62 @@ do $$ begin
   assert exists (select 1 from public.notifications where user_id = test.uid('小安') and kind = 'payment_due' and payload ->> 'payment_id' = current_setting('test.duepay')), 'the student gets the nudge';
   update public.payments set status = 'paid', paid_at = now() where id = current_setting('test.duepay')::uuid;
 end $$;
+
+-- ── 課後筆記 (lesson_notes) ──
+reset role;
+do $$
+declare b uuid;
+begin
+  -- a lesson of Mia's with 小安 that happened yesterday
+  insert into public.lesson_bookings (coach_id, plan_id, student_id, starts_at, pay_method, amount, status, expires_at)
+  select c.id, pl.id, test.uid('小安'), now() - interval '1 day', 'cash', 600, 'confirmed', now() - interval '2 days'
+  from public.coaches c join public.coach_plans pl on pl.coach_id = c.id where c.slug = 'mia' limit 1 returning id into b;
+  perform set_config('test.notebooking', b::text, false);
+end $$;
+do $$ begin perform test.login('趙柏宇'); end $$;
+set role authenticated;
+do $$ begin
+  assert test.fails(format('select public.write_lesson_note(%L, %L, true)', current_setting('test.notebooking'), '很好')) = 'not your lesson', 'another coach cannot write on Mia''s lesson';
+end $$;
+reset role;
+do $$ begin perform test.login('Mia 林'); end $$;
+set role authenticated;
+do $$ begin
+  assert test.fails(format('select public.write_lesson_note(%L, %L, true)', current_setting('test.notebooking'), '加我 LINE: mia123')) is not null, 'a note cannot carry a LINE handle';
+  perform set_config('test.shared', public.write_lesson_note(current_setting('test.notebooking')::uuid, '下次練第三拍 drop', true)::text, false);
+  perform set_config('test.private', public.write_lesson_note(current_setting('test.notebooking')::uuid, '容易緊張，多鼓勵', false)::text, false);
+  assert (select count(*) from public.lesson_notes where booking_id = current_setting('test.notebooking')::uuid) = 2, 'the coach reads both notes';
+end $$;
+reset role;
+do $$ begin
+  assert (select count(*) from public.notifications where user_id = test.uid('小安') and kind = 'lesson_note' and payload ->> 'note_id' = current_setting('test.shared')) = 1, 'sharing a note tells the student once';
+  assert not exists (select 1 from public.notifications where kind = 'lesson_note' and payload ->> 'note_id' = current_setting('test.private')), 'a private note tells no one';
+end $$;
+do $$ begin perform test.login('小安'); end $$;
+set role authenticated;
+do $$ begin
+  assert (select count(*) from public.lesson_notes where booking_id = current_setting('test.notebooking')::uuid) = 1, 'the student sees the shared note only';
+  assert (select body from public.lesson_notes where booking_id = current_setting('test.notebooking')::uuid) = '下次練第三拍 drop', 'and it is the shared one';
+  assert test.fails(format('select public.write_lesson_note(%L, %L, true)', current_setting('test.notebooking'), 'x')) = 'sign in as a coach first', 'a student cannot write notes';
+  assert test.fails(format('delete from public.lesson_notes where id = %L', current_setting('test.shared'))) is null and exists (select 1 from public.lesson_notes where id = current_setting('test.shared')::uuid), 'a student cannot delete a note';
+end $$;
+reset role;
+do $$ begin perform test.login('葉子'); end $$;
+set role authenticated;
+do $$ begin
+  assert (select count(*) from public.lesson_notes) = 0, 'other students see no notes';
+end $$;
+reset role;
+do $$ begin perform test.login('Mia 林'); end $$;
+set role authenticated;
+do $$ begin
+  -- sharing the private one later notifies then
+  perform public.write_lesson_note(current_setting('test.notebooking')::uuid, '容易緊張，多鼓勵', true, current_setting('test.private')::uuid);
+  perform public.delete_lesson_note(current_setting('test.shared')::uuid);
+end $$;
+reset role;
+do $$ begin
+  assert exists (select 1 from public.notifications where kind = 'lesson_note' and payload ->> 'note_id' = current_setting('test.private')), 'sharing an existing note later notifies the student';
+  assert not exists (select 1 from public.lesson_notes where id = current_setting('test.shared')::uuid), 'the coach deleted a note';
+  delete from public.lesson_bookings where id = current_setting('test.notebooking')::uuid;
+end $$;

@@ -1,3 +1,4 @@
+import type { PastLesson } from "../source/notes";
 import { demoDay } from "./today.ts"; // .ts: plain Node may import data files (seed generator)
 
 // The coach console's demo week for Mia (docs/APP.md §4): her lessons, her students and the time she has blocked.
@@ -107,3 +108,11 @@ export const REQUEST_SLOTS: Record<string, { offset: number; start: string; sid:
   r1: { offset: 5, start: "10:00", sid: "xiaoan" },
   r2: { offset: 8, start: "19:30", sid: "jason" },
 };
+
+/** The coach console's 上過的課 in the demo (website): one lesson with the shared note, one waiting for a note. */
+export const demoPastLessons = (): PastLesson[] => [
+  { id: "demo-past-1", student: "Jason", plan: "一對一", ...dayParts(-2), slot: "19:30", notes: [] },
+  { id: "demo-past-2", student: "小安", plan: "新手體驗課", ...dayParts(-9), slot: "10:00",
+    notes: [{ id: "demo-note-1", body: DEMO_SHARED_NOTE, shared: true, at: dayParts(-9).date }] },
+];
+const dayParts = (offset: number) => { const d = demoDay(offset); return { date: d.date, weekday: d.weekday }; };
