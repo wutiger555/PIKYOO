@@ -9,10 +9,10 @@ import { Icon, type IconName } from "@/components/pk/Icon";
 import { LoginSheet } from "@/components/pk/LoginSheet";
 import { useToast } from "@/components/pk/Toast";
 import { TopNav } from "@/components/pk/TopNav";
-import { bookingDays, slotsFor } from "@pikyoo/core/data/coaches";
+import { bookingDays, isCertified, slotsFor } from "@pikyoo/core/data/coaches";
 import { CANCEL_TEXT, specialties } from "@pikyoo/core/rules";
 import { useCoach, useDemo } from "@/lib/demo-store";
-import { levelText, money } from "@pikyoo/core/format";
+import { money } from "@pikyoo/core/format";
 import type { Coach, TimelineItem } from "@pikyoo/core/types";
 import { BookCard } from "./BookCard";
 import { Img, Rating } from "./CoachCard";
@@ -20,14 +20,16 @@ import { AskSheet, QuestionBoard } from "./QuestionBoard";
 
 const TL_ICON: Record<TimelineItem["kind"], IconName> = { cert: "shield", trophy: "trophy", users: "users", cap: "cap" };
 
-type SectionKey = "plans" | "about" | "play" | "time" | "exp" | "reviews" | "qa" | "where";
+// Order (2026-10-15, after the coach interview): trust first (reviews, credentials), then what to buy (plans,
+// times), then the person, questions and where. The app's coach page follows the same order.
+type SectionKey = "reviews" | "creds" | "plans" | "time" | "about" | "qa" | "where";
 const SECTIONS: [SectionKey, string, string][] = [
-  ["plans", "課程", "課程與價目"], ["reviews", "評價", "學生評價"], ["exp", "經歷", "經歷與資格"], ["about", "關於我", "關於我"],
-  ["play", "匹克球檔案", "匹克球檔案"], ["time", "可約時段", "可約時段"], ["qa", "問與答", "問與答"], ["where", "地點", "授課地點"],
+  ["reviews", "評價", "學生評價"], ["creds", "資格", "資格與經歷"], ["plans", "課程", "課程與價目"], ["time", "時段", "可約時段"],
+  ["about", "關於我", "關於我"], ["qa", "問與答", "問與答"], ["where", "地點", "授課地點"],
 ];
 /** What a visitor sees before signing in; every other section sits behind the sign-in panel. Search engines and IG
  *  visitors still get the photos, credentials, prices and bio. Widen or narrow the gate here. */
-const GUEST_SECTIONS: ReadonlySet<SectionKey> = new Set(["plans", "about"]);
+const GUEST_SECTIONS: ReadonlySet<SectionKey> = new Set(["creds", "plans", "about"]);
 
 /** F3-4 教練頁（招生頁）. Reads the live coach so the console's edits show up here. */
 export function CoachPageScreen({ coach }: { coach: Coach }) {
@@ -92,36 +94,58 @@ export function CoachPublicPage({ coach: c, preview }: { coach: Coach; preview?:
         <div className="cp-cols">
           <div className="cp-main">
             <div className="chero carbon">
-              <div className="chero-name">
-                <h1>{c.name}</h1>
-                {c.rating != null && <span className="chero-rate"><Icon name="star" size={15} stroke={0} />{c.rating}<small>（{c.reviews}）</small></span>}
+              <div className="chero-name"><h1>{c.name}</h1></div>
+              {isCertified(c) && <div className="chero-cert"><Icon name="check" size={14} stroke={2.6} />已認證教練</div>}
+              <div className="stats">
+                <div><b className="num">{c.rating != null ? `★ ${c.rating}` : "—"}</b><span>{c.reviews ? `${c.reviews} 則評價` : "還沒有評價"}</span></div>
+                <div><b className="num">{c.students}</b><span>位學生上過課</span></div>
+                <div><b className="num">{c.years}</b><span>年教學</span></div>
               </div>
-              <div className="chero-sub">{c.areas.join("・")}・{p.reply}</div>
               <p className="chero-tag">{c.tagline}</p>
               {specialties(c).length > 0 && <div className="chero-spec" aria-label="教學專長">{specialties(c).map((x) => <span key={x}>{x}</span>)}</div>}
-              <div className="chero-creds">{c.creds.map((x, i) => <Cred key={i} c={x} />)}</div>
-              <div className="stats">
-                <div><b className="num">{c.years}</b><span>年教學</span></div>
-                <div><b className="num">{c.students}</b><span>位學生</span></div>
-                <div><b className="num">{levelText(c.levelMin, c.levelMax)}</b><span>授課程度</span></div>
-              </div>
             </div>
-
-            {gallery.length > 0 && (
-              <div className={`gallery${preview ? "" : " mb-only"}`} aria-label="上課照片">
-                {gallery.map((ph) => (
-                  <figure key={ph.src} className="gal">
-                    <div className="gal-img"><Img src={ph.src} alt={ph.alt} sizes="240px" /></div>
-                    {ph.caption && <figcaption>{ph.caption}</figcaption>}
-                  </figure>
-                ))}
-              </div>
-            )}
 
             <nav className="anchors">
               {SECTIONS.filter(([k]) => shows(k)).map(([k, l]) => <button key={k} onClick={() => jump(k)}>{l}</button>)}
               {locked && <button className="anchor-lock" onClick={() => jump("locked")}><Icon name="lock" size={15} />登入看更多</button>}
             </nav>
+
+            {shows("reviews") && (
+              <section className="blk" id="a-reviews">
+                <div className="blk-h"><h2>學生怎麼說</h2>{c.rating != null && <Rating rating={c.rating} reviews={c.reviews} big />}</div>
+                {p.quotes.length ? (
+                  <div className="quotes">
+                    {p.quotes.map((q) => (
+                      <figure key={q.name} className="quote">
+                        <blockquote>「{q.text}」</blockquote>
+                        <figcaption>{q.name}・{q.level}</figcaption>
+                      </figure>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted">還沒有評價，上完課的學生可以留下第一則。</p>
+                )}
+              </section>
+            )}
+
+            <section className="blk" id="a-creds">
+              <h2>資格與經歷</h2>
+              <div className="chero-creds">{c.creds.map((x, i) => <Cred key={i} c={x} />)}</div>
+              {!locked && (
+                <ul className="tl">
+                  {p.timeline.map((t) => (
+                    <li key={t.year + t.text}>
+                      <span className="tl-y num">{t.year}</span>
+                      <span className="tl-i"><Icon name={TL_ICON[t.kind]} size={16} /></span>
+                      <span className="tl-t">
+                        {t.text}
+                        {t.kind === "cert" && <span className="vf"><Icon name="check" size={12} stroke={2.4} />PIKYOO 已查驗</span>}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
 
             <section className="blk" id="a-plans">
               <div className="blk-h"><h2>課程與價目</h2><LevelChip min={c.levelMin} max={c.levelMax} /></div>
@@ -169,72 +193,6 @@ export function CoachPublicPage({ coach: c, preview }: { coach: Coach; preview?:
               </div>
             )}
 
-            {shows("reviews") && (
-              <section className="blk" id="a-reviews">
-                <div className="blk-h"><h2>學生怎麼說</h2>{c.rating != null && <Rating rating={c.rating} reviews={c.reviews} big />}</div>
-                {p.quotes.length ? (
-                  <div className="quotes">
-                    {p.quotes.map((q) => (
-                      <figure key={q.name} className="quote">
-                        <blockquote>「{q.text}」</blockquote>
-                        <figcaption>{q.name}・{q.level}</figcaption>
-                      </figure>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-muted">還沒有評價，上完課的學生可以留下第一則。</p>
-                )}
-              </section>
-            )}
-
-            {shows("exp") && (
-              <section className="blk" id="a-exp">
-                <h2>經歷與資格</h2>
-                <ul className="tl">
-                  {p.timeline.map((t) => (
-                    <li key={t.year + t.text}>
-                      <span className="tl-y num">{t.year}</span>
-                      <span className="tl-i"><Icon name={TL_ICON[t.kind]} size={16} /></span>
-                      <span className="tl-t">
-                        {t.text}
-                        {t.kind === "cert" && <span className="vf"><Icon name="check" size={12} stroke={2.4} />PIKYOO 已查驗</span>}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
-
-            <section className="blk" id="a-about">
-              <h2>關於我</h2>
-              <p>{p.bio}</p>
-              <h3 className="blk-sub">上課怎麼進行</h3>
-              <ol className="howto">
-                {p.steps.map((s, i) => <li key={i}><span className="num">{i + 1}</span>{s}</li>)}
-              </ol>
-              <div className="paytags" style={{ marginTop: 12 }}>{c.style.map((s) => <span key={s} className="tag tag-outline">{s}</span>)}</div>
-              <h3 className="blk-sub">適合誰</h3>
-              <ul className="fit">
-                {p.audience.map((a) => <li key={a}><Icon name="check" size={16} stroke={2.2} />{a}</li>)}
-              </ul>
-            </section>
-
-            {shows("play") && (
-              <section className="blk" id="a-play">
-                <h2>匹克球檔案</h2>
-                <dl className="pbfile">
-                  <div><dt>球齡</dt><dd><b className="num">{Math.max(1, 2026 - Number(p.play.since))}</b> 年<small>（{p.play.since} 年開始）</small></dd></div>
-                  <div><dt>慣用手</dt><dd>{p.play.hand}</dd></div>
-                  <div><dt>打法</dt><dd>{p.play.format}</dd></div>
-                  <div><dt>運動背景</dt><dd>{p.play.background}</dd></div>
-                  <div><dt>DUPR</dt><dd>{(() => { const d = c.creds.find((x) => x.issuer === "DUPR"); return d ? <><b className="num">{d.level}</b> <small>{d.verified ? "已驗證" : "自填"}</small></> : <span className="text-muted">未提供</span>; })()}</dd></div>
-                  <div><dt>授課語言</dt><dd>{p.languages.join("・")}</dd></div>
-                </dl>
-                <h3 className="blk-sub">擅長教</h3>
-                <div className="paytags">{p.play.strengths.map((s) => <span key={s} className="tag tag-accent-2">{s}</span>)}</div>
-              </section>
-            )}
-
             {shows("time") && (
               <section className="blk" id="a-time">
                 <div className="blk-h"><h2>可約時段</h2><span className="text-muted" style={{ fontSize: 13 }}>未來 7 天</span></div>
@@ -256,6 +214,44 @@ export function CoachPublicPage({ coach: c, preview }: { coach: Coach; preview?:
                 ) : (
                   <p className="text-muted">這週還沒開放時段，可以先在<button className="linkbtn" onClick={() => jump("qa")}>問與答</button>問教練。</p>
                 )}
+            <section className="blk" id="a-about">
+              <h2>關於我</h2>
+              <p>{p.bio}</p>
+              <h3 className="blk-sub">上課怎麼進行</h3>
+              <ol className="howto">
+                {p.steps.map((s, i) => <li key={i}><span className="num">{i + 1}</span>{s}</li>)}
+              </ol>
+              <h3 className="blk-sub">適合誰</h3>
+              <ul className="fit">
+                {p.audience.map((a) => <li key={a}><Icon name="check" size={16} stroke={2.2} />{a}</li>)}
+              </ul>
+              {!locked && (
+                <>
+                  <h3 className="blk-sub">匹克球檔案</h3>
+                  <dl className="pbfile">
+                    <div><dt>球齡</dt><dd><b className="num">{Math.max(1, 2026 - Number(p.play.since))}</b> 年</dd></div>
+                    <div><dt>打法</dt><dd>{p.play.format}</dd></div>
+                    <div><dt>運動背景</dt><dd>{p.play.background}</dd></div>
+                    <div><dt>授課語言</dt><dd>{p.languages.join("・")}</dd></div>
+                  </dl>
+                </>
+              )}
+              {gallery.length > 0 && (
+                <>
+                  <h3 className="blk-sub">上課照片</h3>
+                  <div className="gallery" aria-label="上課照片">
+                    {gallery.map((ph) => (
+                      <figure key={ph.src} className="gal">
+                        <div className="gal-img"><Img src={ph.src} alt={ph.alt} sizes="240px" /></div>
+                        {ph.caption && <figcaption>{ph.caption}</figcaption>}
+                      </figure>
+                    ))}
+                  </div>
+                </>
+              )}
+            </section>
+
+
               </section>
             )}
 
@@ -263,7 +259,7 @@ export function CoachPublicPage({ coach: c, preview }: { coach: Coach; preview?:
 
             {shows("where") && (
               <section className="blk" id="a-where" style={{ borderBottom: 0 }}>
-                <h2>授課地點</h2>
+                <div className="blk-h"><h2>授課地點</h2><span className="text-muted" style={{ fontSize: 13 }}>{c.areas.join("・")}</span></div>
                 {p.venues.map((v) =>
                   v.courtId && !preview ? (
                     <Link key={v.name} className="row-item" href={`/courts/${v.courtId}`}>
