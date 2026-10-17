@@ -144,6 +144,7 @@ export type Database = {
           profile_id: string
           quotes: Json
           reply_note: string
+          slot_venues: Json
           slug: string
           status: Database["public"]["Enums"]["coach_status"]
           steps: string[]
@@ -204,6 +205,7 @@ export type Database = {
           profile_id?: string
           quotes?: Json
           reply_note?: string
+          slot_venues?: Json
           slug?: string
           status?: Database["public"]["Enums"]["coach_status"]
           steps?: string[]
@@ -234,6 +236,10 @@ export type Database = {
           court_count: number
           created_at: string
           district: string
+          fee_checked_at: string | null
+          fee_high: number | null
+          fee_low: number | null
+          fee_source: string | null
           has_aircon: boolean
           has_lights: boolean
           hours_note: string
@@ -243,6 +249,7 @@ export type Database = {
           lat: number | null
           lng: number | null
           name: string
+          partner: boolean
           photos: Json
           price_note: string
           published: boolean
@@ -290,6 +297,10 @@ export type Database = {
           court_count?: number
           created_at?: string
           district?: string
+          fee_checked_at?: string | null
+          fee_high?: number | null
+          fee_low?: number | null
+          fee_source?: string | null
           has_aircon?: boolean
           has_lights?: boolean
           hours_note?: string
@@ -299,6 +310,7 @@ export type Database = {
           lat?: number | null
           lng?: number | null
           name?: string
+          partner?: boolean
           photos?: Json
           price_note?: string
           published?: boolean
@@ -1085,6 +1097,7 @@ export type Database = {
           profile_id: string | null
           quotes: Json | null
           reply_note: string | null
+          slot_venues: Json | null
           slug: string | null
           status: Database["public"]["Enums"]["coach_status"] | null
           steps: string[] | null

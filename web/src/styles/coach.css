@@ -312,3 +312,16 @@
 .ccard-trust b { color: var(--color-text); }
 .ccard-meta { font-size: 13px; color: var(--color-muted); }
 .ccard-photo { aspect-ratio: 2.2 / 1; }
+
+/* 場地費 (2026-10-17): venue on each slot, fee rows, the console's venue editor */
+.slot em, .avail-t em { display: block; font-style: normal; font-size: 11px; color: var(--color-muted); line-height: 1.2; margin-top: 2px; max-width: 9em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.slot.on em { color: inherit; opacity: .8; }
+.bk-fees { margin: 0 0 8px; }
+.bk-fees dd small { display: block; font-size: 12px; color: var(--color-muted); font-family: var(--font-body); }
+.week-chip .week-venue { font: inherit; font-family: var(--font-body); font-size: 12px; border: 0; background: transparent; color: var(--color-muted); max-width: 8em; padding: 0; margin-left: 4px; }
+.week-chip.novenue .week-venue { color: var(--color-warning, #875A00); }
+.ed-venue { border-top: 1px solid var(--color-line); padding: 6px 0; }
+.ed-venue:first-of-type { border-top: 0; }
+.ed-fee { display: grid; gap: 8px; padding: 4px 0 8px 30px; font-size: 14px; }
+.ed-fee .input { width: 90px; display: inline-block; margin: 0 4px; }
+.ed-warn { color: var(--color-warning, #875A00); }

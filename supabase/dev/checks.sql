@@ -566,3 +566,26 @@ do $$ begin
   assert not exists (select 1 from public.lesson_notes where id = current_setting('test.shared')::uuid), 'the coach deleted a note';
   delete from public.lesson_bookings where id = current_setting('test.notebooking')::uuid;
 end $$;
+
+-- ── 場地費 (court fees, slot venues) ──
+reset role;
+do $$ begin
+  assert (select fee_low from public.courts where slug = 'xinyi') = 250, 'seeded courts carry a published fee range';
+  assert (select slot_venues ->> '六|09:00' from public.coach_cards where slug = 'mia') = '大安運動中心', 'coach_cards exposes slot_venues';
+  assert (select (venues -> 0 ->> 'fee')::int from public.coaches where slug = 'mia') = 100, 'venues carry the per-person fee';
+end $$;
+do $$ begin perform test.login('Mia 林'); end $$;
+set role authenticated;
+do $$ begin
+  update public.coaches set slot_venues = '{"六|09:00": "信義運動中心"}' where slug = 'mia';
+  assert (select slot_venues ->> '六|09:00' from public.coaches where slug = 'mia') = '信義運動中心', 'a coach edits their own slot venues';
+end $$;
+reset role;
+do $$ begin perform test.login('趙柏宇'); end $$;
+set role authenticated;
+do $$ begin
+  update public.coaches set slot_venues = '{}' where slug = 'mia';
+  assert (select slot_venues ->> '六|09:00' from public.coaches where slug = 'mia') = '信義運動中心', 'another coach cannot change them';
+end $$;
+reset role;
+do $$ begin update public.coaches set slot_venues = '{"六|09:00": "大安運動中心"}' where slug = 'mia'; end $$;

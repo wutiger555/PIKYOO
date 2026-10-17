@@ -6,6 +6,7 @@ import { AppBar } from "@/components/pk/Shell";
 import { useToast } from "@/components/pk/Toast";
 import { useDemo } from "@/lib/demo-store";
 import { money } from "@pikyoo/core/format";
+import { slotVenueKey } from "@pikyoo/core/venues";
 import type { Coach, Plan, Weekday } from "@pikyoo/core/types";
 import { CoachTabs, ConsoleFrame } from "./ConsoleScreens";
 import { CoachSaveBar } from "./CoachAccount";
@@ -31,6 +32,12 @@ export function CoachLessonsScreen() {
   const setPlan = (i: number, patch: Partial<Plan>) => setPlans(p.plans.map((x, j) => (j === i ? { ...x, ...patch } : x)));
   const setDay = (d: Weekday, times: string[]) => setMyCoach((x) => ({ ...x, profile: { ...x.profile, availability: { ...x.profile.availability, [d]: [...times].sort() } } }));
   const open = WEEK.reduce((n, d) => n + (p.availability[d]?.length ?? 0), 0);
+  const venueAt = (d: Weekday, t: string) => p.slotVenues?.[slotVenueKey(d, t)] ?? "";
+  // a new slot takes the venue of the last slot set, so a coach who always teaches in one place never has to pick
+  const lastVenue = Object.values(p.slotVenues ?? {}).pop() ?? p.venues[0]?.name ?? "";
+  const setSlotVenue = (d: Weekday, t: string, name: string) =>
+    setMyCoach((x) => { const sv = { ...(x.profile.slotVenues ?? {}) }; if (name) sv[slotVenueKey(d, t)] = name; else delete sv[slotVenueKey(d, t)]; return { ...x, profile: { ...x.profile, slotVenues: sv } }; });
+  const addTime = (d: Weekday, t: string) => { setDay(d, [...(p.availability[d] ?? []), t]); if (lastVenue) setSlotVenue(d, t, lastVenue); };
 
   return (
     <>
@@ -91,7 +98,7 @@ export function CoachLessonsScreen() {
 
           <section className="ed-card">
             <div className="sec-head"><h2><span className="en">Weekly</span>每週開放時段</h2><span className="text-muted" style={{ fontSize: 13 }}>{open} 個時段</span></div>
-            <p className="ed-hint">學生預約頁會直接用這些時段。臨時不能上課，可以在「今天」關掉單一場次（下一輪）。</p>
+            <p className="ed-hint">學生預約頁會直接用這些時段。每個時段選一個地點，學生就知道在哪上課、場地費多少；沒選的顯示「地點未定」。</p>
             <div className="week">
               {WEEK.map((d) => {
                 const times = p.availability[d] ?? [];
@@ -100,7 +107,14 @@ export function CoachLessonsScreen() {
                     <b className="week-d">週{d}</b>
                     <div className="week-t">
                       {times.map((t) => (
-                        <span key={t} className="week-chip num">{t}<button aria-label={`移除週${d} ${t}`} onClick={() => setDay(d, times.filter((x) => x !== t))}><Icon name="x" size={12} stroke={2.4} /></button></span>
+                        <span key={t} className={`week-chip num${venueAt(d, t) ? "" : " novenue"}`}>
+                          {t}
+                          <select className="week-venue" aria-label={`週${d} ${t} 的地點`} value={venueAt(d, t)} onChange={(e) => setSlotVenue(d, t, e.target.value)}>
+                            <option value="">地點未定</option>
+                            {p.venues.map((v) => <option key={v.name} value={v.name}>{v.name}</option>)}
+                          </select>
+                          <button aria-label={`移除週${d} ${t}`} onClick={() => { setDay(d, times.filter((x) => x !== t)); setSlotVenue(d, t, ""); }}><Icon name="x" size={12} stroke={2.4} /></button>
+                        </span>
                       ))}
                       {!times.length && <span className="text-muted" style={{ fontSize: 13 }}>不開放</span>}
                     </div>
@@ -110,7 +124,7 @@ export function CoachLessonsScreen() {
                         className="btn btn-secondary btn-icon"
                         aria-label={`新增週${d}時段`}
                         disabled={!newTime[d] || times.includes(newTime[d]!)}
-                        onClick={() => { setDay(d, [...times, newTime[d]!]); setNewTime((x) => ({ ...x, [d]: "" })); }}
+                        onClick={() => { addTime(d, newTime[d]!); setNewTime((x) => ({ ...x, [d]: "" })); }}
                       >
                         <Icon name="plus" size={18} />
                       </button>

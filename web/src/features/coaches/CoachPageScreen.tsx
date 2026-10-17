@@ -10,6 +10,7 @@ import { LoginSheet } from "@/components/pk/LoginSheet";
 import { useToast } from "@/components/pk/Toast";
 import { TopNav } from "@/components/pk/TopNav";
 import { bookingDays, isCertified, slotsFor } from "@pikyoo/core/data/coaches";
+import { venueForSlot } from "@pikyoo/core/venues";
 import { CANCEL_TEXT, specialties } from "@pikyoo/core/rules";
 import { useCoach, useDemo } from "@/lib/demo-store";
 import { money } from "@pikyoo/core/format";
@@ -203,8 +204,8 @@ export function CoachPublicPage({ coach: c, preview }: { coach: Coach; preview?:
                         <span className="avail-d"><b className="num">{d.date}</b><small>週{d.weekday}</small></span>
                         <div className="avail-s">
                           {slots.map(([t, left]) => (
-                            <span key={t} className={`avail-t${left ? "" : " full"}`}>
-                              <b className="num">{t}</b>{left ? `剩 ${left}` : "額滿"}
+                            <span key={t} className={`avail-t${left ? "" : " full"}`} title={venueForSlot(p, d, t)?.name ?? "地點未定"}>
+                              <b className="num">{t}</b>{left ? `剩 ${left}` : "額滿"}<em>{venueForSlot(p, d, t)?.name.replace(/運動中心$/, "") ?? "地點未定"}</em>
                             </span>
                           ))}
                         </div>
@@ -264,13 +265,13 @@ export function CoachPublicPage({ coach: c, preview }: { coach: Coach; preview?:
                   v.courtId && !preview ? (
                     <Link key={v.name} className="row-item" href={`/courts/${v.courtId}`}>
                       <span className="tl-i"><Icon name="pin" size={16} /></span>
-                      <div style={{ flex: 1 }}><div style={{ fontWeight: 700 }}>{v.name}</div><div className="text-muted" style={{ fontSize: 14 }}>{v.sub}</div></div>
+                      <div style={{ flex: 1 }}><div style={{ fontWeight: 700 }}>{v.name}</div><div className="text-muted" style={{ fontSize: 14 }}>{v.sub}・{v.fee ? `場地費每人 ${money(v.fee)}` : "不另收場地費"}</div></div>
                       <Icon name="right" size={18} />
                     </Link>
                   ) : (
                     <div key={v.name} className="row-item">
                       <span className="tl-i"><Icon name="pin" size={16} /></span>
-                      <div style={{ flex: 1 }}><div style={{ fontWeight: 700 }}>{v.name}</div><div className="text-muted" style={{ fontSize: 14 }}>{v.sub}</div></div>
+                      <div style={{ flex: 1 }}><div style={{ fontWeight: 700 }}>{v.name}</div><div className="text-muted" style={{ fontSize: 14 }}>{v.sub}・{v.fee ? `場地費每人 ${money(v.fee)}` : "不另收場地費"}</div></div>
                     </div>
                   ),
                 )}

@@ -10,6 +10,7 @@ import { AppBar, SoonButton } from "@/components/pk/Shell";
 import { useToast } from "@/components/pk/Toast";
 import { TopNav } from "@/components/pk/TopNav";
 import { bookingDays, DEMO_PAYOUT } from "@pikyoo/core/data/coaches";
+import { feeLines } from "@pikyoo/core/venues";
 import type { MyBooking } from "@pikyoo/core/source/bookings";
 import type { MyPayment } from "@pikyoo/core/source/payments";
 import { reportPaymentAction } from "@/lib/payments";
@@ -56,6 +57,7 @@ export function BookingStatusScreen({ demo, live, payment }: { demo?: BookingSta
 
   const { plan, total } = bookingTotal(b, p);
   const day = live?.day ?? bookingDays().find((d) => d.key === b.dayKey)!;
+  const fee = feeLines(c, day, b.slot, plan.unit === "/人" ? b.headcount : 1);
   // real sign-in: after the coach confirms, the payment row says how far the student got
   const st: BookingStatus = live && payment && b.status === "confirmed" ? (payment.status === "wait" ? "confirmed" : payment.status) : b.status;
   const ended = live && live.state !== "pending" && live.state !== "confirmed" ? live.state : null;
@@ -184,13 +186,19 @@ export function BookingStatusScreen({ demo, live, payment }: { demo?: BookingSta
           <div className="sum-body">
             <div className="row-item">
               <Photo coach={c} size="xs" />
-              <div style={{ flex: 1 }}><b>{c.name}</b><div className="text-muted" style={{ fontSize: 13 }}>{p.venues[0].name}</div></div>
+              <div style={{ flex: 1 }}><b>{c.name}</b><div className="text-muted" style={{ fontSize: 13 }}>{fee.venue?.name ?? "地點教練答應後告知"}</div></div>
               <SoonButton className="btn btn-secondary" style={{ minHeight: 38, padding: "0 14px" }} msg="預約訊息（下一輪）：確認後可以在 PIKYOO 裡跟教練聯絡"><Icon name="msg" size={16} />訊息</SoonButton>
             </div>
             <div className="row-item" style={{ fontSize: 14 }}>
               <span className="text-muted" style={{ flex: 1 }}>{plan.durationMin} 分鐘・{plan.unit === "/人" ? `${b.headcount} 人` : "1 人"}</span>
               <b className="num" style={{ fontSize: 18 }}>{money(total)}</b>
             </div>
+            {fee.fee > 0 && (
+              <div className="row-item" style={{ fontSize: 14 }}>
+                <span className="text-muted" style={{ flex: 1 }}>場地費・{fee.feeTo}</span>
+                <b className="num" style={{ fontSize: 18 }}>{money(fee.fee)}</b>
+              </div>
+            )}
           </div>
         </div>
         {st === "paid" && (

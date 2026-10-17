@@ -6,7 +6,7 @@ import type { Court } from "../types";
 export const COURTS: Court[] = [
   {
     id: "daan", name: "大安運動中心", district: "大安區", address: "台北市大安區辛亥路三段 55 號",
-    kind: "室內", courtCount: 4, surface: "PU 多功能球場", free: false, priceNote: "每面每小時約 NT$400（依時段）",
+    kind: "室內", courtCount: 4, surface: "PU 多功能球場", free: false, priceNote: "每面每小時約 NT$250–400（依時段）", fee: { low: 250, high: 400, checked: "2026/10", source: "以信義運動中心匹克球公告類推，待電話確認" },
     hours: "每天 06:00–22:00", amenities: ["冷氣", "淋浴", "停車", "租拍"], aircon: true, lights: true,
     booking: "公立預約系統", bookingNote: "運動中心官網線上預約，開放 14 天內的時段", rules: "需穿室內運動鞋；每次預約最多 2 小時。",
     verified: "2026/09", distance: "1.2 km", map: [44, 58], lat: 25.02073, lng: 121.54601,
@@ -14,7 +14,7 @@ export const COURTS: Court[] = [
   },
   {
     id: "xinyi", name: "信義運動中心", district: "信義區", address: "台北市信義區松勤街 100 號",
-    kind: "室內", courtCount: 3, surface: "PU 多功能球場", free: false, priceNote: "每面每小時約 NT$450（依時段）",
+    kind: "室內", courtCount: 3, surface: "PU 多功能球場", free: false, priceNote: "平日離峰 NT$250、尖峰 NT$400／小時／面", fee: { low: 250, high: 400, checked: "2026/10", source: "https://xysc.teamxports.com/xy-6f" },
     hours: "每天 06:00–22:00", amenities: ["冷氣", "淋浴", "停車"], aircon: true, lights: true,
     booking: "公立預約系統", bookingNote: "運動中心官網線上預約", rules: "需穿室內運動鞋。",
     verified: "2026/09", distance: "2.6 km", map: [70, 52], lat: 25.0317, lng: 121.56677,
@@ -30,7 +30,7 @@ export const COURTS: Court[] = [
   },
   {
     id: "zhongshan", name: "中山運動中心", district: "中山區", address: "台北市中山區中山北路二段 44 巷 2 號",
-    kind: "室內", courtCount: 4, surface: "PU 多功能球場", free: false, priceNote: "每面每小時約 NT$400（依時段）",
+    kind: "室內", courtCount: 4, surface: "PU 多功能球場", free: false, priceNote: "每面每小時約 NT$250–400（依時段）", fee: { low: 250, high: 400, checked: "2026/10", source: "以信義運動中心公告類推，待電話確認" },
     hours: "每天 06:00–22:00", amenities: ["冷氣", "淋浴", "租拍"], aircon: true, lights: true,
     booking: "公立預約系統", bookingNote: "運動中心官網線上預約", rules: "需穿室內運動鞋。",
     distance: "4.1 km", map: [30, 34], lat: 25.05486, lng: 121.52139,
@@ -38,7 +38,7 @@ export const COURTS: Court[] = [
   },
   {
     id: "neihu", name: "內湖運動中心", district: "內湖區", address: "台北市內湖區洲子街 12 號",
-    kind: "室內", courtCount: 3, surface: "PU 多功能球場", free: false, priceNote: "每面每小時約 NT$350（依時段）",
+    kind: "室內", courtCount: 3, surface: "PU 多功能球場", free: false, priceNote: "每面每小時約 NT$250–400（依時段）", fee: { low: 250, high: 400, checked: "2026/10", source: "以信義運動中心公告類推，待電話確認" },
     hours: "每天 06:00–22:00", amenities: ["冷氣", "停車"], aircon: true, lights: true,
     booking: "公立預約系統", bookingNote: "運動中心官網線上預約", rules: "需穿室內運動鞋。",
     distance: "7.9 km", map: [82, 18], lat: 25.07723, lng: 121.57536,
@@ -46,7 +46,7 @@ export const COURTS: Court[] = [
   },
   {
     id: "banqiao", name: "新北市板橋第一運動場風雨球場", district: "板橋區", address: "新北市板橋區漢生東路 278 號",
-    kind: "風雨", courtCount: 2, surface: "硬地", free: false, priceNote: "每小時約 NT$200",
+    kind: "風雨", courtCount: 2, surface: "硬地", free: false, priceNote: "每面每小時 NT$350，不分時段", fee: { low: 350, high: 350, checked: "2026/10", source: "中國時報 2026-06-13 議會質詢" },
     hours: "每天 06:00–22:00", amenities: ["夜間照明", "停車"], aircon: false, lights: true,
     booking: "電話預約", bookingNote: "打電話到場館管理室預約", rules: "颱風與豪雨停開。",
     distance: "9.5 km", map: [12, 76], lat: 25.01017, lng: 121.46838,

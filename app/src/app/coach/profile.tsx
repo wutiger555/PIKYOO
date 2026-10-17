@@ -1,7 +1,8 @@
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { Alert, Pressable, ScrollView, Text, View, TextInput } from "react-native";
 import type { Coach, CoachProfile, PayMethod, PlayProfile } from "@pikyoo/core/types";
+import { courtFeePerHead, courtFeeText } from "@pikyoo/core/venues";
 import { CANCEL_TEXT, SPECIALTIES, specialties } from "@pikyoo/core/rules";
 import { useCatalog } from "@/data/catalog";
 import { useSession } from "@/data/session";
@@ -141,16 +142,32 @@ export default function CoachProfileEditor() {
         <Text style={c.hint}>教練卡上優先顯示教學專長；沒選專長時顯示擅長的第一項。</Text>
       </View>
 
-      <SecHead en="Where" title="授課地點" />
+      <SecHead en="Where" title="授課地點與場地費" />
+      <Text style={c.hint}>場地費是學費以外、每位學生要付的錢；免費場地或已含在學費裡就填 0。學生會同時看到你填的數字和場館的公告價。</Text>
       <View style={[c.card, { gap: 0, paddingVertical: 4 }]}>
         {(catalog?.courts ?? []).map((ct, i) => {
-          const on = p.venues.some((v) => v.courtId === ct.id);
+          const v = p.venues.find((x) => x.courtId === ct.id);
+          const hint = courtFeePerHead(ct);
+          const patch = (u: Partial<typeof p.venues[number]>) => setP({ venues: p.venues.map((x) => (x.courtId === ct.id ? { ...x, ...u } : x)) });
           return (
-            <Pressable key={ct.id} onPress={() => setP({ venues: on ? p.venues.filter((v) => v.courtId !== ct.id) : [...p.venues, { name: ct.name, sub: `${ct.kind} ${ct.courtCount} 面・${ct.district}`, courtId: ct.id }] })}
-              style={[{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12 }, i > 0 && { borderTopWidth: 1, borderTopColor: color.n100 }]}>
-              <View style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, borderColor: on ? color.text : color.n300, backgroundColor: on ? color.accent : color.surface, alignItems: "center", justifyContent: "center" }}>{on && <Icon name="check" size={12} />}</View>
-              <View style={{ flex: 1 }}><Text style={{ fontWeight: "700", fontSize: 15 }}>{ct.name}</Text><Text style={{ fontSize: 13, color: color.muted }}>{ct.district}・{ct.kind} {ct.courtCount} 面</Text></View>
-            </Pressable>
+            <View key={ct.id} style={[{ paddingVertical: 10, gap: 8 }, i > 0 && { borderTopWidth: 1, borderTopColor: color.n100 }]}>
+              <Pressable onPress={() => setP({ venues: v ? p.venues.filter((x) => x.courtId !== ct.id) : [...p.venues, { name: ct.name, sub: `${ct.kind} ${ct.courtCount} 面・${ct.district}`, courtId: ct.id, fee: ct.free ? 0 : hint ?? 0 }] })}
+                style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                <View style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, borderColor: v ? color.text : color.n300, backgroundColor: v ? color.accent : color.surface, alignItems: "center", justifyContent: "center" }}>{v && <Icon name="check" size={12} />}</View>
+                <View style={{ flex: 1 }}><Text style={{ fontWeight: "700", fontSize: 15 }}>{ct.name}{ct.partner ? "・合作場館" : ""}</Text><Text style={{ fontSize: 13, color: color.muted }}>{ct.district}・{ct.kind} {ct.courtCount} 面・公告 {courtFeeText(ct)}</Text></View>
+              </Pressable>
+              {v && !ct.free && (
+                <View style={{ paddingLeft: 34, gap: 8 }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                    <Text style={{ fontSize: 14 }}>場地費每人</Text>
+                    <TextInput value={String(v.fee ?? 0)} onChangeText={(t) => patch({ fee: Math.max(0, Number(t.replace(/\D/g, "")) || 0) })} keyboardType="number-pad" style={{ width: 80, borderWidth: 1, borderColor: color.line, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, fontSize: 16, backgroundColor: color.surface }} />
+                    <Text style={{ fontSize: 14 }}>元</Text>
+                  </View>
+                  <Segmented value={v.feeTo ?? "coach"} options={["coach", "venue"] as const} format={(k) => (k === "coach" ? "跟學費一起付給你" : "上課時付給場館")} onChange={(feeTo) => patch({ feeTo })} />
+                  {hint != null && (v.fee ?? 0) > hint * 1.5 && <Text style={{ fontSize: 12, color: color.warning }}>高於場館公告換算（4 人約每人 {hint} 元），學生會看到對照。</Text>}
+                </View>
+              )}
+            </View>
           );
         })}
       </View>

@@ -27,7 +27,8 @@ export function coachColumns(c: Coach, supabaseUrl: string) {
     name: c.name, tagline: c.tagline, bio: p.bio, areas: c.areas, level_min: c.levelMin, level_max: c.levelMax, style: c.style,
     beginner_friendly: c.beginnerFriendly, coaching_since: c.years ? new Date().getFullYear() - c.years : null, reply_note: p.reply,
     play: json(p.play), audience: p.audience, languages: p.languages, availability: json(p.availability),
-    venues: json(p.venues.map((v) => ({ name: v.name, sub: v.sub, court_slug: v.courtId ?? null }))),
+    venues: json(p.venues.map((v) => ({ name: v.name, sub: v.sub, court_slug: v.courtId ?? null, fee: v.fee ?? 0, fee_to: v.feeTo ?? "coach" }))),
+    slot_venues: json(p.slotVenues ?? {}),
     steps: p.steps, pay_methods: p.pay.map((x) => PAY_DB[x]), policy: p.policy,
     photos: json(p.photos.flatMap((x) => {
       const path = photoPath(x.src, prefix);
