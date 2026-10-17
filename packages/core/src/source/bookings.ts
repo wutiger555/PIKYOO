@@ -4,6 +4,7 @@ import { LEVELS } from "../format";
 import type { Booking, BookingDay, BookingRequest, Coach, Level, PayMethod, Slot, Weekday } from "../types";
 import { PAY_DB } from "./coach-rows";
 import { sharedNotes } from "./notes";
+import { tpeParts as tpe } from "./time";
 import type { Database, Enums } from "./db.types";
 
 // 預約上課 (B5, simple first): 選方案與時段 → 送出 → 教練確認／婉拒 → 學生看到結果、可以取消.
@@ -22,13 +23,7 @@ export function demoCalendar(c: Coach): BookingCalendar {
   return { days: bookingDays(), slots };
 }
 
-const WD: Weekday[] = ["日", "一", "二", "三", "四", "五", "六"];
-/** Taipei calendar parts of an instant (UTC+8 all year). Day keys are YYYY-MM-DD. */
-export function tpeParts(t: string | number | Date) {
-  const d = new Date(new Date(t).getTime() + 8 * 3600e3);
-  const iso = d.toISOString();
-  return { key: iso.slice(0, 10), date: `${d.getUTCMonth() + 1}/${d.getUTCDate()}`, weekday: WD[d.getUTCDay()], hhmm: iso.slice(11, 16) };
-}
+export { tpeParts } from "./time";
 
 /** The coach's real week: the next `days` days from today (Taipei), sessions from open_sessions(). */
 export async function liveCalendar(sb: Sb, coachSlug: string, days = 7): Promise<BookingCalendar> {
@@ -36,12 +31,12 @@ export async function liveCalendar(sb: Sb, coachSlug: string, days = 7): Promise
   if (r.error) throw new Error(`Supabase: ${r.error.message}`);
   const now = Date.now();
   const list: BookingDay[] = Array.from({ length: days }, (_, n) => {
-    const p = tpeParts(now + n * 864e5);
+    const p = tpe(now + n * 864e5);
     return { key: p.key, weekday: p.weekday, date: p.date };
   });
   const slots: BookingCalendar["slots"] = {};
   for (const s of r.data) {
-    const p = tpeParts(s.starts_at);
+    const p = tpe(s.starts_at);
     (slots[slotKey(s.plan_key, p.key)] ??= []).push([p.hhmm, s.seats_left]);
   }
   return { days: list, slots };
@@ -105,7 +100,7 @@ export async function myBookings(sb: Sb, studentId: string): Promise<MyBooking[]
   const notes = await sharedNotes(sb, r.data.map((x) => x.id));
   const now = Date.now();
   return r.data.map((x) => {
-    const p = tpeParts(x.starts_at);
+    const p = tpe(x.starts_at);
     const past = Date.parse(x.starts_at) <= now;
     const state: MyBookingState =
       x.status === "pending" ? (Date.parse(x.expires_at) <= now || past ? "expired" : "pending")
@@ -138,7 +133,7 @@ export async function coachRequests(sb: Sb, coachId: string): Promise<BookingReq
     : { data: [], error: null };
   if (past.error) throw explain(past.error.message);
   return r.data.map((x): BookingRequest => {
-    const p = tpeParts(x.starts_at);
+    const p = tpe(x.starts_at);
     const name = x.profiles?.display_name || "學生";
     const times = past.data.filter((y) => y.student_id === x.student_id).length;
     const plan = x.coach_plans;

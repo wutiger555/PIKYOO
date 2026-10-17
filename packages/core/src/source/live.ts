@@ -84,6 +84,8 @@ function toCourt(photo: Photo, c: Tables<"courts">, i: number): Court {
       ? [Math.round(((c.lng - 121.42) / 0.24) * 100), Math.round(((25.13 - c.lat) / 0.16) * 100)]
       : [15 + ((i * 37) % 70), 20 + ((i * 23) % 60)],
     lat: c.lat ?? undefined, lng: c.lng ?? undefined,
+    fee: c.fee_low != null && c.fee_high != null && c.fee_checked_at ? { low: c.fee_low, high: c.fee_high, checked: c.fee_checked_at.slice(0, 7).replace("-", "/"), source: c.fee_source ?? undefined } : undefined,
+    partner: c.partner,
     photo: p && { src: photo("court-photos", p.path), alt: p.alt },
   };
 }
@@ -116,7 +118,8 @@ function toCoach(photo: Photo, c: CoachCard, creds: Tables<"credentials">[], pla
         tag: p.tag ?? undefined, group: p.group_min != null && p.group_max != null ? { min: p.group_min, max: p.group_max } : undefined,
       })),
       timeline: c.timeline as unknown as TimelineItem[],
-      venues: (c.venues as { name: string; sub: string; court_slug: string | null }[]).map((v) => ({ name: v.name, sub: v.sub, courtId: v.court_slug ?? undefined })),
+      venues: (c.venues as { name: string; sub: string; court_slug: string | null; fee?: number; fee_to?: "coach" | "venue" }[]).map((v) => ({ name: v.name, sub: v.sub, courtId: v.court_slug ?? undefined, fee: v.fee, feeTo: v.fee_to })),
+      slotVenues: (c.slot_venues as Record<string, string>) ?? {},
       steps: c.steps, pay: c.pay_methods.map((m) => PAY[m]), policy: c.policy,
       quotes: c.quotes as Coach["profile"]["quotes"],
     },

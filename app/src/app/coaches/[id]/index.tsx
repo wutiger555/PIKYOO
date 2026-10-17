@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import { Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { bookingDays, isCertified, slotsFor } from "@pikyoo/core/data/coaches";
+import { venueForSlot } from "@pikyoo/core/venues";
 import { CANCEL_TEXT, specialties } from "@pikyoo/core/rules";
 import { money } from "@pikyoo/core/format";
 import type { Coach, TimelineItem } from "@pikyoo/core/types";
@@ -169,8 +170,10 @@ function CoachPublicPage({ c }: { c: Coach }) {
                   <View style={{ flex: 1, flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
                     {slots.map(([t, left]) => (
                       <Pressable key={t} disabled={!left} onPress={() => book(p.plans[0].id, false, d.key, t)} style={[s.slot, !left && { backgroundColor: color.n100, borderColor: color.n100 }]}>
-                        <Num style={{ fontSize: 16, color: left ? color.text : color.n500 }}>{t}</Num>
-                        <Text style={{ fontSize: 12, color: color.muted }}>{left ? `剩 ${left}` : "額滿"}</Text>
+                        <View>
+                          <View style={{ flexDirection: "row", alignItems: "baseline", gap: 6 }}><Num style={{ fontSize: 16, color: left ? color.text : color.n500 }}>{t}</Num><Text style={{ fontSize: 12, color: color.muted }}>{left ? `剩 ${left}` : "額滿"}</Text></View>
+                          <Text style={{ fontSize: 11, color: color.muted }}>{venueForSlot(p, d, t)?.name.replace(/運動中心$/, "運中") ?? "地點未定"}</Text>
+                        </View>
                       </Pressable>
                     ))}
                   </View>
@@ -226,7 +229,7 @@ function CoachPublicPage({ c }: { c: Coach }) {
               {p.venues.map((v) => (
                 <Pressable key={v.name} disabled={!v.courtId} onPress={() => router.push(`/courts/${v.courtId}`)} style={{ flexDirection: "row", gap: 10, alignItems: "center", paddingVertical: 6 }}>
                   <View style={s.tlIcon}><Icon name="pin" size={15} /></View>
-                  <View style={{ flex: 1 }}><Text style={{ fontSize: 16, fontWeight: "700" }}>{v.name}</Text><Text style={{ fontSize: 14, color: color.muted }}>{v.sub}</Text></View>
+                  <View style={{ flex: 1 }}><Text style={{ fontSize: 16, fontWeight: "700" }}>{v.name}</Text><Text style={{ fontSize: 14, color: color.muted }}>{v.sub}・{v.fee ? `場地費每人 ${money(v.fee)}` : "不另收場地費"}</Text></View>
                   {v.courtId && <Icon name="right" size={14} tint={color.muted} />}
                 </Pressable>
               ))}
@@ -321,7 +324,7 @@ const s = StyleSheet.create({
   check: { width: 20, height: 20, borderRadius: 10, backgroundColor: color.accent, alignItems: "center", justifyContent: "center" },
   pb: { flexDirection: "row", flexWrap: "wrap", backgroundColor: color.surface, borderWidth: 1, borderColor: color.line, borderRadius: radius.md, overflow: "hidden" },
   pbV: { fontSize: 16, fontWeight: "700" },
-  slot: { borderWidth: 1.5, borderColor: color.n300, backgroundColor: color.surface, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6, flexDirection: "row", alignItems: "baseline", gap: 6 },
+  slot: { borderWidth: 1.5, borderColor: color.n300, backgroundColor: color.surface, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6 },
   tlIcon: { width: 28, height: 28, borderRadius: 14, backgroundColor: color.n100, alignItems: "center", justifyContent: "center" },
   quote: { backgroundColor: color.surface, borderRadius: radius.md, borderWidth: 1, borderColor: color.line, padding: 14, gap: 6 },
   lock: { alignItems: "center", gap: 10, backgroundColor: color.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: color.line, padding: 20, marginTop: 16 },

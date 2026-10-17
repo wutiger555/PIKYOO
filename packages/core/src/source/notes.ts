@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { tpeParts } from "./bookings";
+import { tpeParts } from "./time";
 import type { Database } from "./db.types";
 
 // 課後筆記 (2026-10-14 interview). The coach writes after a lesson; a shared note is the student's too.

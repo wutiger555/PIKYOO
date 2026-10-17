@@ -90,6 +90,11 @@ export interface Court {
   rules: string;
   /** PIKYOO 已確認 (YYYY/MM) */
   verified?: string;
+  /** 公告參考價 per hour per court (2026-10-17 court-fee research): a range, when PIKYOO last checked it, and where.
+   *  Shown beside what a coach charges so students can compare; never applied automatically. */
+  fee?: { low: number; high: number; checked: string; source?: string };
+  /** 合作場館 (reserved for venue partnerships): a badge now, discounted slots later */
+  partner?: boolean;
   distance: string;
   /** pin position on the placeholder map, % from left/top */
   map: [number, number];
@@ -148,6 +153,8 @@ export interface PlayProfile {
   strengths: string[];
 }
 
+export interface CoachVenue { name: string; sub: string; courtId?: string; fee?: number; feeTo?: "coach" | "venue" }
+
 export interface CoachProfile {
   slug: string;
   reply: string;
@@ -162,7 +169,11 @@ export interface CoachProfile {
   availability: Partial<Record<Weekday, string[]>>;
   plans: Plan[];
   timeline: TimelineItem[];
-  venues: { name: string; sub: string; courtId?: string }[];
+  /** 授課地點. `fee`: 場地費 per person the student pays on top of the lesson (0 or missing = free / included);
+   *  `feeTo`: who collects it (default coach: they booked the court). */
+  venues: CoachVenue[];
+  /** which venue each weekly slot is at, keyed `${weekday}|${hh:mm}` → venue name; a slot without one is 地點未定 */
+  slotVenues?: Record<string, string>;
   steps: string[];
   pay: PayMethod[];
   policy: string;
