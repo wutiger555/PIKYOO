@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { BookingRequest, Coach, PaymentRow } from "../types";
-import { coachRequests } from "./bookings";
+import { coachRequests, coachUpcoming, type UpcomingLesson } from "./bookings";
 import { pastLessons, type PastLesson } from "./notes";
 import { coachPayments, readPayout, type PayoutDetails } from "./payments";
 import { coachColumns, planRow } from "./coach-rows";
@@ -16,13 +16,15 @@ export interface MyCredential { id: string; type: Enums<"credential_type">; issu
 /** id: the coaches row (uuid); coach.id is the slug, as everywhere on screen */
 export interface MyCoach { id: string; status: CoachStatus; coach: Coach; credentials: MyCredential[]; /** 今天: requests waiting for a decision */ requests: BookingRequest[];
   /** 收款 */ payments: PaymentRow[]; payout: PayoutDetails; /** 自動提醒未付款 */ remindUnpaid: boolean;
-  /** 上過的課, for 課後筆記 */ past: PastLesson[] }
+  /** 上過的課, for 課後筆記 */ past: PastLesson[];
+  /** 接下來的課 (confirmed, next two weeks) */ upcoming: UpcomingLesson[]; /** 這天不開放 (YYYY-MM-DD, today on) */ closedDays: string[] }
 
 const MESSAGES: [RegExp, string][] = [
   [/coaches_slug_key|duplicate key.*slug/, "這個網址已經有人用了，換一個試試"],
   [/coaches_profile_id_key/, "你已經申請過教練了"],
   [/slug_check|coaches_slug_check/, "網址只能用小寫英文、數字和 -，2–30 個字"],
   [/status is set by PIKYOO/, "教練頁的狀態由 PIKYOO 審核後設定"],
+  [/payout details missing/, "先填收款資訊（收款 → 收款資訊），學生被答應後才付得了錢"],
   [/permission denied|row-level security/, "請先登入"],
 ];
 const explain = (message: string) => new Error(MESSAGES.find(([re]) => re.test(message))?.[1] ?? `沒有成功，請稍後再試（${message}）`);
@@ -37,20 +39,24 @@ async function readCoach(sb: SupabaseClient<Database>, url: string, column: "pro
   if (card.error) throw explain(card.error.message);
   if (!card.data) return null;
   const id = card.data.id!;
-  const [creds, plans, requests, payments, { payout, remindUnpaid }, past] = await Promise.all([
+  const today = new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 10);
+  const [creds, plans, requests, payments, { payout, remindUnpaid }, past, upcoming, closed] = await Promise.all([
     sb.from("credentials").select("*").eq("coach_id", id).order("created_at"),
     sb.from("coach_plans").select("*").eq("coach_id", id).is("archived_at", null).order("sort"),
     coachRequests(sb, id),
     coachPayments(sb, id),
     readPayout(sb, id),
     pastLessons(sb, id),
+    coachUpcoming(sb, id),
+    sb.from("coach_closed_days").select("day").eq("coach_id", id).gte("day", today).order("day"),
   ]);
+  if (closed.error) throw explain(closed.error.message);
   if (creds.error) throw explain(creds.error.message);
   if (plans.error) throw explain(plans.error.message);
   return {
     id, status: card.data.status!, coach: coachFromRows(url, card.data as CoachCard, creds.data, plans.data),
     credentials: creds.data.map((x) => ({ id: x.id, type: x.type, issuer: x.issuer, level: x.level, status: x.status })),
-    requests, payments, payout, remindUnpaid, past,
+    requests, payments, payout, remindUnpaid, past, upcoming, closedDays: closed.data.map((d) => d.day),
   };
 }
 
@@ -99,5 +105,13 @@ export async function removeCredential(sb: SupabaseClient<Database>, credentialI
 /** 送出審核: draft → pending. PIKYOO checks the page and credentials, then approves. */
 export async function submitMyCoach(sb: SupabaseClient<Database>, id: string): Promise<void> {
   const r = await sb.from("coaches").update({ status: "pending" }).eq("id", id).eq("status", "draft");
+  if (r.error) throw explain(r.error.message);
+}
+
+/** 這天不開放: that date's weekly sessions disappear from booking (lessons already confirmed stay; cancel them one by one). */
+export async function setClosedDay(sb: SupabaseClient<Database>, coachId: string, day: string, closed: boolean): Promise<void> {
+  const r = closed
+    ? await sb.from("coach_closed_days").upsert({ coach_id: coachId, day }, { ignoreDuplicates: true })
+    : await sb.from("coach_closed_days").delete().eq("coach_id", coachId).eq("day", day);
   if (r.error) throw explain(r.error.message);
 }

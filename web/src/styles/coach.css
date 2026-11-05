@@ -312,3 +312,12 @@
 .ccard-trust b { color: var(--color-text); }
 .ccard-meta { font-size: 13px; color: var(--color-muted); }
 .ccard-photo { aspect-ratio: 2.2 / 1; }
+/* 評價 (ReviewBox), 新加入, 這幾天不開放 (MVP gaps) */
+.review-box { display: flex; flex-direction: column; gap: 10px; text-align: left; margin: 12px 0; padding: 14px; border: 1px solid var(--color-line); border-radius: var(--radius-md); background: var(--color-surface); }
+.review-stars { display: flex; gap: 6px; }
+.review-stars button { font-size: 32px; line-height: 1; padding: 2px; background: none; border: 0; color: var(--color-neutral-300); cursor: pointer; }
+.review-stars button.on { color: var(--color-accent-700); }
+.review-ask { font-size: 13px; font-weight: 700; color: var(--color-accent-800); }
+.new-coach { font-weight: 700; color: var(--color-accent-800); }
+.closed-days { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--color-line); }
+.closed-days .week-add { display: flex; gap: 8px; }

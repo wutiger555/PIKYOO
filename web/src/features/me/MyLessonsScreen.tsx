@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Status } from "@/components/pk/Badges";
 import { Icon } from "@/components/pk/Icon";
 import { Crumbs } from "@/components/pk/Crumbs";
-import { SoonButton, TabBar } from "@/components/pk/Shell";
+import { Sheet, TabBar } from "@/components/pk/Shell";
 import { TopNav } from "@/components/pk/TopNav";
 import { bookingDays } from "@pikyoo/core/data/coaches";
 import { demoDate } from "@pikyoo/core/data/today";
@@ -16,6 +16,7 @@ import type { MyBooking } from "@pikyoo/core/source/bookings";
 import type { Group } from "@pikyoo/core/types";
 import { BOOKING_LABEL } from "@pikyoo/core/labels";
 import { Photo } from "../coaches/CoachCard";
+import { ReviewBox } from "../coaches/ReviewBox";
 
 type Tab = "next" | "group" | "done";
 
@@ -46,6 +47,7 @@ function LiveRow({ x }: { x: MyBooking }) {
         <b>{x.planName}</b>
         <span className="text-muted">{x.coachName}・{money(x.amount)}</span>
         <Status tone={tone}>{label}</Status>
+        {x.state === "done" && !x.review && <span className="review-ask">★ 給評價</span>}
         {x.notes?.length ? <p className="lesson-note"><b>{x.coachName.split(" ")[0]} 的課後筆記</b>{x.notes[x.notes.length - 1].body}</p> : null}
       </div>
       <Icon name="right" size={18} />
@@ -62,6 +64,7 @@ export function MyLessonsScreen({ live }: { live?: MyBooking[] }) {
   const gathering = groups.filter((g) => g.status === "gathering" || g.status === "requested");
   const confirmedGroups = groups.filter((g) => g.status === "confirmed");
   const [tab, setTab] = useState<Tab>(gathering.length && !booking.slot ? "group" : "next");
+  const [rating, setRating] = useState<string | null>(null);
   const day = (key: string) => bookingDays().find((d) => d.key === key)!;
 
   const groupRow = (g: Group) => {
@@ -129,7 +132,7 @@ export function MyLessonsScreen({ live }: { live?: MyBooking[] }) {
                 <Status tone="ended">已完成</Status>
                 {h.note && <p className="lesson-note"><b>{c.name.split(" ")[0]} 的課後筆記</b>{h.note}</p>}
               </div>
-              <SoonButton className="btn btn-secondary" style={{ minHeight: 38, padding: "0 12px", fontSize: 14 }} msg="評價（P2）">給評價</SoonButton>
+              <button className="btn btn-secondary" style={{ minHeight: 38, padding: "0 12px", fontSize: 14 }} onClick={() => setRating(c.name.split(" ")[0])}>給評價</button>
             </div>
           );
         })}
@@ -159,6 +162,7 @@ export function MyLessonsScreen({ live }: { live?: MyBooking[] }) {
         {body}
       </div>
       <TabBar active="lessons" />
+      {rating && <Sheet onClose={() => setRating(null)}><ReviewBox coachName={rating} onDone={() => setRating(null)} /></Sheet>}
     </>
   );
 }

@@ -95,7 +95,7 @@ function CoachPublicPage({ c }: { c: Coach }) {
           <Text style={s.heroName}>{c.name}</Text>
           {isCertified(c) && <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}><Icon name="check" size={13} tint={color.accent} /><Text style={{ color: color.accent, fontSize: 14, fontWeight: "700" }}>已認證教練</Text></View>}
           <View style={s.stats}>
-            <Stat n={c.rating != null ? `★ ${c.rating}` : "—"} label={c.reviews ? `${c.reviews} 則評價` : "還沒有評價"} />
+            <Stat n={c.rating != null ? `★ ${c.rating}` : "新"} label={c.reviews ? `${c.reviews} 則評價` : "新加入的教練"} />
             <Stat n={String(c.students)} label="位學生上過課" />
             <Stat n={String(c.years)} label="年教學" last />
           </View>
@@ -108,12 +108,12 @@ function CoachPublicPage({ c }: { c: Coach }) {
         <View onLayout={(e) => { bodyY.current = e.nativeEvent.layout.y; }} style={{ paddingHorizontal: 16 }}>
           {shows("reviews") && (
             <Block {...at("reviews")} title="學生怎麼說" right={c.rating != null ? <Rating rating={c.rating} reviews={c.reviews} big /> : undefined}>
-              {p.quotes.length ? p.quotes.map((q) => (
-                <View key={q.name} style={s.quote}>
+              {p.quotes.length ? p.quotes.map((q, i) => (
+                <View key={i} style={s.quote}>
                   <Text style={[s.body, { fontSize: 16 }]}>「{q.text}」</Text>
-                  <Text style={{ fontSize: 13, color: color.muted }}>{q.name}・{q.level}</Text>
+                  <Text style={{ fontSize: 13, color: color.muted }}>{[q.name, q.level].filter(Boolean).join("・")}</Text>
                 </View>
-              )) : <Text style={{ color: color.muted }}>還沒有評價，上完課的學生可以留下第一則。</Text>}
+              )) : <Text style={{ color: color.muted }}>{c.name.split(" ")[0]} 是新加入的教練，還沒有評價。上完課的學生可以留下第一則。</Text>}
             </Block>
           )}
 

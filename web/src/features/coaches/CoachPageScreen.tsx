@@ -97,7 +97,7 @@ export function CoachPublicPage({ coach: c, preview }: { coach: Coach; preview?:
               <div className="chero-name"><h1>{c.name}</h1></div>
               {isCertified(c) && <div className="chero-cert"><Icon name="check" size={14} stroke={2.6} />已認證教練</div>}
               <div className="stats">
-                <div><b className="num">{c.rating != null ? `★ ${c.rating}` : "—"}</b><span>{c.reviews ? `${c.reviews} 則評價` : "還沒有評價"}</span></div>
+                <div><b className="num">{c.rating != null ? `★ ${c.rating}` : "新"}</b><span>{c.reviews ? `${c.reviews} 則評價` : "新加入的教練"}</span></div>
                 <div><b className="num">{c.students}</b><span>位學生上過課</span></div>
                 <div><b className="num">{c.years}</b><span>年教學</span></div>
               </div>
@@ -115,15 +115,15 @@ export function CoachPublicPage({ coach: c, preview }: { coach: Coach; preview?:
                 <div className="blk-h"><h2>學生怎麼說</h2>{c.rating != null && <Rating rating={c.rating} reviews={c.reviews} big />}</div>
                 {p.quotes.length ? (
                   <div className="quotes">
-                    {p.quotes.map((q) => (
-                      <figure key={q.name} className="quote">
+                    {p.quotes.map((q, i) => (
+                      <figure key={i} className="quote">
                         <blockquote>「{q.text}」</blockquote>
-                        <figcaption>{q.name}・{q.level}</figcaption>
+                        <figcaption>{[q.name, q.level].filter(Boolean).join("・")}</figcaption>
                       </figure>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-muted">還沒有評價，上完課的學生可以留下第一則。</p>
+                  <p className="text-muted">{c.name.split(" ")[0]} 是新加入的教練，還沒有評價。上完課的學生可以留下第一則。</p>
                 )}
               </section>
             )}

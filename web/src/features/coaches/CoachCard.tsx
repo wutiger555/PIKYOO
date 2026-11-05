@@ -87,7 +87,7 @@ export function CoachCard({ coach: c }: { coach: Coach }) {
         <div className="ccard-top">
           <div className="ccard-main">
             <div className="ccard-name">{c.name}{isCertified(c) && <span className="ccard-ok" title="已認證教練"><Icon name="check" size={14} stroke={2.6} /></span>}</div>
-            <div className="ccard-trust">{c.rating != null ? <><b>★ {c.rating}</b>（{c.reviews}）</> : "還沒有評價"}・{c.students} 位學生</div>
+            <div className="ccard-trust">{c.rating != null ? <><b>★ {c.rating}</b>（{c.reviews}）</> : <span className="new-coach">新加入</span>}・{c.students} 位學生</div>
             {spec.length > 0 && <span className="ccard-spec">{spec.map((x) => <span key={x}>{x}</span>)}</span>}
             <div className="ccard-meta">{c.areas.join("・")}・{levelText(c.levelMin, c.levelMax)}</div>
           </div>

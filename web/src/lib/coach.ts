@@ -1,6 +1,6 @@
 "use server";
 
-import { addCredential, applyCoach, removeCredential, saveMyCoach, submitMyCoach } from "@pikyoo/core/source/me-coach";
+import { addCredential, applyCoach, removeCredential, saveMyCoach, setClosedDay, submitMyCoach } from "@pikyoo/core/source/me-coach";
 import type { Coach } from "@pikyoo/core/types";
 import { SUPABASE_URL } from "./env";
 import { supabaseServer } from "./supabase";
@@ -38,3 +38,7 @@ export const addCredentialAction = async (coachRowId: string, issuer: string, le
 
 export const removeCredentialAction = async (credentialId: string) =>
   run(async () => { const { sb } = await viewer(); await removeCredential(sb, String(credentialId)); });
+
+/** 這天不開放 (or open it again); `day` is YYYY-MM-DD. */
+export const setClosedDayAction = async (coachRowId: string, day: string, closed: boolean) =>
+  run(async () => setClosedDay(await supabaseServer(), String(coachRowId), String(day), !!closed));

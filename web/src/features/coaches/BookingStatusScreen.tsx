@@ -21,6 +21,7 @@ import { money } from "@pikyoo/core/format";
 import { BOOKING_LABEL, BOOKING_STEPS, bookingStep } from "@pikyoo/core/labels";
 import { Photo } from "./CoachCard";
 import { bookingTotal } from "./BookScreen";
+import { ReviewBox } from "./ReviewBox";
 import { TransferPay } from "./TransferPay";
 
 /** docs/PRD.md §6.3 — 教練回覆 → 付款 → 完成, the same three words as the app (@pikyoo/core/labels). Payment happens only after the coach confirms.
@@ -83,7 +84,8 @@ export function BookingStatusScreen({ demo, live, payment }: { demo?: BookingSta
         <h1>{title}</h1>
         <p className="text-muted">{live?.notes?.length ? "" : text}</p>
         {live?.notes?.map((n, i) => <p key={i} className="lesson-note" style={{ textAlign: "left", whiteSpace: "pre-line" }}><b>{c.name.split(" ")[0]} 的課後筆記・{n.at}</b>{n.body}</p>)}
-        {ended !== "done" && <Link className="btn btn-primary" href={`/coaches/${c.id}/book?plan=${b.planId}`}>重新選時段</Link>}
+        {ended === "done" && <ReviewBox bookingId={live?.id} coachName={c.name.split(" ")[0]} initial={live?.review} />}
+        <Link className={`btn ${ended === "done" ? "btn-secondary" : "btn-primary"}`} href={`/coaches/${c.id}/book?plan=${b.planId}`}>{ended === "done" ? "再約同一堂" : "重新選時段"}</Link>
       </div>
     );
   } else if (realAuth && st === "confirmed") {

@@ -1,10 +1,13 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Icon } from "@/components/pk/Icon";
 import { AppBar } from "@/components/pk/Shell";
 import { useToast } from "@/components/pk/Toast";
-import { useDemo } from "@/lib/demo-store";
+import { setClosedDayAction } from "@/lib/coach";
+import { useCatalog, useDemo } from "@/lib/demo-store";
+import { realAuth } from "@/lib/env";
 import { money } from "@pikyoo/core/format";
 import type { Coach, Plan, Weekday } from "@pikyoo/core/types";
 import { CoachTabs, ConsoleFrame } from "./ConsoleScreens";
@@ -91,7 +94,7 @@ export function CoachLessonsScreen() {
 
           <section className="ed-card">
             <div className="sec-head"><h2><span className="en">Weekly</span>每週開放時段</h2><span className="text-muted" style={{ fontSize: 13 }}>{open} 個時段</span></div>
-            <p className="ed-hint">學生預約頁會直接用這些時段。臨時不能上課，可以在「今天」關掉單一場次（下一輪）。</p>
+            <p className="ed-hint">學生預約頁會直接用這些時段。某一天不能上課，用下面的「這幾天不開放」。</p>
             <div className="week">
               {WEEK.map((d) => {
                 const times = p.availability[d] ?? [];
@@ -119,6 +122,7 @@ export function CoachLessonsScreen() {
                 );
               })}
             </div>
+            <ClosedDays />
           </section>
         </div>
       </div>
@@ -140,3 +144,40 @@ function Range({ label, value, min, max, onChange }: { label: string; value: num
     </div>
   );
 }
+
+/** 這幾天不開放 (docs/FLOWS.md §2.4): pick a date and its weekly sessions disappear from booking. Saved right away
+ *  (setClosedDay), unlike the rest of this page; lessons already confirmed that day stay, cancel them in 今天. */
+function ClosedDays() {
+  const toast = useToast();
+  const router = useRouter();
+  const { myCoach: mine } = useCatalog();
+  const [today] = useState(() => new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 10));
+  const [demo, setDemo] = useState<string[]>([]);
+  const [day, setDay] = useState("");
+  const days = realAuth ? mine?.closedDays ?? [] : demo;
+  const set = async (d: string, closed: boolean) => {
+    if (realAuth && mine) {
+      const r = await setClosedDayAction(mine.id, d, closed);
+      if (r.error) return toast(r.error);
+      router.refresh();
+    } else setDemo((xs) => (closed ? [...xs, d].sort() : xs.filter((x) => x !== d)));
+    toast(closed ? `${md(d)} 不開放了，學生約不到這天` : `${md(d)} 重新開放`);
+    setDay("");
+  };
+  return (
+    <div className="closed-days">
+      <b>這幾天不開放</b>
+      <div className="week-t">
+        {days.map((d) => <span key={d} className="week-chip num">{md(d)}<button aria-label={`重新開放 ${md(d)}`} onClick={() => set(d, false)}><Icon name="x" size={12} stroke={2.4} /></button></span>)}
+        {!days.length && <span className="text-muted" style={{ fontSize: 13 }}>沒有</span>}
+      </div>
+      <div className="week-add">
+        <input className="input num" type="date" min={today} aria-label="選不開放的日期" value={day} onChange={(e) => setDay(e.target.value)} />
+        <button className="btn btn-secondary" disabled={!day || days.includes(day)} onClick={() => set(day, true)}>不開放</button>
+      </div>
+    </div>
+  );
+}
+
+/** 2026-11-20 → 11/20（五） */
+const md = (d: string) => `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}（${"日一二三四五六"[new Date(`${d}T12:00:00+08:00`).getUTCDay()]}）`;

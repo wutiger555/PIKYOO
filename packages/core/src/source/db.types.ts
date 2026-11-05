@@ -561,6 +561,33 @@ export type Database = {
           },
         ]
       }
+      coach_closed_days: {
+        Row: { coach_id: string; created_at: string; day: string }
+        Insert: { coach_id: string; created_at?: string; day: string }
+        Update: { coach_id?: string; created_at?: string; day?: string }
+        Relationships: []
+      }
+      lesson_reviews: {
+        Row: { body: string; booking_id: string; coach_id: string; created_at: string; id: string; stars: number; student_id: string }
+        Insert: { body?: string; booking_id: string; coach_id: string; created_at?: string; id?: string; stars: number; student_id: string }
+        Update: { body?: string; booking_id?: string; coach_id?: string; created_at?: string; id?: string; stars?: number; student_id?: string }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_reviews_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "lesson_bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_reviews_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lesson_notes: {
         Row: {
           body: string
@@ -1060,6 +1087,10 @@ export type Database = {
       }
     }
     Views: {
+      coach_ratings: {
+        Row: { coach_id: string | null; rating: number | null; reviews: number | null }
+        Relationships: []
+      }
       coach_cards: {
         Row: {
           approved_at: string | null
@@ -1362,6 +1393,8 @@ export type Database = {
       payment_instructions: { Args: { p_payment: string }; Returns: Json }
       promote_waitlist: { Args: { p_game: string }; Returns: number }
       reject_payment_report: { Args: { p_payment: string }; Returns: undefined }
+      coach_cancel_booking: { Args: { p_booking: string; p_reason: string }; Returns: undefined }
+      review_lesson: { Args: { p_body: string; p_booking: string; p_stars: number }; Returns: undefined }
       write_lesson_note: {
         Args: { p_body: string; p_booking: string; p_note?: string; p_shared: boolean }
         Returns: string

@@ -59,6 +59,12 @@ const MESSAGES: [RegExp, string][] = [
   [/already closed/, "這筆預約已經結束了"],
   [/not your booking/, "找不到這筆預約"],
   [/plan not found/, "這個課程方案已經下架了"],
+  [/off that day/, "教練這天不開放，換一天試試"],
+  [/not your lesson/, "找不到這堂課"],
+  [/lesson already started/, "這堂課已經開始了，不能取消"],
+  [/lesson not taken yet/, "上完課才能評價"],
+  [/stars must be/, "請選 1 到 5 顆星"],
+  [/contact/, "評價和取消原因不能留電話、LINE、IG 等聯絡方式"],
 ];
 const explain = (message: string) => new Error(MESSAGES.find(([re]) => re.test(message))?.[1] ?? `沒有成功，請稍後再試（${message}）`);
 
@@ -95,11 +101,13 @@ export interface MyBooking {
   paid?: "wait" | "reported" | "paid";
   /** 課後筆記 the coach shared (lesson_notes) */
   notes?: { body: string; at: string }[];
+  /** the student's own 評價 of this lesson, once given */
+  review?: { stars: number; body: string };
 }
 
 export async function myBookings(sb: Sb, studentId: string): Promise<MyBooking[]> {
   const r = await sb.from("lesson_bookings")
-    .select("id, status, starts_at, expires_at, headcount, note, pay_method, amount, coach_plans(key, name), coaches(slug, name), payments(status, payer_id)")
+    .select("id, status, starts_at, expires_at, headcount, note, pay_method, amount, coach_plans(key, name), coaches(slug, name), payments(status, payer_id), lesson_reviews(stars, body)")
     .eq("student_id", studentId).is("group_id", null).order("starts_at", { ascending: false }).limit(50);
   if (r.error) throw explain(r.error.message);
   const notes = await sharedNotes(sb, r.data.map((x) => x.id));
@@ -115,6 +123,7 @@ export async function myBookings(sb: Sb, studentId: string): Promise<MyBooking[]
     const pay = x.payments.find((y) => y.payer_id === studentId)?.status;
     return {
       id: x.id, state, coachName: x.coaches?.name ?? "", planName: x.coach_plans?.name ?? "", amount: x.amount, notes: notes[x.id],
+      review: x.lesson_reviews ? { stars: x.lesson_reviews.stars, body: x.lesson_reviews.body } : undefined,
       paid: pay === "waiting" ? "wait" : pay === "reported" ? "reported" : pay === "paid" || pay === "refunded" ? "paid" : undefined,
       day: { key: p.key, weekday: p.weekday, date: p.date },
       booking: {
@@ -124,6 +133,38 @@ export async function myBookings(sb: Sb, studentId: string): Promise<MyBooking[]
     };
   });
 }
+
+/** 評價: 1–5 stars and a line of text, after the lesson; giving it again replaces it. */
+export const reviewLesson = async (sb: Sb, bookingId: string, stars: number, body: string) => {
+  const r = await sb.rpc("review_lesson", { p_booking: bookingId, p_stars: stars, p_body: body });
+  if (r.error) throw explain(r.error.message);
+};
+
+/** 接下來的課: the coach's confirmed lessons from now on, soonest first. */
+export interface UpcomingLesson { id: string; date: string; weekday: string; time: string; plan: string; student: string; headcount: number; paid?: "wait" | "reported" | "paid" }
+
+export async function coachUpcoming(sb: Sb, coachId: string, days = 14): Promise<UpcomingLesson[]> {
+  const now = Date.now();
+  const r = await sb.from("lesson_bookings")
+    .select("id, starts_at, headcount, coach_plans(name), profiles!lesson_bookings_student_id_fkey(display_name), payments(status)")
+    .eq("coach_id", coachId).eq("status", "confirmed").gt("starts_at", new Date(now).toISOString())
+    .lt("starts_at", new Date(now + days * 864e5).toISOString()).order("starts_at").limit(50);
+  if (r.error) throw explain(r.error.message);
+  return r.data.map((x) => {
+    const p = tpeParts(x.starts_at);
+    const pay = x.payments[0]?.status;
+    return {
+      id: x.id, date: p.date, weekday: p.weekday, time: p.hhmm, plan: x.coach_plans?.name ?? "課程", student: x.profiles?.display_name || "學生", headcount: x.headcount,
+      paid: pay === "waiting" ? "wait" : pay === "reported" ? "reported" : pay === "paid" ? "paid" : undefined,
+    };
+  });
+}
+
+/** 取消這堂: the coach cancels before it starts; the student gets the reason, unpaid payments go away. */
+export const coachCancelBooking = async (sb: Sb, bookingId: string, reason: string) => {
+  const r = await sb.rpc("coach_cancel_booking", { p_booking: bookingId, p_reason: reason });
+  if (r.error) throw explain(r.error.message);
+};
 
 /** 今天: requests waiting for this coach, in the shape the console cards already use. */
 export async function coachRequests(sb: Sb, coachId: string): Promise<BookingRequest[]> {
