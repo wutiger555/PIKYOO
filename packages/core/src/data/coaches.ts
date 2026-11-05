@@ -1,4 +1,5 @@
 import type { BookingDay, BookingRequest, Coach, Group, PaymentRow, Slot } from "../types";
+import type { UpcomingLesson } from "../source/bookings";
 import { demoDate, demoDay } from "./today.ts"; // .ts: the seed generator runs this file in plain Node
 
 // Mock coaches, slots and coach-console data — content from prototype/coach-kit.js and PIKYOO-coach.html.
@@ -218,6 +219,13 @@ export const RECEIVED_BEFORE = 16400;
 export const TODAY_AGENDA = [
   { start: "10:00", end: "11:00", title: "一對一", who: "Peggy", where: "大安運動中心", status: "已付款", tone: "open" as const },
   { start: "19:30", end: "21:00", title: "小班課（3/4）", who: "小周、阿何、葉子", where: "信義運動中心", status: "1 人未付", tone: "almost" as const },
+];
+
+/** 接下來的課 in the demo (live: me-coach upcoming): today's two lessons and two later this week. */
+export const demoUpcoming = (): UpcomingLesson[] => [
+  { id: "u1", date: demoDay(0).date, weekday: demoDay(0).weekday, time: "19:30", plan: "小班課", student: "小周、阿何、葉子", headcount: 3, paid: "wait" },
+  { id: "u2", date: demoDay(1).date, weekday: demoDay(1).weekday, time: "10:00", plan: "新手體驗課", student: "小安", headcount: 1, paid: "wait" },
+  { id: "u3", date: demoDay(3).date, weekday: demoDay(3).weekday, time: "19:30", plan: "一對一", student: "Jason", headcount: 1, paid: "paid" },
 ];
 
 export const PAYOUT_METHODS = [

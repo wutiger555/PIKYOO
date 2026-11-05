@@ -45,7 +45,7 @@ export function CoachCard({ coach }: { coach: Coach }) {
                 {isCertified(coach) && <Icon name="check" size={14} tint={color.success} />}
               </View>
               <Text style={{ fontSize: 14, color: color.n700 }}>
-                {coach.rating != null ? <Text style={{ fontWeight: "700", color: color.text }}>★ {coach.rating}</Text> : "還沒有評價"}
+                {coach.rating != null ? <Text style={{ fontWeight: "700", color: color.text }}>★ {coach.rating}</Text> : <Text style={{ fontWeight: "700", color: color.accent700 }}>新加入</Text>}
                 {coach.rating != null && <Text>（{coach.reviews}）</Text>}・{coach.students} 位學生
               </Text>
               {spec.length > 0 && <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4 }}>{spec.map((x) => <Text key={x} style={c.spec}>{x}</Text>)}</View>}

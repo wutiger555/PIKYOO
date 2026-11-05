@@ -8,7 +8,7 @@ type Sb = SupabaseClient<Database>;
 
 export interface Notice { id: string; title: string; body?: string; href?: string; at: string; read: boolean }
 
-type Payload = { booking_id?: string; game_id?: string; question_id?: string; group_id?: string; note?: string; verified?: boolean; changed?: string[]; at?: string; unpaid?: boolean; amount?: number; method?: string };
+type Payload = { booking_id?: string; game_id?: string; question_id?: string; group_id?: string; note?: string; verified?: boolean; changed?: string[]; at?: string; unpaid?: boolean; amount?: number; method?: string; reason?: string; paid?: boolean; coach?: string };
 
 /** Copy and link per kind (the kinds notify() is called with in supabase/migrations). Unknown kinds get a generic line. */
 export function describe(kind: string, p: Payload): Pick<Notice, "title" | "body" | "href"> {
@@ -20,6 +20,10 @@ export function describe(kind: string, p: Payload): Pick<Notice, "title" | "body
     case "booking_confirmed": return { title: "教練確認了你的預約", body: "照付款資訊付款就完成了", href: booking };
     case "booking_declined": return { title: "教練婉拒了這個時段", body: "換一個時段再試試", href: booking };
     case "booking_cancelled": return { title: "學生取消了預約", href: "/coach" };
+    case "booking_cancelled_by_coach": return {
+      title: `教練取消了${p.at ? ` ${p.at} ` : ""}的課`,
+      body: [p.reason, p.paid ? "已付的費用教練會退給你" : "這堂不用付款"].filter(Boolean).join("・"), href: booking };
+    case "review_request": return { title: `給${p.coach ? ` ${p.coach} ` : "教練"}一個評價`, body: "上完課感覺如何？點星星就好，一分鐘", href: booking };
     case "booking_expired": return { title: "預約已逾時取消", body: "教練 48 小時內沒有回覆，沒有任何費用", href: booking };
     case "payment_reported": return { title: "學生說付好了", body: "看一下入帳，按「收到了」", href: "/coach/payments" };
     case "lesson_note": return { title: "教練寫了課後筆記給你", body: "今天練了什麼、下次練什麼，點開看看", href: booking };
@@ -50,7 +54,7 @@ export function describe(kind: string, p: Payload): Pick<Notice, "title" | "body
 
 /** Kinds also pushed over LINE (PRD F6 plus D9's payment round trip). LINE bills per message, so the rest stay in-app. */
 export const LINE_KINDS = new Set([
-  "booking_requested", "booking_confirmed", "booking_declined", "booking_cancelled", "booking_expired",
+  "booking_requested", "booking_confirmed", "booking_declined", "booking_cancelled", "booking_expired", "booking_cancelled_by_coach", "review_request",
   "payment_reported", "payment_received", "payment_not_received", "payment_due",
   "game_promoted", "game_changed", "game_cancelled", "game_removed",
   "coach_approved", "coach_returned", "coach_suspended", "lesson_reminder", "game_reminder",

@@ -1,6 +1,6 @@
 "use server";
 
-import { cancelBooking, decideBooking, requestBooking } from "@pikyoo/core/source/bookings";
+import { cancelBooking, coachCancelBooking, decideBooking, requestBooking, reviewLesson } from "@pikyoo/core/source/bookings";
 import type { Booking } from "@pikyoo/core/types";
 import { supabaseServer } from "./supabase";
 
@@ -29,6 +29,26 @@ export async function decideBookingAction(bookingId: string, accept: boolean): P
 export async function cancelBookingAction(bookingId: string): Promise<{ error?: string }> {
   try {
     await cancelBooking(await supabaseServer(), String(bookingId));
+    return {};
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+/** 評價 a lesson the student has taken (1–5 stars, a line of text). */
+export async function reviewLessonAction(bookingId: string, stars: number, body: string): Promise<{ error?: string }> {
+  try {
+    await reviewLesson(await supabaseServer(), String(bookingId), Number(stars), String(body ?? ""));
+    return {};
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+/** 取消這堂 as the coach, with a short reason the student sees. */
+export async function coachCancelAction(bookingId: string, reason: string): Promise<{ error?: string }> {
+  try {
+    await coachCancelBooking(await supabaseServer(), String(bookingId), String(reason ?? ""));
     return {};
   } catch (e) {
     return fail(e);

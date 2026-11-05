@@ -566,3 +566,115 @@ do $$ begin
   assert not exists (select 1 from public.lesson_notes where id = current_setting('test.shared')::uuid), 'the coach deleted a note';
   delete from public.lesson_bookings where id = current_setting('test.notebooking')::uuid;
 end $$;
+
+-- ── MVP gaps (docs/FLOWS.md §4) ──
+-- 這天不開放: a closed date has no sessions and refuses bookings; only the coach sees their closed dates
+do $$ begin perform test.login('Mia 林'); end $$;
+set role authenticated;
+do $$
+declare d date := (test.next_at('三', '19:30') at time zone 'Asia/Taipei')::date;
+begin
+  assert exists (select 1 from public.open_sessions('mia', 14) s where (s.starts_at at time zone 'Asia/Taipei')::date = d), 'the check day has sessions to begin with';
+  insert into public.coach_closed_days (coach_id, day) values (public.my_coach_id(), d);
+  assert not exists (select 1 from public.open_sessions('mia', 14) s where (s.starts_at at time zone 'Asia/Taipei')::date = d), 'a closed day has no sessions';
+end $$;
+reset role;
+do $$ begin perform test.login('小安'); end $$;
+set role authenticated;
+do $$ begin
+  assert test.fails($q$select public.request_booking((select id from public.coach_plans where key = 'p1' and coach_id = (select id from public.coaches where slug = 'mia')),
+    test.next_at('三', '19:30'), 1, '', 'cash')$q$) = 'coach is off that day', 'nobody books a closed day';
+  assert (select count(*) from public.coach_closed_days) = 0, 'students cannot read coaches'' closed days';
+end $$;
+reset role;
+delete from public.coach_closed_days;
+
+-- 取消這堂: only the lesson's coach, before it starts; the student is told and unpaid payment rows go away
+do $$ begin perform test.login('小安'); end $$;
+set role authenticated;
+do $$ begin
+  perform set_config('test.cancel', public.request_booking((select id from public.coach_plans where key = 'trial' and coach_id = (select id from public.coaches where slug = 'mia')),
+    (select starts_at from public.open_sessions('mia', 14) where plan_key = 'trial' and seats_left >= 1 order by starts_at desc limit 1), 1, '', 'bank_transfer')::text, false);
+end $$;
+reset role;
+do $$ begin perform test.login('Mia 林'); end $$;
+set role authenticated;
+do $$ begin perform public.decide_booking(current_setting('test.cancel')::uuid, true); end $$;
+reset role;
+do $$ begin perform test.login('趙柏宇'); end $$;
+set role authenticated;
+do $$ begin
+  assert test.fails(format('select public.coach_cancel_booking(%L, %L)', current_setting('test.cancel'), '生病')) = 'not your lesson', 'another coach cannot cancel it';
+end $$;
+reset role;
+do $$ begin perform test.login('Mia 林'); end $$;
+set role authenticated;
+do $$ begin
+  assert test.fails(format('select public.coach_cancel_booking(%L, %L)', current_setting('test.cancel'), '加我 LINE 0912345678')) is not null, 'the reason follows the no-contact rule';
+  perform public.coach_cancel_booking(current_setting('test.cancel')::uuid, '下雨，球場關閉');
+end $$;
+reset role;
+do $$ begin
+  assert (select status = 'cancelled' from public.lesson_bookings where id = current_setting('test.cancel')::uuid), 'the coach cancelled it';
+  assert not exists (select 1 from public.payments where booking_id = current_setting('test.cancel')::uuid), 'unpaid payment rows go away';
+  assert exists (select 1 from public.notifications where user_id = test.uid('小安') and kind = 'booking_cancelled_by_coach'
+                 and payload ->> 'booking_id' = current_setting('test.cancel') and payload ->> 'reason' = '下雨，球場關閉'), 'the student is told why';
+end $$;
+
+-- 評價: only the student, only after the lesson, no contact details; ratings are public; one review request per lesson
+do $$
+declare past uuid; fut uuid;
+begin
+  insert into public.lesson_bookings (coach_id, plan_id, student_id, starts_at, pay_method, amount, status, expires_at)
+  select pl.coach_id, pl.id, test.uid('小安'), now() - interval '1 day', 'cash', 600, 'confirmed', now() - interval '2 days'
+  from public.coach_plans pl join public.coaches c on c.id = pl.coach_id where c.slug = 'mia' and pl.key = 'trial' returning id into past;
+  insert into public.lesson_bookings (coach_id, plan_id, student_id, starts_at, pay_method, amount, status, expires_at)
+  select pl.coach_id, pl.id, test.uid('小安'), now() - interval '20 hours', 'cash', 600, 'confirmed', now() - interval '2 days'
+  from public.coach_plans pl join public.coaches c on c.id = pl.coach_id where c.slug = 'mia' and pl.key = 'trial' returning id into fut;
+  perform set_config('test.past', past::text, false);
+  perform set_config('test.past2', fut::text, false);
+  perform public.ask_reviews();
+  perform public.ask_reviews();
+  assert (select count(*) from public.notifications where kind = 'review_request' and payload ->> 'booking_id' = past::text) = 1, 'one review request per lesson';
+end $$;
+do $$ begin perform test.login('葉子'); end $$;
+set role authenticated;
+do $$ begin
+  assert test.fails(format('select public.review_lesson(%L, 5, %L)', current_setting('test.past'), '很棒')) = 'not your lesson', 'only the student reviews';
+end $$;
+reset role;
+do $$ begin perform test.login('小安'); end $$;
+set role authenticated;
+do $$ begin
+  assert test.fails(format('select public.review_lesson(%L, 5, %L)', current_setting('test.past'), '找我 IG @pickle_an')) is not null, 'reviews follow the no-contact rule';
+  assert test.fails(format('select public.review_lesson(%L, 6, %L)', current_setting('test.past'), '')) is not null, 'stars are 1 to 5';
+  perform public.review_lesson(current_setting('test.past')::uuid, 5, '第一堂就能對打十拍');
+  perform public.review_lesson(current_setting('test.past')::uuid, 4, '第一堂就能對打十拍，很有耐心');
+end $$;
+reset role;
+do $$ begin perform test.visitor(); end $$;
+set role anon;
+do $$ begin
+  assert (select reviews = 1 and rating = 4.0 from public.coach_ratings where coach_id = (select id from public.coaches where slug = 'mia')), 'a second review of the same lesson replaces the first';
+  assert exists (select 1 from public.lesson_reviews where body like '第一堂%'), 'visitors read reviews on public coach pages';
+end $$;
+reset role;
+do $$ begin
+  perform public.ask_reviews();
+  assert (select count(*) from public.notifications where kind = 'review_request' and payload ->> 'booking_id' = current_setting('test.past2')) = 1, 'the unreviewed lesson is asked once too';
+end $$;
+set role authenticated;
+do $$ begin assert test.fails('select public.ask_reviews()') like 'permission denied%', 'only pg_cron asks for reviews'; end $$;
+reset role;
+
+-- 送審前要有收款資訊: a coach who takes transfers can't submit until the bank account is filled in
+do $$ begin perform test.login('阿凱'); end $$;
+set role authenticated;
+do $$ begin
+  insert into public.coaches (profile_id, slug, name, pay_methods) values (auth.uid(), 'akai', '阿凱', '{bank_transfer,cash}');
+  assert test.fails($q$update public.coaches set status = 'pending' where slug = 'akai'$q$) = 'payout details missing', 'no 送審 without a bank account';
+  insert into public.coach_pay_details (coach_id, details) values (public.my_coach_id(), '{"bank_transfer": {"bank": "台新銀行 812", "account": "28881001234567", "name": "阿＊"}}');
+  update public.coaches set status = 'pending' where slug = 'akai';
+  assert (select status = 'pending' from public.coaches where slug = 'akai'), 'with the account filled in, 送審 works';
+end $$;
+reset role;

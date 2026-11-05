@@ -5,16 +5,17 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Status } from "@/components/pk/Badges";
 import { Icon, type IconName } from "@/components/pk/Icon";
-import { AppBar, Sheet, SoonButton } from "@/components/pk/Shell";
+import { AppBar, Sheet } from "@/components/pk/Shell";
 import { TopNav } from "@/components/pk/TopNav";
 import { useToast } from "@/components/pk/Toast";
-import { DEMO_PAYOUT, PAYOUT_METHODS, RECEIVED_BEFORE, TODAY_AGENDA } from "@pikyoo/core/data/coaches";
+import { DEMO_PAYOUT, demoUpcoming, PAYOUT_METHODS, RECEIVED_BEFORE } from "@pikyoo/core/data/coaches";
+import type { UpcomingLesson } from "@pikyoo/core/source/bookings";
 import { BANKS, bankCode, bankLabel } from "@pikyoo/core/twqr";
 import { useCatalog, useDemo } from "@/lib/demo-store";
 import { money } from "@pikyoo/core/format";
 import { AnswerCard } from "@/features/coaches/QuestionBoard";
 import { CoachGate } from "./CoachAccount";
-import { decideBookingAction } from "@/lib/bookings";
+import { coachCancelAction, decideBookingAction } from "@/lib/bookings";
 import { markPaidAction, rejectReportAction, remindPaymentAction, savePayoutAction, setRemindUnpaidAction } from "@/lib/payments";
 import { CollectQRSheet } from "./CollectQR";
 import { realAuth } from "@/lib/env";
@@ -216,26 +217,7 @@ export function CoachTodayScreen() {
           </div>
           {ask.length ? <div className="stack con-qs">{ask.map((q) => <AnswerCard key={q.id} q={q} />)}</div> : <p className="text-muted" style={{ margin: 0 }}>沒有待回覆的提問。回覆會公開在教練頁，其他學生也看得到。</p>}
         </section>
-        {/* the sample day; with real sign-in the schedule comes with B5 part 3 */}
-        {!realAuth && <section className="sec con-today">
-          <div className="sec-head">
-            <h2><span className="en">Today</span>今天的課</h2>
-            <SoonButton className="linklike" msg="行事曆（週檢視）">行事曆</SoonButton>
-          </div>
-          <div className="agenda">
-            {TODAY_AGENDA.map((a) => (
-              <div key={a.start} className="ag">
-                <div className="ag-t"><b className="num">{a.start}</b><small className="num">{a.end}</small></div>
-                <div className="ag-b">
-                  <b>{a.title}</b>
-                  <div className="text-muted" style={{ fontSize: 13 }}>{a.who}</div>
-                  <div className="text-muted" style={{ fontSize: 13 }}>{a.where}</div>
-                </div>
-                <Status tone={a.tone}>{a.status}</Status>
-              </div>
-            ))}
-          </div>
-        </section>}
+        <UpcomingLessons />
         </div>
         <PastLessons onWrite={setWriting} />
       </ConsoleFrame>
@@ -601,6 +583,65 @@ function PayoutDetailsSheet({ onClose }: { onClose: () => void }) {
       </div>
       <p className="fine" style={{ margin: "8px 0 0" }}>學生付款頁會用這個帳號產生轉帳 QR code，用銀行 App 一掃就帶入帳號和金額，錢直接進你的帳戶。</p>
       <button className="btn btn-primary btn-lg btn-block" style={{ marginTop: 12 }} disabled={busy} onClick={save}>{busy ? "儲存中…" : "儲存"}</button>
+    </Sheet>
+  );
+}
+
+const CANCEL_REASONS = ["生病", "下雨或場地關閉", "臨時有事"];
+const PAID_LABEL = { wait: ["還沒付", "almost"], reported: ["說付好了", "info"], paid: ["已收到", "open"] } as const;
+
+/** 接下來的課 (docs/FLOWS.md §2.2, §2.4): confirmed lessons for the next two weeks, each cancellable with a short reason the
+ *  student sees. Live: me-coach `upcoming` and coach_cancel_booking; the demo uses a sample week and only hides the row. */
+function UpcomingLessons() {
+  const toast = useToast();
+  const router = useRouter();
+  const { myCoach: mine } = useCatalog();
+  const [gone, setGone] = useState<string[]>([]);
+  const [cancelling, setCancelling] = useState<UpcomingLesson | null>(null);
+  const list = (realAuth ? mine?.upcoming ?? [] : demoUpcoming()).filter((l) => !gone.includes(l.id));
+  const cancel = async (l: UpcomingLesson, reason: string) => {
+    if (realAuth) {
+      const r = await coachCancelAction(l.id, reason);
+      if (r.error) return toast(r.error);
+      router.refresh();
+    }
+    setGone((g) => [...g, l.id]);
+    setCancelling(null);
+    toast(`已取消，${l.student} 會收到通知`);
+  };
+  return (
+    <section className="sec con-today">
+      <div className="sec-head"><h2><span className="en">Upcoming</span>接下來的課</h2><Link className="linklike" href="/coach/lessons">這天不開放</Link></div>
+      {list.length ? (
+        <div className="agenda">
+          {list.map((l) => (
+            <div key={l.id} className="ag">
+              <div className="ag-t"><b className="num">{l.time}</b><small>{l.date}（{l.weekday}）</small></div>
+              <div className="ag-b">
+                <b>{l.plan}{l.headcount > 1 ? `（${l.headcount} 人）` : ""}</b>
+                <div className="text-muted" style={{ fontSize: 13 }}>{l.student}</div>
+                <button className="linkbtn" style={{ fontSize: 13, marginTop: 4 }} onClick={() => setCancelling(l)}>取消這堂</button>
+              </div>
+              {l.paid && <Status tone={PAID_LABEL[l.paid][1]}>{PAID_LABEL[l.paid][0]}</Status>}
+            </div>
+          ))}
+        </div>
+      ) : <p className="text-muted" style={{ margin: 0 }}>未來兩週還沒有確認的課。學生預約、你答應之後會出現在這裡。</p>}
+      {cancelling && <CancelSheet lesson={cancelling} onCancel={(r) => cancel(cancelling, r)} onClose={() => setCancelling(null)} />}
+    </section>
+  );
+}
+
+function CancelSheet({ lesson: l, onCancel, onClose }: { lesson: UpcomingLesson; onCancel: (reason: string) => void; onClose: () => void }) {
+  const [reason, setReason] = useState(CANCEL_REASONS[0]);
+  return (
+    <Sheet className="sheet-coach" onClose={onClose}>
+      <h2>取消 {l.date}（{l.weekday}）{l.time} 的課？</h2>
+      <p className="text-muted" style={{ fontSize: 14 }}>{l.student} 會收到 LINE 通知和原因。已經付款的，請你直接退給學生。</p>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, margin: "8px 0 16px" }}>
+        {CANCEL_REASONS.map((r) => <button key={r} className="chip" aria-pressed={reason === r} onClick={() => setReason(r)}>{r}</button>)}
+      </div>
+      <button className="btn btn-primary btn-lg btn-block" onClick={() => onCancel(reason)}>取消並通知學生</button>
     </Sheet>
   );
 }

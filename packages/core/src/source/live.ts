@@ -3,6 +3,7 @@ import type {
   BookingMethod, Coach, CoachPhoto, CourtKind, Court, DayGroup, Game, LessonType, Level, PayMethod, PlayProfile, Plan,
   TimelineItem, Weekday,
 } from "../types";
+import { LEVELS } from "../format";
 import type { Database, Enums, Tables } from "./db.types";
 import { readQuestions } from "./questions";
 import type { Catalog, DataSource } from "./types";
@@ -88,7 +89,10 @@ function toCourt(photo: Photo, c: Tables<"courts">, i: number): Court {
   };
 }
 
-function toCoach(photo: Photo, c: CoachCard, creds: Tables<"credentials">[], plans: Tables<"coach_plans">[], at: (n: number) => ReturnType<typeof tpe>): Coach {
+/** A coach's real 評價: the average and count, and the latest few with text (shown in place of coach-picked quotes). */
+export type CoachReviews = { rating: number | null; reviews: number; quotes: Coach["profile"]["quotes"] };
+
+function toCoach(photo: Photo, c: CoachCard, creds: Tables<"credentials">[], plans: Tables<"coach_plans">[], at: (n: number) => ReturnType<typeof tpe>, rv?: CoachReviews): Coach {
   const availability = c.availability as Coach["profile"]["availability"];
   const now = at(0);
   // 最近可約: the first weekly slot still ahead of now in the next 7 days
@@ -105,7 +109,7 @@ function toCoach(photo: Photo, c: CoachCard, creds: Tables<"credentials">[], pla
     types: (Object.keys(LESSON) as Enums<"lesson_kind">[]).filter((k) => c.kinds.includes(k)).map((k) => LESSON[k]),
     priceFrom: c.price_from ?? 0, nextSlot, style: c.style, beginnerFriendly: c.beginner_friendly,
     years: c.coaching_since ? Math.max(1, new Date().getFullYear() - c.coaching_since) : 0,
-    students: c.students, rating: null, reviews: 0, tagline: c.tagline,
+    students: c.students, rating: rv?.rating ?? null, reviews: rv?.reviews ?? 0, tagline: c.tagline,
     profile: {
       slug: `pikyoo.tw/c/${c.slug}`, reply: c.reply_note, bio: c.bio,
       photos: (c.photos as { path: string; alt: string; caption: string | null }[])
@@ -118,7 +122,7 @@ function toCoach(photo: Photo, c: CoachCard, creds: Tables<"credentials">[], pla
       timeline: c.timeline as unknown as TimelineItem[],
       venues: (c.venues as { name: string; sub: string; court_slug: string | null }[]).map((v) => ({ name: v.name, sub: v.sub, courtId: v.court_slug ?? undefined })),
       steps: c.steps, pay: c.pay_methods.map((m) => PAY[m]), policy: c.policy,
-      quotes: c.quotes as Coach["profile"]["quotes"],
+      quotes: rv?.quotes.length ? rv.quotes : (c.quotes as Coach["profile"]["quotes"]),
     },
   };
 }
@@ -143,8 +147,8 @@ function toGame(g: GameCard, dayLabel: string, roster: Seat[], viewerWaiting: bo
 }
 
 /** One coach as the screens see it (also used for a coach's own page at any status, see me-coach.ts). */
-export const coachFromRows = (url: string, c: CoachCard, creds: Tables<"credentials">[], plans: Tables<"coach_plans">[]) =>
-  toCoach(photoUrl(url), c, creds, plans, calendar(Date.now()).at);
+export const coachFromRows = (url: string, c: CoachCard, creds: Tables<"credentials">[], plans: Tables<"coach_plans">[], rv?: CoachReviews) =>
+  toCoach(photoUrl(url), c, creds, plans, calendar(Date.now()).at, rv);
 
 export type { CoachCard };
 
@@ -154,14 +158,26 @@ export const createLive = ({ url, publishableKey }: LiveConfig): DataSource => (
     const now = Date.now();
     const cal = calendar(now);
     const sb = createClient<Database>(url, publishableKey, { auth: { persistSession: false } });
-    const [courts, coaches, creds, plans, games] = await Promise.all([
+    const [courts, coaches, creds, plans, games, ratings, latest] = await Promise.all([
       sb.from("courts").select("*").order("created_at").then(ok),
       sb.from("coach_cards").select("*").eq("status", "approved").order("approved_at").then(ok),
       sb.from("credentials").select("*").order("created_at").then(ok),
       sb.from("coach_plans").select("*").is("archived_at", null).order("sort").then(ok),
       sb.from("game_cards").select("*").is("cancelled_at", null).gt("ends_at", new Date(now).toISOString())
         .lt("starts_at", new Date(now + (GAME_DAYS + 1) * 864e5).toISOString()).order("starts_at").then(ok),
+      sb.from("coach_ratings").select("*").then(ok),
+      sb.from("lesson_reviews").select("coach_id, stars, body, profiles!lesson_reviews_student_id_fkey(display_name, level)")
+        .neq("body", "").order("created_at", { ascending: false }).limit(300).then(ok),
     ]);
+    const reviewsOf = (coachId: string): CoachReviews => {
+      const r = ratings.find((x) => x.coach_id === coachId);
+      return {
+        rating: r?.rating ?? null, reviews: r?.reviews ?? 0,
+        quotes: latest.filter((x) => x.coach_id === coachId).slice(0, 6).map((x) => ({
+          name: x.profiles?.display_name || "學生", level: x.profiles?.level != null ? LEVELS[x.profiles.level as Level] : "", text: x.body,
+        })),
+      };
+    };
     const shown = (games as GameCard[]).flatMap((g) => {
       const n = cal.offsetOf(g.starts_at);
       return n === undefined ? [] : [{ g, dayLabel: cal.dayLabel(n) }];
@@ -184,7 +200,7 @@ export const createLive = ({ url, publishableKey }: LiveConfig): DataSource => (
     return {
       courts: courts.map((c, i) => toCourt(photo, c, i)),
       coaches: (coaches as CoachCard[]).map((c) =>
-        toCoach(photo, c, creds.filter((x) => x.coach_id === c.id), plans.filter((p) => p.coach_id === c.id), cal.at)),
+        toCoach(photo, c, creds.filter((x) => x.coach_id === c.id), plans.filter((p) => p.coach_id === c.id), cal.at, reviewsOf(c.id!))),
       games: shown.map(({ g, dayLabel }) => {
         const mineHere = hosting.includes(g.id);
         const seats = roster.filter((p) => p.game_id === g.id && (!viewer || p.user_id !== viewer || mineHere))
