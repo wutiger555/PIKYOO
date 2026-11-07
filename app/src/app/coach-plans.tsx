@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Alert, Pressable, Switch, Text, TextInput, View } from "react-native";
 import { money } from "@pikyoo/core/format";
+import { slotVenueKey } from "@pikyoo/core/venues";
 import type { Coach, Plan, Weekday } from "@pikyoo/core/types";
 import { useSession } from "@/data/session";
 import { Num } from "@/ui/badges";
@@ -29,6 +30,13 @@ export default function CoachLessons() {
   const setPlan = (i: number, patch: Partial<Plan>) => setPlans(p.plans.map((x, j) => (j === i ? { ...x, ...patch } : x)));
   const setDay = (d: Weekday, times: string[]) => setMyCoach((x) => ({ ...x, profile: { ...x.profile, availability: { ...x.profile.availability, [d]: [...times].sort() } } }));
   const open = WEEK.reduce((n, d) => n + (p.availability[d]?.length ?? 0), 0);
+  const venueAt = (d: Weekday, t: string) => p.slotVenues?.[slotVenueKey(d, t)] ?? "";
+  const lastVenue = Object.values(p.slotVenues ?? {}).pop() ?? p.venues[0]?.name ?? "";
+  const setSlotVenue = (d: Weekday, t: string, name: string) =>
+    setMyCoach((x) => { const sv = { ...(x.profile.slotVenues ?? {}) }; if (name) sv[slotVenueKey(d, t)] = name; else delete sv[slotVenueKey(d, t)]; return { ...x, profile: { ...x.profile, slotVenues: sv } }; });
+  // tapping the venue label cycles: venue 1 → venue 2 → … → 地點未定
+  const cycleVenue = (d: Weekday, t: string) => { const names = p.venues.map((v) => v.name); const i = names.indexOf(venueAt(d, t)); setSlotVenue(d, t, i < 0 ? names[0] ?? "" : names[i + 1] ?? ""); };
+  const removeTime = (d: Weekday, t: string) => { setDay(d, (p.availability[d] ?? []).filter((x) => x !== t)); setSlotVenue(d, t, ""); };
 
   return (
     <ConsolePage inStack>
@@ -63,7 +71,7 @@ export default function CoachLessons() {
       <Btn label="新增方案" icon="plus" onPress={() => setPlans([...p.plans, { id: "n" + Date.now().toString(36), name: "新方案", durationMin: 60, size: "1 人", price: 1000, unit: "/堂", note: "" }])} />
 
       <SecHead en="Weekly" title="每週開放時段" right={<Text style={{ fontSize: 13, color: color.muted }}>{open} 個時段</Text>} />
-      <Text style={c.hint}>學生預約頁會直接用這些時段。</Text>
+      <Text style={c.hint}>學生預約頁會直接用這些時段。點時段下方的地點可以切換；沒選的顯示「地點未定」。</Text>
       <View style={[c.card, { gap: 0, paddingVertical: 4 }]}>
         {WEEK.map((d, i) => {
           const times = p.availability[d] ?? [];
@@ -72,10 +80,15 @@ export default function CoachLessons() {
               <Text style={{ width: 36, fontWeight: "800", fontSize: 15 }}>週{d}</Text>
               <View style={{ flex: 1, flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
                 {times.map((t) => (
-                  <Pressable key={t} onPress={() => setDay(d, times.filter((x) => x !== t))} accessibilityLabel={`移除週${d} ${t}`}
-                    style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: color.accentSoft, borderWidth: 1, borderColor: color.accent700, borderRadius: radius.sm, paddingHorizontal: 8, paddingVertical: 4 }}>
-                    <Num style={{ fontSize: 15 }}>{t}</Num><Icon name="x" size={10} />
-                  </Pressable>
+                  <View key={t} style={{ backgroundColor: color.accentSoft, borderWidth: 1, borderColor: color.accent700, borderRadius: radius.sm, paddingHorizontal: 8, paddingVertical: 4, gap: 1 }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                      <Num style={{ fontSize: 15 }}>{t}</Num>
+                      <Pressable onPress={() => removeTime(d, t)} accessibilityLabel={`移除週${d} ${t}`} hitSlop={8}><Icon name="x" size={10} /></Pressable>
+                    </View>
+                    <Pressable onPress={() => cycleVenue(d, t)} accessibilityLabel={`週${d} ${t} 的地點，點一下切換`} hitSlop={6}>
+                      <Text style={{ fontSize: 11, color: venueAt(d, t) ? color.muted : color.warning }}>{venueAt(d, t) ? venueAt(d, t).replace(/運動中心$/, "運中") : "地點未定"} ›</Text>
+                    </Pressable>
+                  </View>
                 ))}
                 {!times.length && <Text style={{ fontSize: 13, color: color.muted }}>不開放</Text>}
               </View>
@@ -89,7 +102,7 @@ export default function CoachLessons() {
 
       {adding && (
         <TimeSheet title={`週${adding} 開放時段`} taken={p.availability[adding] ?? []} onClose={() => setAdding(null)}
-          onAdd={(t) => setDay(adding, [...(p.availability[adding] ?? []), t])} />
+          onAdd={(t) => { setDay(adding, [...(p.availability[adding] ?? []), t]); if (lastVenue) setSlotVenue(adding, t, lastVenue); }} />
       )}
     </ConsolePage>
   );

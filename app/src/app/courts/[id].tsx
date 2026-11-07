@@ -2,6 +2,7 @@ import { Link, Stack, useLocalSearchParams } from "expo-router";
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { lessons as demoLessons } from "@pikyoo/core/data/games";
+import { courtFeeText } from "@pikyoo/core/venues";
 import { teachesAt } from "@pikyoo/core/coach-filters";
 import { money } from "@pikyoo/core/format";
 import type { Court } from "@pikyoo/core/types";
@@ -51,7 +52,7 @@ export default function CourtPage() {
             <Text style={s.body}>{c.bookingNote}</Text>
           </Block>
           <Block>
-            <KV k="開放" v={c.hours} /><KV k="收費" v={c.priceNote} /><KV k="規則" v={c.rules} />
+            <KV k="開放" v={c.hours} /><KV k="收費" v={c.fee ? `${courtFeeText(c)}。${c.priceNote}。依場館公告，以現場為準；教練開課時會另外標示每位學生的場地費。` : c.priceNote} /><KV k="規則" v={c.rules} />
           </Block>
           <Block title="地點">
             <Text style={{ fontSize: 14, color: color.muted }}>{c.address}</Text>

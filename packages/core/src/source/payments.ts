@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PaymentRow, PayMethod } from "../types";
-import { tpeParts } from "./bookings";
+import { tpeParts } from "./time";
 import type { Database, Enums, Json } from "./db.types";
 
 // 收款 (B5, simple first): money goes straight to the coach (LINE Pay link, bank transfer, cash).

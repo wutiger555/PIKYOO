@@ -9,6 +9,7 @@ import { useToast } from "@/components/pk/Toast";
 import { TopNav } from "@/components/pk/TopNav";
 import { CoachMini, Img } from "@/features/coaches/CoachCard";
 import { teachesAt } from "@pikyoo/core/coach-filters";
+import { courtFeeText } from "@pikyoo/core/venues";
 import { lessons as demoLessons } from "@pikyoo/core/data/games";
 import { useAllGames, useCoaches, useDemo } from "@/lib/demo-store";
 import { money } from "@pikyoo/core/format";
@@ -60,7 +61,7 @@ export function CourtDetailScreen({ court: c }: { court: Court }) {
           {c.photo ? <Img src={c.photo.src} alt={c.photo.alt} sizes="(min-width: 1024px) 800px, 480px" priority /> : <div className="ph img-ph">球場照片</div>}
         </div>
         <div className="dblock o2">
-          <h1 style={{ margin: 0, fontSize: 24, overflowWrap: "anywhere" }}>{c.name}</h1>
+          <h1 style={{ margin: 0, fontSize: 24, overflowWrap: "anywhere" }}>{c.name}{c.partner && <span className="tag tag-accent" style={{ marginLeft: 8, verticalAlign: "middle" }}>合作場館</span>}</h1>
           <div className="text-muted" style={{ fontSize: 14 }}>{c.district}・{c.kind} {c.courtCount} 面・{c.surface}</div>
           <div className="ticket-tags" style={{ marginTop: "var(--space-2)" }}>
             {c.amenities.map((a) => <span key={a} className="tag tag-neutral">{a}</span>)}
@@ -83,7 +84,7 @@ export function CourtDetailScreen({ court: c }: { court: Court }) {
         <div className="dblock o4">
           <dl className="kv" style={{ margin: 0 }}>
             <dt>開放</dt><dd>{c.hours}</dd>
-            <dt>收費</dt><dd>{c.priceNote}</dd>
+            <dt>收費</dt><dd>{c.fee ? <>{courtFeeText(c)}<small className="text-muted" style={{ display: "block" }}>{c.priceNote}。依場館公告，以現場為準；教練開課時會另外標示每位學生的場地費。</small></> : c.priceNote}</dd>
             <dt>規則</dt><dd>{c.rules}</dd>
           </dl>
         </div>

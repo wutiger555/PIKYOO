@@ -49,10 +49,10 @@ const emit = (s: string) => out.push(s);
 // — courts —
 for (const c of COURTS) {
   emit(`insert into public.courts (slug, name, city, district, address, kind, court_count, surface, is_free, price_note, hours_note,
-  amenities, has_aircon, has_lights, booking_method, booking_note, rules, photos, verified_at, lat, lng) values (
+  amenities, has_aircon, has_lights, booking_method, booking_note, rules, photos, verified_at, lat, lng, fee_low, fee_high, fee_checked_at, fee_source) values (
   ${q(c.id)}, ${q(c.name)}, ${q(c.address.slice(0, 3))}, ${q(c.district)}, ${q(c.address)}, '${KIND[c.kind]}', ${c.courtCount}, ${q(c.surface)},
   ${c.free}, ${q(c.priceNote)}, ${q(c.hours)}, ${arr(c.amenities)}, ${c.aircon}, ${c.lights}, '${BOOKING[c.booking]}', ${q(c.bookingNote)},
-  ${q(c.rules)}, ${json(c.photo ? [{ path: c.photo.src, alt: c.photo.alt }] : [])}, ${c.verified ? q(c.verified.replace("/", "-") + "-01") : "null"}, ${c.lat ?? "null"}, ${c.lng ?? "null"});`);
+  ${q(c.rules)}, ${json(c.photo ? [{ path: c.photo.src, alt: c.photo.alt }] : [])}, ${c.verified ? q(c.verified.replace("/", "-") + "-01") : "null"}, ${c.lat ?? "null"}, ${c.lng ?? "null"}, ${c.fee?.low ?? "null"}, ${c.fee?.high ?? "null"}, ${c.fee ? q(c.fee.checked.replace("/", "-") + "-01") : "null"}, ${c.fee?.source ? q(c.fee.source) : "null"});`);
 }
 
 // — coaches —
@@ -60,10 +60,10 @@ for (const c of COACHES) {
   person(c.name);
   const p = c.profile;
   emit(`insert into public.coaches (profile_id, slug, name, status, tagline, bio, areas, level_min, level_max, style, beginner_friendly,
-  coaching_since, reply_note, play, audience, languages, availability, venues, steps, pay_methods, policy, photos, timeline, quotes, approved_at) values (
+  coaching_since, reply_note, play, audience, languages, availability, venues, slot_venues, steps, pay_methods, policy, photos, timeline, quotes, approved_at) values (
   ${uid(c.name)}, ${q(c.id)}, ${q(c.name)}, 'approved', ${q(c.tagline)}, ${q(p.bio)}, ${arr(c.areas)}, ${c.levelMin}, ${c.levelMax}, ${arr(c.style)},
   ${c.beginnerFriendly}, ${2026 - c.years}, ${q(p.reply)}, ${json(p.play)}, ${arr(p.audience)}, ${arr(p.languages)}, ${json(p.availability)},
-  ${json(p.venues.map((v) => ({ name: v.name, sub: v.sub, court_slug: v.courtId ?? null })))}, ${arr(p.steps)},
+  ${json(p.venues.map((v) => ({ name: v.name, sub: v.sub, court_slug: v.courtId ?? null, fee: v.fee ?? 0, fee_to: v.feeTo ?? "coach" })))}, ${json(p.slotVenues ?? {})}, ${arr(p.steps)},
   ${arr(p.pay.map((x) => PAY_DB[x]), "public.pay_method")}, ${q(p.policy)},
   ${json(p.photos.map((x) => ({ path: x.src, alt: x.alt, caption: x.caption ?? null })))}, ${json(p.timeline)}, ${json(p.quotes)}, now());`);
   for (const cr of c.creds) {

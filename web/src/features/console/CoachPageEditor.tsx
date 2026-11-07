@@ -10,6 +10,7 @@ import { CoachPublicPage } from "@/features/coaches/CoachPageScreen";
 import { Img } from "@/features/coaches/CoachCard";
 import { useCatalog, useDemo } from "@/lib/demo-store";
 import { LEVELS } from "@pikyoo/core/format";
+import { courtFeePerHead, courtFeeText } from "@pikyoo/core/venues";
 import { CANCEL_TEXT, SPECIALTIES, specialties } from "@pikyoo/core/rules";
 import type { Coach, CoachProfile, Level, PayMethod, PlayProfile, TimelineItem } from "@pikyoo/core/types";
 import { CoachTabs, ConsoleFrame } from "./ConsoleScreens";
@@ -245,14 +246,29 @@ export function CoachPageEditor() {
           </section>
 
           <section className="ed-card">
-            <h2><span className="en">Where</span>授課地點</h2>
+            <h2><span className="en">Where</span>授課地點與場地費</h2>
+            <p className="ed-hint">場地費是學費以外、每位學生要付的錢；免費場地或已含在學費裡就填 0。學生會同時看到你填的數字和場館的公告價。</p>
             {courts.map((ct) => {
-              const on = p.venues.some((v) => v.courtId === ct.id);
+              const v = p.venues.find((x) => x.courtId === ct.id);
+              const hint = courtFeePerHead(ct);
               return (
-                <label key={ct.id} className="ed-check">
-                  <input type="checkbox" checked={on} onChange={() => setP({ venues: on ? p.venues.filter((v) => v.courtId !== ct.id) : [...p.venues, { name: ct.name, sub: `${ct.kind} ${ct.courtCount} 面・${ct.district}`, courtId: ct.id }] })} />
-                  <span><b>{ct.name}</b><small className="text-muted">{ct.district}・{ct.kind} {ct.courtCount} 面</small></span>
-                </label>
+                <div key={ct.id} className={`ed-venue${v ? " on" : ""}`}>
+                  <label className="ed-check">
+                    <input type="checkbox" checked={!!v} onChange={() => setP({ venues: v ? p.venues.filter((x) => x.courtId !== ct.id) : [...p.venues, { name: ct.name, sub: `${ct.kind} ${ct.courtCount} 面・${ct.district}`, courtId: ct.id, fee: ct.free ? 0 : hint ?? 0 }] })} />
+                    <span><b>{ct.name}{ct.partner && <span className="tag tag-accent" style={{ marginLeft: 6 }}>合作場館</span>}</b><small className="text-muted">{ct.district}・{ct.kind} {ct.courtCount} 面・公告 {courtFeeText(ct)}</small></span>
+                  </label>
+                  {v && !ct.free && (
+                    <div className="ed-fee">
+                      <label>場地費每人 <input className="input num" type="number" min={0} step={10} value={v.fee ?? 0} onChange={(e) => setP({ venues: p.venues.map((x) => (x.courtId === ct.id ? { ...x, fee: Math.max(0, Number(e.target.value) || 0) } : x)) })} /> 元</label>
+                      <div className="seg seg-tight" role="radiogroup" aria-label="場地費付給誰">
+                        {([["coach", "跟學費一起付給你"], ["venue", "上課時付給場館"]] as const).map(([k, l]) => (
+                          <label key={k} className="seg-opt"><input type="radio" name={`feeto-${ct.id}`} checked={(v.feeTo ?? "coach") === k} onChange={() => setP({ venues: p.venues.map((x) => (x.courtId === ct.id ? { ...x, feeTo: k } : x)) })} />{l}</label>
+                        ))}
+                      </div>
+                      {hint != null && (v.fee ?? 0) > hint * 1.5 && <small className="ed-warn">高於場館公告換算（4 人約每人 {hint} 元），學生會看到對照。</small>}
+                    </div>
+                  )}
+                </div>
               );
             })}
           </section>

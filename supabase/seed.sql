@@ -34,40 +34,40 @@ insert into auth.users (id, aud, role, email, confirmation_token, recovery_token
   (md5('pikyoo-seed:小安')::uuid, 'authenticated', 'authenticated', 'seed+29@pikyoo.test', '', '', '', '', '{"name":"小安"}'::jsonb);
 
 insert into public.courts (slug, name, city, district, address, kind, court_count, surface, is_free, price_note, hours_note,
-  amenities, has_aircon, has_lights, booking_method, booking_note, rules, photos, verified_at, lat, lng) values (
+  amenities, has_aircon, has_lights, booking_method, booking_note, rules, photos, verified_at, lat, lng, fee_low, fee_high, fee_checked_at, fee_source) values (
   'daan', '大安運動中心', '台北市', '大安區', '台北市大安區辛亥路三段 55 號', 'indoor', 4, 'PU 多功能球場',
-  false, '每面每小時約 NT$400（依時段）', '每天 06:00–22:00', array['冷氣', '淋浴', '停車', '租拍']::text[], true, true, 'public_system', '運動中心官網線上預約，開放 14 天內的時段',
-  '需穿室內運動鞋；每次預約最多 2 小時。', '[{"path":"/photos/court-daan.jpg","alt":"空無一人的室內 PU 球場，藍色地板與白線"}]'::jsonb, '2026-09-01', 25.02073, 121.54601);
+  false, '每面每小時約 NT$250–400（依時段）', '每天 06:00–22:00', array['冷氣', '淋浴', '停車', '租拍']::text[], true, true, 'public_system', '運動中心官網線上預約，開放 14 天內的時段',
+  '需穿室內運動鞋；每次預約最多 2 小時。', '[{"path":"/photos/court-daan.jpg","alt":"空無一人的室內 PU 球場，藍色地板與白線"}]'::jsonb, '2026-09-01', 25.02073, 121.54601, 250, 400, '2026-10-01', '以信義運動中心匹克球公告類推，待電話確認');
 insert into public.courts (slug, name, city, district, address, kind, court_count, surface, is_free, price_note, hours_note,
-  amenities, has_aircon, has_lights, booking_method, booking_note, rules, photos, verified_at, lat, lng) values (
+  amenities, has_aircon, has_lights, booking_method, booking_note, rules, photos, verified_at, lat, lng, fee_low, fee_high, fee_checked_at, fee_source) values (
   'xinyi', '信義運動中心', '台北市', '信義區', '台北市信義區松勤街 100 號', 'indoor', 3, 'PU 多功能球場',
-  false, '每面每小時約 NT$450（依時段）', '每天 06:00–22:00', array['冷氣', '淋浴', '停車']::text[], true, true, 'public_system', '運動中心官網線上預約',
-  '需穿室內運動鞋。', '[{"path":"/photos/court-xinyi.jpg","alt":"室內球場上兩位球員在對打"}]'::jsonb, '2026-09-01', 25.0317, 121.56677);
+  false, '平日離峰 NT$250、尖峰 NT$400／小時／面', '每天 06:00–22:00', array['冷氣', '淋浴', '停車']::text[], true, true, 'public_system', '運動中心官網線上預約',
+  '需穿室內運動鞋。', '[{"path":"/photos/court-xinyi.jpg","alt":"室內球場上兩位球員在對打"}]'::jsonb, '2026-09-01', 25.0317, 121.56677, 250, 400, '2026-10-01', 'https://xysc.teamxports.com/xy-6f');
 insert into public.courts (slug, name, city, district, address, kind, court_count, surface, is_free, price_note, hours_note,
-  amenities, has_aircon, has_lights, booking_method, booking_note, rules, photos, verified_at, lat, lng) values (
+  amenities, has_aircon, has_lights, booking_method, booking_note, rules, photos, verified_at, lat, lng, fee_low, fee_high, fee_checked_at, fee_source) values (
   'dajia', '大佳河濱公園', '台北市', '中山區', '台北市中山區濱江街 5 號', 'outdoor', 6, '硬地',
   true, '免費', '全天開放・夜間照明到 22:00', array['夜間照明', '停車']::text[], false, true, 'walk_in', '先到先打，週末早上人多',
-  '下雨地滑請勿使用；請自備球網以外的器材。', '[{"path":"/photos/court-dajia.jpg","alt":"綠樹環繞、有圍網的戶外球場"}]'::jsonb, '2026-09-01', 25.07473, 121.539);
+  '下雨地滑請勿使用；請自備球網以外的器材。', '[{"path":"/photos/court-dajia.jpg","alt":"綠樹環繞、有圍網的戶外球場"}]'::jsonb, '2026-09-01', 25.07473, 121.539, null, null, null, null);
 insert into public.courts (slug, name, city, district, address, kind, court_count, surface, is_free, price_note, hours_note,
-  amenities, has_aircon, has_lights, booking_method, booking_note, rules, photos, verified_at, lat, lng) values (
+  amenities, has_aircon, has_lights, booking_method, booking_note, rules, photos, verified_at, lat, lng, fee_low, fee_high, fee_checked_at, fee_source) values (
   'zhongshan', '中山運動中心', '台北市', '中山區', '台北市中山區中山北路二段 44 巷 2 號', 'indoor', 4, 'PU 多功能球場',
-  false, '每面每小時約 NT$400（依時段）', '每天 06:00–22:00', array['冷氣', '淋浴', '租拍']::text[], true, true, 'public_system', '運動中心官網線上預約',
-  '需穿室內運動鞋。', '[{"path":"/photos/court-zhongshan.jpg","alt":"室內球場上女球員在網前擊球"}]'::jsonb, null, 25.05486, 121.52139);
+  false, '每面每小時約 NT$250–400（依時段）', '每天 06:00–22:00', array['冷氣', '淋浴', '租拍']::text[], true, true, 'public_system', '運動中心官網線上預約',
+  '需穿室內運動鞋。', '[{"path":"/photos/court-zhongshan.jpg","alt":"室內球場上女球員在網前擊球"}]'::jsonb, null, 25.05486, 121.52139, 250, 400, '2026-10-01', '以信義運動中心公告類推，待電話確認');
 insert into public.courts (slug, name, city, district, address, kind, court_count, surface, is_free, price_note, hours_note,
-  amenities, has_aircon, has_lights, booking_method, booking_note, rules, photos, verified_at, lat, lng) values (
+  amenities, has_aircon, has_lights, booking_method, booking_note, rules, photos, verified_at, lat, lng, fee_low, fee_high, fee_checked_at, fee_source) values (
   'neihu', '內湖運動中心', '台北市', '內湖區', '台北市內湖區洲子街 12 號', 'indoor', 3, 'PU 多功能球場',
-  false, '每面每小時約 NT$350（依時段）', '每天 06:00–22:00', array['冷氣', '停車']::text[], true, true, 'public_system', '運動中心官網線上預約',
-  '需穿室內運動鞋。', '[{"path":"/photos/court-neihu.jpg","alt":"室內球場上男球員準備擊球"}]'::jsonb, null, 25.07723, 121.57536);
+  false, '每面每小時約 NT$250–400（依時段）', '每天 06:00–22:00', array['冷氣', '停車']::text[], true, true, 'public_system', '運動中心官網線上預約',
+  '需穿室內運動鞋。', '[{"path":"/photos/court-neihu.jpg","alt":"室內球場上男球員準備擊球"}]'::jsonb, null, 25.07723, 121.57536, 250, 400, '2026-10-01', '以信義運動中心公告類推，待電話確認');
 insert into public.courts (slug, name, city, district, address, kind, court_count, surface, is_free, price_note, hours_note,
-  amenities, has_aircon, has_lights, booking_method, booking_note, rules, photos, verified_at, lat, lng) values (
+  amenities, has_aircon, has_lights, booking_method, booking_note, rules, photos, verified_at, lat, lng, fee_low, fee_high, fee_checked_at, fee_source) values (
   'banqiao', '新北市板橋第一運動場風雨球場', '新北市', '板橋區', '新北市板橋區漢生東路 278 號', 'covered', 2, '硬地',
-  false, '每小時約 NT$200', '每天 06:00–22:00', array['夜間照明', '停車']::text[], false, true, 'phone', '打電話到場館管理室預約',
-  '颱風與豪雨停開。', '[{"path":"/photos/court-banqiao.jpg","alt":"夜間打燈的兩面球場空拍"}]'::jsonb, null, 25.01017, 121.46838);
+  false, '每面每小時 NT$350，不分時段', '每天 06:00–22:00', array['夜間照明', '停車']::text[], false, true, 'phone', '打電話到場館管理室預約',
+  '颱風與豪雨停開。', '[{"path":"/photos/court-banqiao.jpg","alt":"夜間打燈的兩面球場空拍"}]'::jsonb, null, 25.01017, 121.46838, 350, 350, '2026-10-01', '中國時報 2026-06-13 議會質詢');
 insert into public.coaches (profile_id, slug, name, status, tagline, bio, areas, level_min, level_max, style, beginner_friendly,
-  coaching_since, reply_note, play, audience, languages, availability, venues, steps, pay_methods, policy, photos, timeline, quotes, approved_at) values (
+  coaching_since, reply_note, play, audience, languages, availability, venues, slot_venues, steps, pay_methods, policy, photos, timeline, quotes, approved_at) values (
   md5('pikyoo-seed:Mia 林')::uuid, 'mia', 'Mia 林', 'approved', '網球教練 8 年轉匹克球，專帶第一次拿拍的人。', '我相信第一堂課最重要的是「打得到球、想再來」。每堂課會拍一段你的揮拍影片，課後用 LINE 傳給你，附上一個回家可以練的重點。', array['大安', '信義']::text[], 0, 3, array['零基礎入門', '技術細節']::text[],
   true, 2023, '通常 2 小時內回覆', '{"since":"2022","hand":"右手","format":"雙打為主","background":"網球教練 8 年","strengths":["零基礎入門","發球與接發球","網前小球（dink）","網球轉匹克球的揮拍修正"]}'::jsonb, array['第一次拿拍', '打過網球、羽球想轉項', '想先上課再去打新手局', '跟朋友一起來的小班']::text[], array['中文', '英文']::text[], '{"二":["19:30"],"三":["19:30"],"五":["20:00"],"六":["09:00","14:00"],"日":["10:00","15:00"]}'::jsonb,
-  '[{"name":"大安運動中心","sub":"室內 4 面・大安區","court_slug":"daan"},{"name":"信義運動中心","sub":"室內 3 面・信義區","court_slug":"xinyi"}]'::jsonb, array['握拍與準備姿勢，先把球打過網', '分解動作＋當場錄影給你看', '小比賽實戰，課後 LINE 傳影片與功課']::text[],
+  '[{"name":"大安運動中心","sub":"室內 4 面・大安區","court_slug":"daan","fee":100,"fee_to":"coach"},{"name":"信義運動中心","sub":"室內 3 面・信義區","court_slug":"xinyi","fee":100,"fee_to":"coach"}]'::jsonb, '{"二|19:30":"信義運動中心","三|19:30":"大安運動中心","五|20:00":"大安運動中心","六|09:00":"大安運動中心","六|14:00":"信義運動中心","日|10:00":"大安運動中心","日|15:00":"信義運動中心"}'::jsonb, array['握拍與準備姿勢，先把球打過網', '分解動作＋當場錄影給你看', '小比賽實戰，課後 LINE 傳影片與功課']::text[],
   array['line_pay', 'bank_transfer', 'cash']::public.pay_method[], '上課前 24 小時可免費改期或取消；24 小時內取消收 50%。',
   '[{"path":"/photos/mia-cover.jpg","alt":"女教練拿著球拍在室內球場準備接球","caption":"大安運動中心"},{"path":"/photos/mia-lesson.jpg","alt":"女教練在室內球場拿著球拍和球準備發球","caption":"第一堂課：握拍與準備姿勢"},{"path":"/photos/mia-group.jpg","alt":"兩位學員在室內球場對打練習","caption":"小班課：網前小球"}]'::jsonb, '[{"year":"2026","text":"中華民國匹克球協會 認證教練","kind":"cert"},{"year":"2025","text":"TMLP 台北站 女子雙打 第 5 名","kind":"trophy"},{"year":"2024","text":"開始教匹克球，累計 128 位學生","kind":"users"},{"year":"2016–24","text":"網球教練（8 年）","kind":"cap"}]'::jsonb, '[{"name":"小芸","level":"新手 → 2.5","text":"第一堂就能對打十拍，影片回饋超有用。"},{"name":"Jason","level":"2.5","text":"把我網球的揮拍習慣一個一個拆掉，很有耐心。"}]'::jsonb, now());
 insert into public.credentials (coach_id, type, issuer, level, status) values ((select id from public.coaches where slug = 'mia'), 'coach_cert', '協會', '認證教練', 'verified');
@@ -85,10 +85,10 @@ insert into public.coach_plans (coach_id, key, name, kind, duration_min, size_la
   (select id from public.coaches where slug = 'mia'), 'pack', '一對一 10 堂', 'private', 60, '1 人', 1,
   null, null, 13500, 'per_pack', '每堂 NT$1,350・6 個月內用完', '省 NT$1,500', 3);
 insert into public.coaches (profile_id, slug, name, status, tagline, bio, areas, level_min, level_max, style, beginner_friendly,
-  coaching_since, reply_note, play, audience, languages, availability, venues, steps, pay_methods, policy, photos, timeline, quotes, approved_at) values (
+  coaching_since, reply_note, play, audience, languages, availability, venues, slot_venues, steps, pay_methods, policy, photos, timeline, quotes, approved_at) values (
   md5('pikyoo-seed:趙柏宇')::uuid, 'zhao', '趙柏宇', 'approved', 'TMLP 台北站雙打銅牌，把 3.0 打到 3.5。', '很多人卡在 3.0，是因為第三拍和網前轉換沒有固定打法。我會先看你打一局，找出最常失分的兩個球，接下來每堂課只練那兩個，直到比賽裡用得出來。', array['信義', '松山']::text[], 2, 5, array['比賽與選手', '技術細節']::text[],
   false, 2022, '通常當天回覆', '{"since":"2020","hand":"右手","format":"雙打為主","background":"桌球校隊、羽球 10 年","strengths":["第三拍 drop","重置球（reset）","雙打站位與換位","比賽策略"]}'::jsonb, array['2.5–3.0 想升級', '準備參加積分賽', '固定球友想一起練戰術']::text[], array['中文']::text[], '{"二":["20:00"],"四":["19:30","21:00"],"六":["16:00"],"日":["09:00"]}'::jsonb,
-  '[{"name":"信義運動中心","sub":"室內 3 面・信義區","court_slug":"xinyi"},{"name":"松山運動中心","sub":"室內・松山區","court_slug":null}]'::jsonb, array['先打一局，找出最常失分的兩個球', '每堂只練那兩個球，拆解到你能重複', '2 對 2 實戰，比賽裡用出來才算數']::text[],
+  '[{"name":"信義運動中心","sub":"室內 3 面・信義區","court_slug":"xinyi","fee":200,"fee_to":"coach"},{"name":"松山運動中心","sub":"室內・松山區","court_slug":null,"fee":200,"fee_to":"coach"}]'::jsonb, '{"二|20:00":"信義運動中心","四|19:30":"信義運動中心","四|21:00":"信義運動中心","六|16:00":"松山運動中心"}'::jsonb, array['先打一局，找出最常失分的兩個球', '每堂只練那兩個球，拆解到你能重複', '2 對 2 實戰，比賽裡用出來才算數']::text[],
   array['bank_transfer', 'cash']::public.pay_method[], '上課前 48 小時可免費改期；48 小時內取消收全額。',
   '[{"path":"/photos/zhao-cover.jpg","alt":"男教練在室內球場網前低手救球","caption":"信義運動中心"},{"path":"/photos/zhao-lesson.jpg","alt":"雙打練習中，球員在網前壓低準備截擊","caption":"雙打站位與換位"},{"path":"/photos/zhao-match.jpg","alt":"室內比賽場館裡的雙打比賽","caption":"帶學生參加積分賽"}]'::jsonb, '[{"year":"2026","text":"中華民國匹克球總會 丙級教練","kind":"cert"},{"year":"2025","text":"PPR Certified Coach","kind":"cert"},{"year":"2025","text":"TMLP 台北站 男子雙打 第 3 名","kind":"trophy"},{"year":"2022","text":"開始教匹克球，累計 86 位學生","kind":"users"}]'::jsonb, '[{"name":"阿睿","level":"3.0 → 3.5","text":"第三拍終於不再亂打，積分賽第一次打進八強。"},{"name":"Peggy","level":"3.0","text":"講解很有邏輯，每次都知道下一步要練什麼。"}]'::jsonb, now());
 insert into public.credentials (coach_id, type, issuer, level, status) values ((select id from public.coaches where slug = 'zhao'), 'coach_cert', '總會', '丙級教練', 'verified');
@@ -103,10 +103,10 @@ insert into public.coach_plans (coach_id, key, name, kind, duration_min, size_la
   (select id from public.coaches where slug = 'zhao'), 'pack', '一對一 10 堂', 'private', 60, '1 人', 1,
   null, null, 11000, 'per_pack', '每堂 NT$1,100・4 個月內用完', '省 NT$1,000', 2);
 insert into public.coaches (profile_id, slug, name, status, tagline, bio, areas, level_min, level_max, style, beginner_friendly,
-  coaching_since, reply_note, play, audience, languages, availability, venues, steps, pay_methods, policy, photos, timeline, quotes, approved_at) values (
+  coaching_since, reply_note, play, audience, languages, availability, venues, slot_venues, steps, pay_methods, policy, photos, timeline, quotes, approved_at) values (
   md5('pikyoo-seed:安妮')::uuid, 'ann', '安妮', 'approved', '週末團體課，一個人來也能馬上找到球伴。', '團體課的好處是：你會認識一群程度差不多的球友。我的課前半小時練基本動作，後面一小時分組打比賽，下課前大家常常就約好下一次一起打了。', array['中山', '大同']::text[], 0, 2, array['團體帶氣氛', '親子兒童', '零基礎入門']::text[],
   true, 2024, '通常 1 小時內回覆', '{"since":"2022","hand":"右手","format":"雙打為主","background":"兒童體適能教練 5 年","strengths":["零基礎入門","團體分組練習","發球與接發球","親子課"]}'::jsonb, array['一個人想找球伴', '第一次拿拍', '親子一起學', '英文授課需求']::text[], array['中文', '英文']::text[], '{"三":["19:00"],"六":["09:00","14:00"],"日":["09:00"]}'::jsonb,
-  '[{"name":"中山運動中心","sub":"室內 4 面・中山區","court_slug":"zhongshan"},{"name":"大佳河濱公園","sub":"室外 6 面・中山區","court_slug":"dajia"}]'::jsonb, array['30 分鐘基本動作：握拍、發球、接發', '分組輪轉，每個人都有很多擊球機會', '小比賽＋認識球友，下課一起約下次']::text[],
+  '[{"name":"中山運動中心","sub":"室內 4 面・中山區","court_slug":"zhongshan","fee":80,"fee_to":"coach"},{"name":"大佳河濱公園","sub":"室外 6 面・中山區","court_slug":"dajia","fee":0,"fee_to":"coach"}]'::jsonb, '{"三|19:00":"中山運動中心","六|09:00":"大佳河濱公園","六|14:00":"中山運動中心","日|09:00":"大佳河濱公園"}'::jsonb, array['30 分鐘基本動作：握拍、發球、接發', '分組輪轉，每個人都有很多擊球機會', '小比賽＋認識球友，下課一起約下次']::text[],
   array['line_pay', 'cash']::public.pay_method[], '上課前 24 小時可免費取消；雨天室外課改到室內或延期。',
   '[{"path":"/photos/ann-cover.jpg","alt":"女教練在室內球場網前準備接球","caption":"中山運動中心"},{"path":"/photos/ann-group.jpg","alt":"週末團體課學員在戶外球場分組打雙打","caption":"週末團體課：分組比賽"},{"path":"/photos/ann-gear.jpg","alt":"球網前放著兩支球拍和幾顆洞洞球","caption":"借拍與球都準備好了"}]'::jsonb, '[{"year":"2025","text":"IPTPA Level 1 認證","kind":"cert"},{"year":"2024","text":"開始帶週末團體課，累計 210 位學生","kind":"users"},{"year":"2019–24","text":"兒童體適能教練（5 年）","kind":"cap"}]'::jsonb, '[{"name":"葉子","level":"新手","text":"一個人去完全不尷尬，下課就加了三個球友。"},{"name":"Emily","level":"2.0","text":"Classes in English were really helpful for me."}]'::jsonb, now());
 insert into public.credentials (coach_id, type, issuer, level, status) values ((select id from public.coaches where slug = 'ann'), 'coach_cert', 'IPTPA', 'Level 1', 'verified');
@@ -120,10 +120,10 @@ insert into public.coach_plans (coach_id, key, name, kind, duration_min, size_la
   (select id from public.coaches where slug = 'ann'), 'family', '親子課', 'private', 60, '1 大 1 小', 1,
   null, null, 900, 'per_lesson', '小朋友 7 歲以上', null, 2);
 insert into public.coaches (profile_id, slug, name, status, tagline, bio, areas, level_min, level_max, style, beginner_friendly,
-  coaching_since, reply_note, play, audience, languages, availability, venues, steps, pay_methods, policy, photos, timeline, quotes, approved_at) values (
+  coaching_since, reply_note, play, audience, languages, availability, venues, slot_venues, steps, pay_methods, policy, photos, timeline, quotes, approved_at) values (
   md5('pikyoo-seed:Ray 陳')::uuid, 'ray', 'Ray 陳', 'approved', '4.5 以上陪練，備戰積分賽。', '我自己還在打 DUPR 積分賽，所以課程就是比賽節奏：高強度對抽、發球變化、單打跑位。適合已經會打、想找強度的人。', array['內湖', '南港']::text[], 3, 6, array['比賽與選手']::text[],
   false, 2025, '通常當天回覆', '{"since":"2019","hand":"左手","format":"單打、雙打都教","background":"網球選手出身","strengths":["快速對抽（hands battle）","發球變化","單打戰術","比賽心理"]}'::jsonb, array['3.5 以上想找強度', '備戰 DUPR 積分賽', '想練單打']::text[], array['中文', '英文']::text[], '{"一":["20:00"],"三":["19:00"],"五":["20:00"],"日":["15:00"]}'::jsonb,
-  '[{"name":"內湖運動中心","sub":"室內 3 面・內湖區","court_slug":"neihu"}]'::jsonb, array['暖身後直接比賽強度對抽', '針對弱點設計情境練習', '模擬積分賽的一局，檢討每一分']::text[],
+  '[{"name":"內湖運動中心","sub":"室內 3 面・內湖區","court_slug":"neihu","fee":150,"fee_to":"venue"}]'::jsonb, '{"一|20:00":"內湖運動中心","三|19:00":"內湖運動中心","五|20:00":"內湖運動中心","日|15:00":"內湖運動中心"}'::jsonb, array['暖身後直接比賽強度對抽', '針對弱點設計情境練習', '模擬積分賽的一局，檢討每一分']::text[],
   array['bank_transfer', 'line_pay']::public.pay_method[], '上課前 24 小時可免費改期。',
   '[{"path":"/photos/ray-cover.jpg","alt":"男球員左手持拍在室內球場網前擊球","caption":"內湖運動中心"},{"path":"/photos/ray-match.jpg","alt":"室內比賽場館裡的雙打比賽","caption":"陪學生備戰積分賽"}]'::jsonb, '[{"year":"2026","text":"DUPR 4.65（自填，待驗證）","kind":"trophy"},{"year":"2025","text":"開始陪練教學，累計 24 位學生","kind":"users"},{"year":"2012–18","text":"網球選手（高中、大專盃）","kind":"cap"}]'::jsonb, '[]'::jsonb, now());
 insert into public.credentials (coach_id, type, issuer, level, status) values ((select id from public.coaches where slug = 'ray'), 'dupr', 'DUPR', '4.65', 'self_reported');

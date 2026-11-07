@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Icon } from "@/components/pk/Icon";
@@ -9,6 +10,8 @@ import { AppBar } from "@/components/pk/Shell";
 import { useToast } from "@/components/pk/Toast";
 import { TopNav } from "@/components/pk/TopNav";
 import { PAY_HINT } from "@pikyoo/core/data/coaches";
+import { useCatalog } from "@/lib/demo-store";
+import { courtFeeText, courtOf, feeLines, isOutdoor, venueForSlot } from "@pikyoo/core/venues";
 import { CANCEL_TEXT } from "@pikyoo/core/rules";
 import { slotKey, type BookingCalendar } from "@pikyoo/core/source/bookings";
 import { requestBookingAction } from "@/lib/bookings";
@@ -47,12 +50,16 @@ export function BookScreen({ coach, planId, friends, dayKey, slot, calendar }: {
   });
   const set = (patch: Partial<Booking>) => setB((prev) => ({ ...prev, ...patch }));
   const { plan, total } = bookingTotal(b, p);
+  const { courts } = useCatalog();
   const canFriends = !realAuth && !!plan.group;
   const [withFriends, setWithFriends] = useState(!!friends && canFriends);
   const group = withFriends && canFriends ? plan.group! : null;
   const perHead = plan.unit === "/人";
   const day = calendar.days.find((d) => d.key === b.dayKey) ?? calendar.days[0];
   const slots = day ? slotsOf(b.planId, day.key) : [];
+  const lines = feeLines(c, day ?? null, b.slot, perHead ? b.headcount : 1);
+  const court = courtOf(lines.venue, courts);
+  const grand = total + lines.fee;
   const [sending, setSending] = useState(false);
 
   const startGroup = () => {
@@ -126,13 +133,15 @@ export function BookScreen({ coach, planId, friends, dayKey, slot, calendar }: {
                 <button key={t} className={`slot${b.slot === t ? " on" : ""}`} disabled={!left} onClick={() => set({ slot: t })} aria-pressed={b.slot === t}>
                   <b className="num">{t}</b>
                   <small>{left ? `剩 ${left} 位` : "額滿"}</small>
+                  <em>{day ? venueForSlot(p, day, t)?.name ?? "地點未定" : ""}</em>
                 </button>
               ))
             ) : (
               <p className="text-muted" style={{ margin: 0 }}>這天沒有開放時段</p>
             )}
           </div>
-          <p className="fine" style={{ margin: "8px 0 0" }}>{p.venues[0].name}・時段由教練開放，選了之後送出申請</p>
+          <p className="fine" style={{ margin: "8px 0 0" }}>{lines.venue ? <>{lines.venue.name}・{lines.fee ? `場地費每人 ${money(lines.venue.fee ?? 0)}，${lines.feeTo}` : "不用另付場地費"}{isOutdoor(court) && "・戶外場，雨天教練會改期，不收費"}</> : b.slot ? "這個時段的地點教練答應後會告訴你" : "時段由教練開放，選了之後送出申請"}</p>
+          {lines.venue && court && !court.free && <p className="fine" style={{ margin: "4px 0 0" }}>場館公告價 {courtFeeText(court)}，<Link href={`/courts/${court.id}`}>看球場</Link></p>}
         </section>
 
         <section className="blk">
@@ -188,7 +197,13 @@ export function BookScreen({ coach, planId, friends, dayKey, slot, calendar }: {
               <dt>人數</dt><dd>{group ? `揪朋友 ${group.min}–${group.max} 人，各自付款` : perHead ? `${b.headcount} 人` : "1 人"}</dd>
               <dt>付款</dt><dd>{b.pay}</dd>
             </dl>
-            <div className="bk-total"><span>{group ? "每人" : "合計"}</span><b className="num">{money(group ? plan.price : total)}</b></div>
+            {lines.fee > 0 && !group && (
+              <dl className="bcard-kv bk-fees">
+                <dt>學費</dt><dd className="num">{money(total)}</dd>
+                <dt>場地費</dt><dd className="num">{money(lines.fee)}<small>{lines.feeTo}</small></dd>
+              </dl>
+            )}
+            <div className="bk-total"><span>{group ? "每人" : lines.fee ? "合計約" : "合計"}</span><b className="num">{money(group ? plan.price + (lines.venue?.fee ?? 0) : grand)}</b></div>
             <button className="btn btn-primary btn-lg btn-block" disabled={!b.slot || sending} onClick={submit}>{b.slot ? (sending ? "送出中…" : cta) : "請先選時段"}</button>
             <p className="fine">教練確認後才需要付款，現在不會扣款。</p>
             <div className="rule-box"><b>取消與請假規則</b>{CANCEL_TEXT}<small>所有教練都一樣，由平台統一規定。</small></div>
@@ -198,8 +213,8 @@ export function BookScreen({ coach, planId, friends, dayKey, slot, calendar }: {
       </div>
       <div className="sticky-cta">
         <div className="sticky-cta-info">
-          <span className="sticky-cta-price">{group ? <>{money(plan.price)}<small style={{ fontSize: 14, fontFamily: "var(--font-body)", color: "var(--color-on-carbon-muted)" }}> /人</small></> : money(total)}</span>
-          <span className="sticky-cta-sub">{when ? `${when}・${plan.name}` : "請選時段"}</span>
+          <span className="sticky-cta-price">{group ? <>{money(plan.price + (lines.venue?.fee ?? 0))}<small style={{ fontSize: 14, fontFamily: "var(--font-body)", color: "var(--color-on-carbon-muted)" }}> /人</small></> : money(grand)}</span>
+          <span className="sticky-cta-sub">{when ? `${when}・${plan.name}${lines.fee ? `・含場地費 ${money(lines.fee)}` : ""}` : "請選時段"}</span>
         </div>
         <button className="btn btn-primary btn-lg" disabled={!b.slot || sending} onClick={submit}>{sending ? "送出中…" : cta}</button>
       </div>

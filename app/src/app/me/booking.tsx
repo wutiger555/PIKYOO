@@ -2,6 +2,7 @@ import { Link, router } from "expo-router";
 import { useState } from "react";
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { bookingDays } from "@pikyoo/core/data/coaches";
+import { feeLines } from "@pikyoo/core/venues";
 import { money } from "@pikyoo/core/format";
 import { BOOKING_LABEL, BOOKING_STEPS, bookingStep } from "@pikyoo/core/labels";
 import type { BookingStatus } from "@pikyoo/core/types";
@@ -40,7 +41,8 @@ export default function BookingStatusPage() {
   const idx = bookingStep(st);
   const L = BOOKING_LABEL[st];
   const setStatus = (status: BookingStatus) => setBookingStatus(status);
-  const venue = p.venues[0]?.name ?? "";
+  const fee = feeLines(c, day.weekday ? day : null, b.slot, plan.unit === "/人" ? b.headcount : 1);
+  const venue = fee.venue?.name ?? "";
   const offset = Number(b.dayKey.replace("d", ""));
   const toCalendar = async () => {
     const { start } = lessonDates({ offset, start: b.slot!, end: b.slot! });
@@ -118,7 +120,7 @@ export default function BookingStatusPage() {
         <Link href={`/coaches/${c.id}`} asChild>
           <Pressable style={s.sumRow}>
             {p.photos[0] && <Photo src={p.photos[0].src} alt={c.name} tag={false} style={{ width: 40, height: 40, borderRadius: 20 }} />}
-            <View style={{ flex: 1 }}><Text style={{ fontWeight: "800", fontSize: 16 }}>{c.name}</Text><Text style={{ color: color.muted, fontSize: 13 }}>{p.venues[0]?.name}</Text></View>
+            <View style={{ flex: 1 }}><Text style={{ fontWeight: "800", fontSize: 16 }}>{c.name}</Text><Text style={{ color: color.muted, fontSize: 13 }}>{venue || "地點教練答應後告知"}</Text></View>
             <Icon name="right" size={16} tint={color.muted} />
           </Pressable>
         </Link>
@@ -126,6 +128,12 @@ export default function BookingStatusPage() {
           <Text style={{ flex: 1, color: color.muted }}>{plan.durationMin} 分鐘・{plan.unit === "/人" ? `${b.headcount} 人` : "1 人"}・{b.pay}</Text>
           <Num style={{ fontSize: 19 }}>{money(total)}</Num>
         </View>
+        {fee.fee > 0 && (
+          <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 14, paddingBottom: 12 }}>
+            <Text style={{ flex: 1, fontSize: 14, color: color.muted }}>場地費・{fee.feeTo}</Text>
+            <Num style={{ fontSize: 19 }}>{money(fee.fee)}</Num>
+          </View>
+        )}
       </View>
       <Btn kind="ghost" label="改期或取消" onPress={() => setChange(true)} />
       {change && (

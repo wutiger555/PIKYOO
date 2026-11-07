@@ -3,11 +3,13 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { PAY_HINT } from "@pikyoo/core/data/coaches";
+import { courtFeeText, courtOf, feeLines, isOutdoor, venueForSlot } from "@pikyoo/core/venues";
 import { CANCEL_TEXT } from "@pikyoo/core/rules";
 import { slotKey, type BookingCalendar } from "@pikyoo/core/source/bookings";
 import { money } from "@pikyoo/core/format";
 import type { Booking, Coach } from "@pikyoo/core/types";
 import { bookingTotal, loadCalendar } from "@/data/booking";
+import { useCatalog } from "@/data/catalog";
 import { useSession } from "@/data/session";
 import { Num } from "@/ui/badges";
 import { Btn } from "@/ui/Btn";
@@ -34,6 +36,7 @@ function BookForm({ c, cal, planId, dayKey, slot }: { c: Coach; cal: BookingCale
   const p = c.profile;
   const insets = useSafeAreaInsets();
   const { signedIn, submitBooking, isBlocked, myCoach } = useSession();
+  const { catalog } = useCatalog();
   const [login, setLogin] = useState(false);
   // demo day keys are d1…d7 (days from today); time the coach blocked off is not bookable
   const off = (dk: string) => (c.id === myCoach?.id && /^d\d+$/.test(dk) ? Number(dk.slice(1)) : null);
@@ -51,6 +54,9 @@ function BookForm({ c, cal, planId, dayKey, slot }: { c: Coach; cal: BookingCale
   const day = cal.days.find((d) => d.key === b.dayKey) ?? cal.days[0];
   const slots = day ? slotsOf(b.planId, day.key) : [];
   const when = b.slot && day ? `${day.date}（${day.weekday}）${b.slot}` : null;
+  const lines = feeLines(c, day ?? null, b.slot, perHead ? b.headcount : 1);
+  const court = courtOf(lines.venue, catalog?.courts ?? []);
+  const grand = total + lines.fee;
   const submit = () => {
     if (!signedIn) return setLogin(true);
     submitBooking(b);
@@ -90,11 +96,13 @@ function BookForm({ c, cal, planId, dayKey, slot }: { c: Coach; cal: BookingCale
               return (
                 <Pressable key={t} disabled={!left} onPress={() => set({ slot: t })} style={[s.slot, on && { backgroundColor: color.accent, borderColor: color.text }, !left && { opacity: 0.4 }]}>
                   <Num style={{ fontSize: 19 }}>{t}</Num><Text style={s.small}>{left ? `剩 ${left} 位` : "額滿"}</Text>
+                  <Text style={[s.small, { fontSize: 11 }]} numberOfLines={1}>{day ? venueForSlot(p, day, t)?.name.replace(/運動中心$/, "運中") ?? "地點未定" : ""}</Text>
                 </Pressable>
               );
             }) : <Text style={{ color: color.muted }}>這天沒有開放時段</Text>}
           </View>
-          <Text style={s.fine}>{p.venues[0]?.name}・時段由教練開放，選了之後送出申請</Text>
+          <Text style={s.fine}>{lines.venue ? `${lines.venue.name}・${lines.fee ? `場地費每人 ${money(lines.venue.fee ?? 0)}，${lines.feeTo}` : "不用另付場地費"}${isOutdoor(court) ? "・戶外場，雨天教練會改期，不收費" : ""}` : b.slot ? "這個時段的地點教練答應後會告訴你" : "時段由教練開放，選了之後送出申請"}</Text>
+          {lines.venue && court && !court.free && <Text style={s.fine}>場館公告價 {courtFeeText(court)}</Text>}
         </Step>
 
         <Step n={3} title="人數與備註">
@@ -128,8 +136,8 @@ function BookForm({ c, cal, planId, dayKey, slot }: { c: Coach; cal: BookingCale
 
       <View style={[s.cta, { paddingBottom: insets.bottom + 10 }]}>
         <View style={{ flex: 1 }}>
-          <Num style={{ fontSize: 26, color: "#fff" }}>{money(total)}</Num>
-          <Text style={{ color: color.onCarbonMuted, fontSize: 13 }} numberOfLines={1}>{when ? `${when}・${plan.name}` : "請選時段"}</Text>
+          <Num style={{ fontSize: 26, color: "#fff" }}>{money(grand)}</Num>
+          <Text style={{ color: color.onCarbonMuted, fontSize: 13 }} numberOfLines={1}>{when ? `${when}・${plan.name}${lines.fee ? `・含場地費 ${money(lines.fee)}` : ""}` : "請選時段"}</Text>
         </View>
         <Btn kind="primary" label={!signedIn ? "登入後送出" : "送出預約"} disabled={!b.slot} onPress={submit} />
       </View>
